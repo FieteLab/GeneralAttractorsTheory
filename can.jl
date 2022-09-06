@@ -79,31 +79,31 @@ function run()
     S = zeros(Float64, n^2)  # initialize the state of all neurons
     T = 0:dt:150 |> collect
     
-    pause = (true, 250, [0.0, 0.0])
+    pause = (false, 250, [0.0, 0.0])
     flow_directions = [
         (false, 150, [cos(0), sin(0)]),
         (false, 150, [cos(π/5), sin(π/5)]),
         (false, 150, [cos(π/2-π/5), sin(π/2-π/5)]),
 
         pause,
-        (true, 2250, [cos(0), 0.0] .* .6),
+        (true, 10_000, [cos(0), 0.0] .* .6),
         pause,
-        (true, 2250, [0.0, sin(π/2)] .* .6),
+        (true, 10_000, [0.0, sin(π/2)] .* .6),
         pause,
-        (true, 2250, [-cos(0), 0.0] .* .6),
+        (true, 10_000, [-cos(0), 0.0] .* .6),
         pause,
-        (true, 2250, [0.0, -sin(π/2)] .* .6),
+        (true, 10_000, [0.0, -sin(π/2)] .* .6),
 
         pause,
-        (true, 2250, [cos(π/4), sin(π/4)] .* .6),
+        (true, 10_000, [cos(π/4), sin(π/4)] .* .6),
         pause,
-        (true, 2250, [cos(-π/4), sin(-π/4)] .* .6),
+        (true, 10_000, [cos(-π/4), sin(-π/4)] .* .6),
         pause,
     ]
 
-    random = (true, 2000, nothing)
-    randos = vcat(repeat([random, pause], 250)...)
-    flow_directions = vcat(flow_directions..., randos...)
+    # random = (true, 2000, nothing)
+    # randos = vcat(repeat([random, pause], 250)...)
+    # flow_directions = vcat(flow_directions..., randos...)
 
     T = sum(map(x->x[2], flow_directions)) / dt
     Ts = sum(
@@ -218,6 +218,6 @@ l = 1.0
 
 
 # create network and simulate
-# Θ, W, X = make_network()
-# run()
+Θ, W, X = make_network()
+run()
 
