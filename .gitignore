@@ -10,3 +10,8 @@
 
 # base
 .DS_Store
+
+
+# specific files
+workspace.jl
+test.jl
