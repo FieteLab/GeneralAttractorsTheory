@@ -2,43 +2,17 @@ using GeneralAttractors
 
 import Base.Iterators: product as ×  # cartesian product
 import Distances: Metric, PeriodicEuclidean, pairwise
-import StaticArrays: SVector, SA_F32, SMatrix
+import StaticArrays: SVector, SA_F64, SMatrix
 using Term.Progress
 using Plots
 
-# ring attractor CAN - can I do it?
 
 
-"""
-Create a CAN given :
-- `n`: the number of neurons in each dimension  
-- `ξ`: the position of each neuron, such that ξ(i) is the position of the i-th
-    neuron in the neural lattice.
-"""
-function builder(n::NTuple{N,Int}, ξ::Function, d::Metric, kernel::Kernel) where N
-    # check that ξ has the right form
-    nargs = first(methods(ξ)).nargs - 1
-    @assert N == nargs  "ξ should accept $(N) arguments, accepts: $(nargs)"
+using Logging
+import Term.Logs: TermLogger
+Logging.min_enabled_level(::TermLogger) = Logging.Debug
 
-    rtype = Base.return_types(ξ, NTuple{N, Int})[1]
-    @assert rtype <: AbstractVector "ξ should return a Vector with neuron coordinates, not $rtype"
 
-    # get the index of every neuron in the lattice | Array of size `n`
-    lattice_idxs::AbstractArray{NTuple{N, Int}} = ×(map(_n -> 1:_n, n)...) |> collect
-
-    # get the coordinates of every neurons | Array of size `n`
-    X::Vector{SVector} = [ξ(idx...) for idx in lattice_idxs]
-    @degbug "X" size(X) typeof(X) eltype(X) 
-
-    # get connectivity matrix by applying the kernel function to the pairwise distance mtx
-    D =  pairwise(d, hcat(X...))
-    @degbug "got pairwise" size(D)
-
-    W = kernel.(D)
-    @degbug "Got connectivity" size(W)
-
-    return nothing
-end
 
 
 
@@ -46,7 +20,7 @@ end
 # ----------------------------------- ring ----------------------------------- #
 @info "doing ring"
 n = (100,)  # number of neurons in the ring
-ξ_r(i::Int)::SVector = SA_F32[2π/n[1]*i]  # neurons coordinates function
+ξ_r(i::Int)::Vector = [2π/n[1]*i]  # neurons coordinates function
 d = PeriodicEuclidean([2π])  # distance function
 
 
@@ -57,16 +31,22 @@ l = 1.0
 β = 3/(λ^2)
 γ = 1.05 * β
 
-k(x)::Float64 = a * exp(-γ*abs(x)^2) - exp(-β*abs(x)^2)
+k(x::Float64)::Float64 = a * exp(-γ*abs(x)^2) - exp(-β*abs(x)^2)
 
-builder(n, ξ_r, d, Kernel(k));
+# @time can(n, ξ_r, d, Kernel(k));
+# @time can(n, ξ_r, d, Kernel(k));
 
+# ----------------------------------- torus ---------------------------------- #
+@info "doing torus"
+n = (64, 64)  # number of neurons in the ring
+ξ_t(i::Int, j::Int)::Vector = begin # neurons coordinates function
+    p_i, p_j = (i-1)/(n[1]-1), (j-1)/(n[2]-1) # ∈ [0, 1]
+    [
+        -π/2*(1-p_i)+π/2*(p_i), 
+        -π/2*(1-p_j)+π/2*(p_j)
+    ]  # ∈ [-π/2, π/2] × [-π/2, π/2]
+end
+d = PeriodicEuclidean([2π, 2π])  # distance function over a torus manifold
 
-
-# # ----------------------------------- torus ---------------------------------- #
-# @info "doing torus"
-# n = (64, 64)  # number of neurons in the ring
-# ξ_t(i::Int, j::Int)::SVector = SA_F32[Float64(i), Float64(j)]  # neurons coordinates function
-# d = PeriodicEuclidean([2π, 2π])  # distance function
-
-# @time builder(n, ξ_t, d)
+# can = @time CAN(n, ξ_t, d, Kernel(k))
+show_connectivity(can,)
