@@ -34,7 +34,7 @@ module Can
     
             rtype = Base.return_types(k, (Number,))[1]
             @assert rtype isa Union{Any, Float64}  "Kernel function should return a scalar, not $rtype"
-    
+            
             new(k)
         end
     end
@@ -58,8 +58,8 @@ module Can
     mutable struct CAN <: AbstractCAN
         n::NTuple{N,Int} where N           # number of neurons in each dimension
         I::Vector{Tuple}                   # index (i,j...) of each neuron in the lattice
-        X::Vector{Vector}                  # vector witht the position (vector) of each neuron in the neural lattice
-        W::Array                           # connectivity matrix between all neurons in the network
+        X::Matrix                          # N × n_neurons matrix with coordinates of each neuron in lattice
+        Ws::Vector{Array}                  # connectivity matrices with lateral offsets | length N
         kernel::Kernel                     # connectivity kernel
     end
 
@@ -67,8 +67,42 @@ module Can
     Base.print(io::IO, can::CAN) = print(io, string(can))
     Base.show(io::IO, ::MIME"text/plain", can::CAN) = print(io, string(can))
 
+    """
+        make_orientations_table(::NTuple{N, Int})::Vector{Int} where N
 
-    function CAN(n::NTuple{N,Int}, ξ::Function, d::Metric, kernel::Kernel) where N
+    Given an N dimensional connectivity matrix, construct valid combinations
+    of positive/negative basis vectors. 
+
+    In ℝ, possible combinations are [-1], [1].
+    In ℝ²: [-1, 0], [1, 0], [0, -1], [0, 1]
+    In ℝ³: [1, 0, 0], [-1, 0, 0], [0, -1, 0], [0, 1, 0]...
+
+    Avoid diagonal ([1, 1]) and 0 vectors. 
+
+    These are used as offset vectors to create asymmetric connectivity matrix
+    for attractors with drifting dynamics.
+    """
+    function make_orientations_table(::NTuple{N, Int})::Vector{Vector} where N
+        v = [-1, 0, 1]  # possible values for each base vec of connection mtx
+        θ = ×(repeat([v], N)...) |> collect  # all possible combinations
+        θ = map(x -> [x...], vec(θ))  # turn into a vector of vectors
+
+        # keep only elements of the form: [0, 1], [-1, 0]... ∈ ℝ² | [1, 1, 0], [-1, 0, 1] ∈ ℝ²....
+        filter!(  
+            x -> abs(sum(x)) == 1.0, 
+            θ
+        )
+    end
+
+
+    function CAN(
+            n::NTuple{N,Int},
+            ξ::Function,
+            d::Metric,
+            kernel::Kernel;
+            offset_strength::Number=1.0
+        ) where N
+
         # check that ξ has the right form
         nargs = first(methods(ξ)).nargs - 1
         @assert N == nargs  "ξ should accept $(N) arguments, accepts: $(nargs)"
@@ -82,18 +116,22 @@ module Can
     
         # get the coordinates of every neurons | Array of size `n`
         ξ̂(t::Tuple) = ξ(t...)
-        X::Vector{Vector} = ξ̂.(lattice_idxs)
+        X::Matrix = hcat(ξ̂.(lattice_idxs)...)
         @debug "X" size(X) typeof(X) eltype(X) 
     
-        # get connectivity matrix by applying the kernel function to the pairwise distance mtx
-        D =  pairwise(d, hcat(X...))
-        @debug "got pairwise" size(D)
-    
-        W = kernel.k.(D)
-        @debug "Got connectivity" size(W)
+        # construct connectivity matrices with on vector offets
+        orientations = make_orientations_table(n)
+        Ws::Vector{Matrix} = []
+        for θ in orientations
+            # get pairwise offset connectivity
+            D =  pairwise(d, X .+ offset_strength .* θ, X)
+
+            # get connectivity matrix with kernel
+            push!(Ws, kernel.k.(D ))
+        end
         
-        @debug "ready" n lattice_idxs eltype(lattice_idxs) X eltype(X) W
-        return CAN(n, lattice_idxs, X, W, kernel)
+        @debug "ready" n lattice_idxs eltype(lattice_idxs) X eltype(X) typeof(Ws) eltype(Ws)
+        return CAN(n, lattice_idxs, X, Ws, kernel)
     end
 
 
