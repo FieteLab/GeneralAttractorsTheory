@@ -1,6 +1,6 @@
 using Plots
 using Measures
-using Distances: PeriodicEuclidean, evaluate
+using Distances: PeriodicEuclidean, evaluate, UnionMetric
 import Base.Iterators: product as ×  # cartesian product
 
 
@@ -62,6 +62,33 @@ function plot_distance_2d(d::PeriodicEuclidean; kwargs...)
 end
 
 
+function plot_distance_2d(d::MobiusEuclidean; kwargs...)
+    x = range(0, 2π, length=100) |> collect
+    y = range(0, 1, length=100) |> collect
+    X = (x × y) |> collect
+    X = [[x...] for x in vec(X)]
+
+    # get distance from a point
+    pts = []
+    points = [[0, 0], [.5, .2], [.05, .2], [2π-.05, .2]]
+    for p in points
+        # p = [rand(x), rand(y)]
+        Δx = [evaluate(d, p, x) for x in X]
+        Δx = reshape(Δx, length(x), length(y))'
+        
+        _plot = heatmap(
+            x, y, Δx,  grid=false,
+            xlabel="x", ylabel="x"
+        )
+        scatter!([p[1]], [p[2]], color=:green, label=nothing, ms=8, alpha=.8)
+        push!(pts, _plot)
+    end
+
+    plt = plot(pts..., size=(600, 600); layout=(4,1), kwargs...)
+    display(plt)
+end
+
+
 """
     plot_distance_function(d::PeriodicEuclidean)
 
@@ -76,6 +103,8 @@ function plot_distance_function(d::PeriodicEuclidean; kwargs...)
         plot_distance_2d(d; kwargs...)
     end
 end
+
+plot_distance_function(d::MobiusEuclidean; kwargs...) = plot_distance_2d(d; kwargs...)
 
 # ------------------------------- connectivity ------------------------------- #
 """ Plot connectivity matrix. """
@@ -149,7 +178,7 @@ function show_connectivity(can::CAN, i::Int)
         p = plot()
         for (n, W) in enumerate(can.Ws)
             weights = reshape(W[i, :], can.n...)
-            show_connectivity!(weights; label="Offset $n")
+            show_connectivity!(weights; label=nothing)
         end
         x = can.I[i]
         vline!([x[1]], label="Neuron $i", lw=4, color=:black)
@@ -175,7 +204,7 @@ function show_connectivity(can::CAN, i::Int)
             scatter!(
                 reverse(map(z->[z], x .+ Δ))..., 
                 color=:green,
-                label= n == 1 ? "p: $x" : nothing,
+                label= n == 1 ? "neuron" : nothing,
                 ms=12)
         end
         vline!([can.n[1]], lw=4, color=:white, label=nothing)

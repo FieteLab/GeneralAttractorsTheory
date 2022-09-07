@@ -5,15 +5,15 @@
 # neurons position and distance function
 n = (256,)  # number of neurons in the ring
 ξ_r(i::Int)::Vector = [(i-1)/(n[1]-1)*2π]  # neurons coordinates function
-d = PeriodicEuclidean([2π])  # distance function
+d_r = PeriodicEuclidean([2π])  # distance function
 
 # connectivity kernel
 α, σ = .33, .25
 mexicanhat(t) = α * 2/(√(3σ)*π^(1/4))*(1 - (t/σ)^2) * exp(-t^2/(2σ))
-k(x::Float64)::Float64 = mexicanhat(x)
+k_r(x::Float64)::Float64 = mexicanhat(x)
 
 # construct network
-ring_attractor = CAN(n, ξ_r, d, Kernel(k); offset_strength=0.25);
+ring_attractor = CAN(n, ξ_r, d_r, Kernel(k_r); offset_strength=0.25);
 
 # ---------------------------------------------------------------------------- #
 #                                TORUS ATTRACTOR                               #
@@ -27,10 +27,10 @@ n = (48, 48)
         2π*(p_j)
     ]  # ∈ [-π/2, π/2] × [-π/2, π/2]
 end
-d = PeriodicEuclidean([2π, 2π])  # distance function over a torus manifold
+d_t = PeriodicEuclidean([2π, 2π])  # distance function over a torus manifold
 
 # connectivity kernel | params defined in fn to speedup
-k(x::Float64)::Float64 = begin    
+k_t(x::Float64)::Float64 = begin    
     a = 1.0
     λ = 13/2π
     β = 5/(λ^2)
@@ -41,4 +41,4 @@ k(x::Float64)::Float64 = begin
 end
 
 # construct network
-torus_attractor = CAN(n, ξ_t, d, Kernel(k); offset_strength=.5)
+torus_attractor = CAN(n, ξ_t, d_t, Kernel(k_t); offset_strength=.5)
