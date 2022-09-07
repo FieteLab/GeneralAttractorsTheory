@@ -40,10 +40,10 @@ module Can
     end
     
     # make `K` callable
-    # (K::Kernel)(x::Float64)::Float64 = K.k(x)
+    (K::Kernel)(x::Float64)::Float64 = K.k(x)
     (K::Kernel)(x::Vector)::Vector = K.k.(x)
 
-    Base.string(k::Kernel) = "Kernel: $(K.k)"
+    Base.string(K::Kernel) = "Kernel: $(K.k)"
     Base.print(io::IO, k::Kernel) = print(io, string(k))
     Base.show(io::IO, ::MIME"text/plain", k::Kernel) = print(io, string(k))
 
@@ -57,10 +57,16 @@ module Can
 
     mutable struct CAN <: AbstractCAN
         n::NTuple{N,Int} where N           # number of neurons in each dimension
-        I::Vector{Tuple{M, Int}} where M   # index (i,j...) of each neuron in the lattice
+        I::Vector{Tuple}                   # index (i,j...) of each neuron in the lattice
         X::Vector{Vector}                  # vector witht the position (vector) of each neuron in the neural lattice
         W::Array                           # connectivity matrix between all neurons in the network
+        kernel::Kernel                     # connectivity kernel
     end
+
+    Base.string(can::CAN) = "CAN (dim=$(length(can.n))) - n neurons: $(can.n)"
+    Base.print(io::IO, can::CAN) = print(io, string(can))
+    Base.show(io::IO, ::MIME"text/plain", can::CAN) = print(io, string(can))
+
 
     function CAN(n::NTuple{N,Int}, ξ::Function, d::Metric, kernel::Kernel) where N
         # check that ξ has the right form
@@ -72,21 +78,22 @@ module Can
     
         # get the index of every neuron in the lattice | Array of size `n`
         lattice_idxs::AbstractArray{NTuple{N, Int}} = ×(map(_n -> 1:_n, n)...) |> collect |> vec
-        @info "Got lattice" typeof(lattice_idxs) size(lattice_idxs)
+        @debug "Got lattice" typeof(lattice_idxs) size(lattice_idxs)
     
         # get the coordinates of every neurons | Array of size `n`
         ξ̂(t::Tuple) = ξ(t...)
-        X::Vector{Vector} = @time ξ̂.(lattice_idxs)
-        @info "X" size(X) typeof(X) eltype(X) 
+        X::Vector{Vector} = ξ̂.(lattice_idxs)
+        @debug "X" size(X) typeof(X) eltype(X) 
     
         # get connectivity matrix by applying the kernel function to the pairwise distance mtx
-        D = @time  pairwise(d, hcat(X...))
-        @info "got pairwise" size(D)
+        D =  pairwise(d, hcat(X...))
+        @debug "got pairwise" size(D)
     
-        W = @time kernel.k.(D)
-        @info "Got connectivity" size(W)
-    
-        return CAN(n, lattice_idxs, X, W)
+        W = kernel.k.(D)
+        @debug "Got connectivity" size(W)
+        
+        @debug "ready" n lattice_idxs eltype(lattice_idxs) X eltype(X) W
+        return CAN(n, lattice_idxs, X, W, kernel)
     end
 
 

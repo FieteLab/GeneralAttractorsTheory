@@ -67,7 +67,7 @@ function make_network()
         end
     end
     plot_connectivity(W, X)
-    npzwrite("W.npz", W)
+    # npzwrite("W.npz", W)
     return Θ, W, X
 end
 
@@ -219,5 +219,5 @@ l = 1.0
 
 # create network and simulate
 Θ, W, X = make_network()
-run()
+# run()
 
