@@ -1,13 +1,81 @@
 using Plots
 using Measures
+using Distances: PeriodicEuclidean, evaluate
+import Base.Iterators: product as ×  # cartesian product
+
 
 # ---------------------------------- kernel ---------------------------------- #
 function Plots.plot(K::Kernel; kwargs...)
     x = -10:.1:10 |> collect
     y = K.(x)
-    Plots.plot(x, y, xlabel="distance Δx", ylabel="w", lw=2, color="black"; kwargs...)
+    Plots.plot(
+        x, 
+        y,
+        xlabel="distance Δx",
+        ylabel="w",
+        lw=2,
+        label=nothing,
+        color="black"; kwargs...)
 end
 
+
+
+# ---------------------------- distance functions ---------------------------- #
+function plot_distance_1d(d::PeriodicEuclidean; kwargs...)
+    x = 0:.1:d.periods[1] |> collect
+
+    p = plot(; xlabel="x", ylabel="distance", kwargs...)
+    colors = [:black, :red, :green, :blue]
+    for (i, point) in enumerate(rand(x, 4))
+        y = [evaluate(d, point, xx) for xx in x]
+        plot!(x, y, lw=3, color=colors[i], label=nothing)
+        vline!([point], color=colors[i], label=nothing)
+    end
+    display(p)
+end
+
+
+function plot_distance_2d(d::PeriodicEuclidean; kwargs...)
+    @info "distance" d.periods
+    upperbound(x, ) = isfinite(x) ? x : 2
+    # get coordinates mesh
+    x = range(0, upperbound(d.periods[1]), length=100) |> collect
+    y = range(0, upperbound(d.periods[2]), length=100) |> collect
+    X = (x × y) |> collect
+    X = [[x...] for x in vec(X)]
+
+    # get distance from a point
+    pts = []
+    for _ in 1:4
+        p = [rand(x), rand(y)]
+        Δx = [evaluate(d, p, x) for x in X]
+        Δx = reshape(Δx, length(x), length(y))'
+        _plot = heatmap(x, y, Δx, aspect_ratio=:equal, grid=false,
+            xlabel="x", ylabel="x"
+        )
+        scatter!([p[1]], [p[2]], color=:green, label=nothing, ms=10, alpha=.5)
+        push!(pts, _plot)
+    end
+
+    plt = plot(pts..., size=(600, 600); kwargs...)
+    display(plt)
+end
+
+
+"""
+    plot_distance_function(d::PeriodicEuclidean)
+
+Visualize N=dimensional periodic distance functions.
+"""
+function plot_distance_function(d::PeriodicEuclidean; kwargs...)
+    ndims = length(d.periods)
+
+    if ndims == 1
+        plot_distance_1d(d; kwargs...)
+    elseif ndims == 2
+        plot_distance_2d(d; kwargs...)
+    end
+end
 
 # ------------------------------- connectivity ------------------------------- #
 """ Plot connectivity matrix. """
@@ -122,9 +190,9 @@ end
 Show the connectivity for a can, the kernel and a 
 few randomly selected neurons.
 """
-function show_connectivity(can::CAN)
+function show_connectivity(can::CAN; kwargs...)
     idxs = rand(1:*(can.n...), 5)
     p = plot(can.kernel; title="Connectivity kernel")
     ps = map(i -> show_connectivity(can, i), idxs)
-    plot(p, ps...;  size=(800, 600))
+    plot(p, ps...;  size=(800, 600), kwargs...)
 end
