@@ -5,7 +5,7 @@ import Base.Iterators: product as ×  # cartesian product
 
 
 # ---------------------------------- kernel ---------------------------------- #
-function Plots.plot(K::Kernel; kwargs...)
+function Plots.plot(K::AbstractKernel; kwargs...)
     x = -10:.1:10 |> collect
     y = K.(x)
     Plots.plot(
@@ -213,6 +213,7 @@ function show_connectivity(can::CAN, i::Int)
                 aspect_ratio=:equal,
                 xticks=[], yticks=[]
             )
+
         end
         # separate heatmaps
         vline!([can.n[2]], lw=4, color=:white, label=nothing)

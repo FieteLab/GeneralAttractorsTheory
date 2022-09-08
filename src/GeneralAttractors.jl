@@ -1,14 +1,15 @@
 module GeneralAttractors
 
-
+    include("kernels.jl")
     include("can.jl")
 
     export CAN, Kernel
     export show_connectivity, plot_distance_function
-    export ring_attractor, torus_attractor
+    export ring_attractor, torus_attractor, mobius_attractor
     export MobiusEuclidean
 
-    using .Can: CAN, Kernel
+    using .Kernels: AbstractKernel, Kernel, MexicanHatKernel, DiffOfExpKernel
+    using .Can: CAN
 
     include("metrics.jl")
     include("viz.jl")

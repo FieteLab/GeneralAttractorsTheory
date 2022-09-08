@@ -7,51 +7,11 @@ module Can
     
     
 
-    export AbstractCAN, CAN, Kernel
+    export AbstractCAN, CAN
+
+    using ..Kernels: AbstractKernel
 
 
-    # ---------------------------------------------------------------------------- #
-    #                                    KERNEL                                    #
-    # ---------------------------------------------------------------------------- #
-
-    """
-        struct Kernel
-            k::Function
-        end
-
-    A `Kernel` represents a function used to compute the connectivity strength
-    between neurons x₁ -> x₂ based on their distance Δx. 
-    It's entirely defined by a scalar function `k`.
-
-    The struct is a convenience structure used to ensure that `k` has the appropriate
-    signature and to help with multiple dispatch (e.g. for plotting).
-    """
-    struct Kernel
-        k::Function
-        function Kernel(k::Function)
-            nargs = first(methods(k)).nargs - 1
-            @assert nargs == 1 "Kernel functions can only have one argument, not $nargs"
-    
-            rtype = Base.return_types(k, (Number,))[1]
-            @assert rtype isa Union{Any, Float64}  "Kernel function should return a scalar, not $rtype"
-            
-            new(k)
-        end
-    end
-    
-    # make `K` callable
-    (K::Kernel)(x::Float64)::Float64 = K.k(x)
-    (K::Kernel)(x::Vector)::Vector = K.k.(x)
-
-    Base.string(K::Kernel) = "Kernel: $(K.k)"
-    Base.print(io::IO, k::Kernel) = print(io, string(k))
-    Base.show(io::IO, ::MIME"text/plain", k::Kernel) = print(io, string(k))
-
-
-
-    # ---------------------------------------------------------------------------- #
-    #                                      CAN                                     #
-    # ---------------------------------------------------------------------------- #
 
     abstract type AbstractCAN end
 
@@ -60,7 +20,7 @@ module Can
         I::Vector{Tuple}                   # index (i,j...) of each neuron in the lattice
         X::Matrix                          # N × n_neurons matrix with coordinates of each neuron in lattice
         Ws::Vector{Array}                  # connectivity matrices with lateral offsets | length N
-        kernel::Kernel                     # connectivity kernel
+        kernel::AbstractKernel             # connectivity kernel
     end
 
     Base.string(can::CAN) = "CAN (dim=$(length(can.n))) - n neurons: $(can.n)"
@@ -99,7 +59,7 @@ module Can
             n::NTuple{N,Int},
             ξ::Function,
             d::Metric,
-            kernel::Kernel;
+            kernel::AbstractKernel;
             offset_strength::Number=1.0
         ) where N
 
