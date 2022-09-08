@@ -1,6 +1,6 @@
 
 using Distances: UnionMetric, PeriodicEuclidean, euclidean
-
+import Distances
 
 """
     MobiusEuclidean{W}
@@ -24,24 +24,31 @@ To compute the distance:
 
 """
 struct MobiusEuclidean <: UnionMetric
+    periodic1D::PeriodicEuclidean
     periodic::PeriodicEuclidean
 end
 
-MobiusEuclidean() = MobiusEuclidean(PeriodicEuclidean([2π, Inf]))
+MobiusEuclidean() = MobiusEuclidean(
+        PeriodicEuclidean([2π]),
+        PeriodicEuclidean([2π, Inf])
+    )
 
 
 function (dist::MobiusEuclidean)(x, y)
-    @assert length(x) == length(y) == 2 "Inputs to Mobius Distance should be 2-vectors"
-
-
     # flip y-coord for odd trips around the strip
-    if abs(x[1]-y[1]) < abs(x[1]-(2π-y[1]))
-        ŷ = y
-    else
-        @inbounds ŷ = [y[1], 1-y[2]]
+    @inbounds begin
+        Δx = dist.periodic1D(x[1], y[1])
+        if Δx < 2π - Δx
+            return dist.periodic(x, y)
+        else
+            ŷ = [y[1], 1-y[2]]
+        end
     end
-    # @inbounds ŷ = [y[1], 1-y[2]]
 
     # get distance
     return dist.periodic(x, ŷ)
 end
+
+# Distances.result_type(::MobiusEuclidean, ::Float64, ::Float64) = Float64
+Distances.eval_op(::MobiusEuclidean, ::Float64, ::Float64) = 1.0
+

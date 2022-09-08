@@ -127,7 +127,8 @@ module Can
             D =  pairwise(d, X .+ offset_strength .* θ, X)
 
             # get connectivity matrix with kernel
-            push!(Ws, kernel.k.(D ))
+            # push!(Ws, kernel.k.(D ))
+            push!(Ws, D)
         end
         
         @debug "ready" n lattice_idxs eltype(lattice_idxs) X eltype(X) typeof(Ws) eltype(Ws)

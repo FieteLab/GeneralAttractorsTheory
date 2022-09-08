@@ -20,12 +20,12 @@ ring_attractor = CAN(n, ξ_r, d_r, Kernel(k_r); offset_strength=0.25);
 # ---------------------------------------------------------------------------- #
 # neurons position and distance function
 n = (48, 48)  
-ξ_t(i::Int, j::Int)::Vector = begin # neurons coordinates function
+function ξ_t(i::Int, j::Int)::Vector  # neurons coordinates function
     p_i, p_j = (i-1)/(n[1]-1), (j-1)/(n[2]-1) # ∈ [0, 1]
     [
         2π*(p_i), 
         2π*(p_j)
-    ]  # ∈ [-π/2, π/2] × [-π/2, π/2]
+    ]  # ∈ [0, 2π] × [0, 2π]
 end
 d_t = PeriodicEuclidean([2π, 2π])  # distance function over a torus manifold
 

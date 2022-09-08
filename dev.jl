@@ -1,19 +1,26 @@
 using GeneralAttractors
 
 
-# TODO Mobius strip
-# TODO define neurons position function
-# TODO define distance function for th Mobius strip
-# TODO enjoy
-# https://math.stackexchange.com/questions/2925163/parametric-equation-of-the-moebius-strip
-# https://math.stackexchange.com/questions/638225/understanding-the-equation-of-a-m%C3%B6bius-strip
+n = (48, 24)
+function ξ_m(i::Int, j::Int)
+    p_i, p_j = (i-1)/(n[1]-1), (j-1)/(n[2]-1) # ∈ [0, 1]
+    [
+        2π*(p_i), 
+        p_j
+    ]  # ∈ [0, 2π] × [0, 1]
+end
+d_m = MobiusEuclidean()
 
+# connectivity kernel | params defined in fn to speedup
+k_m(x::Float64)::Float64 = begin    
+    a = 1.0
+    λ = 13/2π
+    β = 5/(λ^2)
+    γ = 1.05 * β
 
+    _x = abs(x)^2
+    a * exp(-γ*_x) - exp(-β*_x)
+end
 
-d = MobiusEuclidean()
-# p = [1, 0]
-# q = [3, 1]
-
-# d(p, q)
-
-plot_distance_function(d)
+mobius_attractor = @time CAN(n, ξ_m, d_m, Kernel(k_m); offset_strength=0.0)
+show_connectivity(mobius_attractor)

@@ -9,4 +9,7 @@ d = PeriodicEuclidean([2π, 2π])  # distance function over a torus manifold
 plot_distance_function(d, plot_title="Torus distance")
 
 d = PeriodicEuclidean([2π, Inf])  
-plot_distance_function(d, plot_title="Cylinder distance", layout=(2, 2))
+plot_distance_function(d, plot_title="Cylinder distance", layout=(4, 1))
+
+d = MobiusEuclidean()
+plot_distance_function(d, plot_title="Mobius distance", layout=(4, 1))

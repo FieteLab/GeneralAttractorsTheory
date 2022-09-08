@@ -35,25 +35,38 @@ function plot_distance_1d(d::PeriodicEuclidean; kwargs...)
 end
 
 
-function plot_distance_2d(d::PeriodicEuclidean; kwargs...)
-    @info "distance" d.periods
-    upperbound(x, ) = isfinite(x) ? x : 2
-    # get coordinates mesh
-    x = range(0, upperbound(d.periods[1]), length=100) |> collect
-    y = range(0, upperbound(d.periods[2]), length=100) |> collect
+"""
+    plot_distance_2d(
+        d::UNion{PeriodicEuclidean, MobiusEuclidean}, 
+        X::Vector{Vector})
+
+Plot a 2D distance metric `d` given the set of 
+points coordinates `x,y
+"""
+function plot_distance_2d(
+    d, 
+    x::Vector,
+    y::Vector;
+    kwargs...
+    )
+
+    # create lattice of points
     X = (x × y) |> collect
     X = [[x...] for x in vec(X)]
 
     # get distance from a point
     pts = []
     for _ in 1:4
-        p = [rand(x), rand(y)]
+        p = rand(X)
         Δx = [evaluate(d, p, x) for x in X]
-        Δx = reshape(Δx, length(x), length(y))'
-        _plot = heatmap(x, y, Δx, aspect_ratio=:equal, grid=false,
-            xlabel="x", ylabel="x"
-        )
-        scatter!([p[1]], [p[2]], color=:green, label=nothing, ms=10, alpha=.5)
+
+        _plot=contourf(
+            x, 
+            y,
+            reshape(Δx, length(x), length(y))',
+            aspect_ratio=:equal,
+            linewidth=0)
+        scatter!([p[1]], [p[2]], color=:green, label=nothing, ms=10, alpha=1)
         push!(pts, _plot)
     end
 
@@ -61,31 +74,23 @@ function plot_distance_2d(d::PeriodicEuclidean; kwargs...)
     display(plt)
 end
 
+function plot_distance_2d(d::PeriodicEuclidean; kwargs...)
+    upperbound(x, ) = isfinite(x) ? x : 1
+    # get coordinates mesh
+    x = range(0, upperbound(d.periods[1]), length=100) |> collect
+    y = range(0, upperbound(d.periods[2]), length=100) |> collect
+
+    plot_distance_2d(d, x, y; kwargs...)
+end
+
 
 function plot_distance_2d(d::MobiusEuclidean; kwargs...)
-    x = range(0, 2π, length=100) |> collect
-    y = range(0, 1, length=100) |> collect
+    x = 0:.075:2π |> collect
+    y = 0:.075:1 |> collect
     X = (x × y) |> collect
     X = [[x...] for x in vec(X)]
 
-    # get distance from a point
-    pts = []
-    points = [[0, 0], [.5, .2], [.05, .2], [2π-.05, .2]]
-    for p in points
-        # p = [rand(x), rand(y)]
-        Δx = [evaluate(d, p, x) for x in X]
-        Δx = reshape(Δx, length(x), length(y))'
-        
-        _plot = heatmap(
-            x, y, Δx,  grid=false,
-            xlabel="x", ylabel="x"
-        )
-        scatter!([p[1]], [p[2]], color=:green, label=nothing, ms=8, alpha=.8)
-        push!(pts, _plot)
-    end
-
-    plt = plot(pts..., size=(600, 600); layout=(4,1), kwargs...)
-    display(plt)
+    plot_distance_2d(d, x, y; kwargs...)
 end
 
 
@@ -165,7 +170,7 @@ show connectivity for a single neuron in a 2D lattice
 """
 function show_connectivity(W::Matrix, n::NTuple{N,Int}, i::Int) where N
     weights = reshape(W[i, :], n...)
-    p = show_connectivity(weights)
+    show_connectivity(weights)
 end
 
 """
@@ -174,6 +179,7 @@ end
 Show connectivity for a can's neuron given its index
 """
 function show_connectivity(can::CAN, i::Int)
+    i = 1
     if length(can.n) == 1
         p = plot()
         for (n, W) in enumerate(can.Ws)
@@ -186,11 +192,12 @@ function show_connectivity(can::CAN, i::Int)
         p = plot()
         offsets = [[0, 0], [1, 0], [0, 1], [1, 1]]
         for (n, W) in enumerate(can.Ws)
-            w = reshape(W[i, :], can.n...)
-
-            Δx, Δy = can.n[1] * offsets[n][1], can.n[2] * offsets[n][2]
-            x = collect(1:can.n[1]) .+ Δx
-            y = collect(1:can.n[2]) .+ Δy
+            # plot connectivity map
+            w = reshape(W[:, i], can.n...)
+    
+            Δx, Δy = can.n[2] * offsets[n][1], can.n[1] * offsets[n][2]
+            x = collect(1:can.n[2]) .+ Δx
+            y = collect(1:can.n[1]) .+ Δy
             heatmap!(x, y, w, 
                 colorbar=nothing, 
                 xaxis=false, 
@@ -198,17 +205,25 @@ function show_connectivity(can::CAN, i::Int)
                 aspect_ratio=:equal,
                 xticks=[], yticks=[]
             )
+            break
+        end
+        # separate heatmaps
+        vline!([can.n[2]], lw=4, color=:white, label=nothing)
+        hline!([can.n[1]], lw=4, color=:white, label=nothing)
 
+        # mark the neruon's location
+        for n in 1:length(can.Ws)    
             x = can.I[i]
-            Δ = reverse(can.n .* offsets[n])
+            # Δ = reverse(can.n .* offsets[n])
+            Δ = can.n .* offsets[n]
             scatter!(
                 reverse(map(z->[z], x .+ Δ))..., 
                 color=:green,
-                label= n == 1 ? "neuron" : nothing,
-                ms=12)
+                label= nothing,
+                ms=8)
+                break
         end
-        vline!([can.n[1]], lw=4, color=:white, label=nothing)
-        hline!([can.n[1]], lw=4, color=:white, label=nothing)
+
     end
     p
 end
