@@ -6,60 +6,46 @@ module Can
     using Plots
     
     
-
     export AbstractCAN, CAN
 
     using ..Kernels: AbstractKernel
 
 
+    # --------------------------- activation functions --------------------------- #
+    relu(x) = max(0, x)
 
+    activations::Dict{Symbol, Function} = Dict(
+        :relu => relu,
+        :tanh => tanh,
+    )
+
+    # --------------------------------- abstract --------------------------------- #
     abstract type AbstractCAN end
 
+
+    # ---------------------------------------------------------------------------- #
+    #                                      CAN                                     #
+    # ---------------------------------------------------------------------------- #
     mutable struct CAN <: AbstractCAN
         n::NTuple{N,Int} where N           # number of neurons in each dimension
+        d::Int                             # number of dimensions
         I::Vector{Tuple}                   # index (i,j...) of each neuron in the lattice
         X::Matrix                          # N × n_neurons matrix with coordinates of each neuron in lattice
         Ws::Vector{Array}                  # connectivity matrices with lateral offsets | length N
         kernel::AbstractKernel             # connectivity kernel
+        σ::Function                        # activation function
     end
 
     Base.string(can::CAN) = "CAN (dim=$(length(can.n))) - n neurons: $(can.n)"
     Base.print(io::IO, can::CAN) = print(io, string(can))
     Base.show(io::IO, ::MIME"text/plain", can::CAN) = print(io, string(can))
 
-    """
-        make_orientations_table(::NTuple{N, Int})::Vector{Int} where N
-
-    Given an N dimensional connectivity matrix, construct valid combinations
-    of positive/negative basis vectors. 
-
-    In ℝ, possible combinations are [-1], [1].
-    In ℝ²: [-1, 0], [1, 0], [0, -1], [0, 1]
-    In ℝ³: [1, 0, 0], [-1, 0, 0], [0, -1, 0], [0, 1, 0]...
-
-    Avoid diagonal ([1, 1]) and 0 vectors. 
-
-    These are used as offset vectors to create asymmetric connectivity matrix
-    for attractors with drifting dynamics.
-    """
-    function make_orientations_table(::NTuple{N, Int})::Vector{Vector} where N
-        v = [-1, 0, 1]  # possible values for each base vec of connection mtx
-        θ = ×(repeat([v], N)...) |> collect  # all possible combinations
-        θ = map(x -> [x...], vec(θ))  # turn into a vector of vectors
-
-        # keep only elements of the form: [0, 1], [-1, 0]... ∈ ℝ² | [1, 1, 0], [-1, 0, 1] ∈ ℝ²....
-        filter!(  
-            x -> abs(sum(x)) == 1.0, 
-            θ
-        )
-    end
-
-
     function CAN(
             n::NTuple{N,Int},
             ξ::Function,
             d::Metric,
             kernel::AbstractKernel;
+            σ::Union{Symbol, Function}=:relu,
             offset_strength::Number=1.0
         ) where N
 
@@ -89,10 +75,39 @@ module Can
             # get connectivity matrix with kernel
             push!(Ws, kernel.k.(D ))
         end
+
+        # get connectivity function
+        σ = σ isa Symbol ? activations[σ] : σ
         
         @debug "ready" n lattice_idxs eltype(lattice_idxs) X eltype(X) typeof(Ws) eltype(Ws)
-        return CAN(n, lattice_idxs, X, Ws, kernel)
+        return CAN(n, length(n), lattice_idxs, X, Ws, kernel, σ)
     end
 
 
+    """
+        make_orientations_table(::NTuple{N, Int})::Vector{Int} where N
+
+    Given an N dimensional connectivity matrix, construct valid combinations
+    of positive/negative basis vectors. 
+
+    In ℝ, possible combinations are [-1], [1].
+    In ℝ²: [-1, 0], [1, 0], [0, -1], [0, 1]
+    In ℝ³: [1, 0, 0], [-1, 0, 0], [0, -1, 0], [0, 1, 0]...
+
+    Avoid diagonal ([1, 1]) and 0 vectors. 
+
+    These are used as offset vectors to create asymmetric connectivity matrix
+    for attractors with drifting dynamics.
+    """
+    function make_orientations_table(::NTuple{N, Int})::Vector{Vector} where N
+        v = [-1, 0, 1]  # possible values for each base vec of connection mtx
+        θ = ×(repeat([v], N)...) |> collect  # all possible combinations
+        θ = map(x -> [x...], vec(θ))  # turn into a vector of vectors
+
+        # keep only elements of the form: [0, 1], [-1, 0]... ∈ ℝ² | [1, 1, 0], [-1, 0, 1] ∈ ℝ²....
+        filter!(  
+            x -> abs(sum(x)) == 1.0, 
+            θ
+        )
+    end
 end

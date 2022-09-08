@@ -32,11 +32,14 @@ Once `CAN` is passed $n, ξ, d, K$ (in code: `Tuple, Function, Metric, AbstractK
 - it computes the pairwise distance matrix between neurons. 
 - it uses the kernel $k$ to get the connection strength.
 
-The last two steps repeated $2d$ times with $d=length(n)$ the number of dimensions of the attractor to create $W_i$ connectivity matrices. In each matrix the weights are offset in $\pm$ a "basis" of the lattice by a distacnce set by the `offset_strength` paramter for `CAN`. 
+The last two steps repeated $2d$ times with $d=length(n)$ the number of dimensions of the attractor to create $W_i$ offset connectivity matrices. To compute the offset, given tge the coordinates of all neurons in the lattice $X$ and an offset vector $Δx ∈ \mathbb R^d$, the pairwise distance matrice is computed as `metric(X + Δx, X)`.
+For each matrix $\Delta x$ is choen to offset the distances by $\pm$ a "basis" of the lattice by a an offset fctor set by the `offset_strength` paramter for `CAN`. 
 
+## Note
+Currently `Kernel`s are considered to be radially symmetric, hence why they work as maps `k: \mathbb R \to \mathbb R` and why we can create the $W_i$ by offetting the pairwise distance matrix. Shuld we need asymmetric connection kernels this would have to be changed. However this solution is the most compiutationally efficient for now. 
 
 ## TODO
-- [ ] connect $W_i$
+- [x] connect $W_i$
 - [ ] simulate
 - [ ] visualize activity
 - [ ] PCA/isomap/TDA -> visualize and reconstruct activity manifold
