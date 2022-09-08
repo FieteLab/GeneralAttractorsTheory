@@ -34,6 +34,7 @@ module Can
         Ws::Vector{Array}                  # connectivity matrices with lateral offsets | length N
         kernel::AbstractKernel             # connectivity kernel
         σ::Function                        # activation function
+        offset_directions::Vector{Vector}  # offset direction for each copy of the neurons
     end
 
     Base.string(can::CAN) = "CAN (dim=$(length(can.n))) - n neurons: $(can.n)"
@@ -80,7 +81,7 @@ module Can
         σ = σ isa Symbol ? activations[σ] : σ
         
         @debug "ready" n lattice_idxs eltype(lattice_idxs) X eltype(X) typeof(Ws) eltype(Ws)
-        return CAN(n, length(n), lattice_idxs, X, Ws, kernel, σ)
+        return CAN(n, length(n), lattice_idxs, X, Ws, kernel, σ, orientations)
     end
 
 

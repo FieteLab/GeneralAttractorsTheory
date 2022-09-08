@@ -14,7 +14,7 @@ ring_attractor = CAN(n, ξ_r, d_r, MexicanHatKernel(); offset_strength=0.25);
 #                                TORUS ATTRACTOR                               #
 # ---------------------------------------------------------------------------- #
 # neurons position and distance function
-n = (48, 48)  
+n = (64, 64)  
 function ξ_t(i::Int, j::Int)::Vector  # neurons coordinates function
     p_i, p_j = (i-1)/(n[1]-1), (j-1)/(n[2]-1) # ∈ [0, 1]
     [
