@@ -47,6 +47,7 @@ function plot_distance_2d(
     d, 
     x::Vector,
     y::Vector;
+    points=nothing,
     kwargs...
     )
 
@@ -55,9 +56,9 @@ function plot_distance_2d(
     X = [[x...] for x in vec(X)]
 
     # get distance from a point
+    points = isnothing(points) ? rand(X, 4) : points
     pts = []
-    for _ in 1:4
-        p = rand(X)
+    for p in points
         Δx = [evaluate(d, p, x) for x in X]
 
         _plot=contourf(
@@ -65,7 +66,10 @@ function plot_distance_2d(
             y,
             reshape(Δx, length(x), length(y))',
             aspect_ratio=:equal,
-            linewidth=0)
+            xlabel="x", ylabel="y",
+            linewidth=0.25,
+            grid=false,
+            )
         scatter!([p[1]], [p[2]], color=:green, label=nothing, ms=10, alpha=1)
         push!(pts, _plot)
     end
@@ -90,7 +94,12 @@ function plot_distance_2d(d::MobiusEuclidean; kwargs...)
     X = (x × y) |> collect
     X = [[x...] for x in vec(X)]
 
-    plot_distance_2d(d, x, y; kwargs...)
+    plot_distance_2d(d, x, y; points = [
+        [0, 0],
+        [3, 0],
+        [.2, .5],
+        [2π, 0]
+    ], kwargs...)
 end
 
 
@@ -179,7 +188,6 @@ end
 Show connectivity for a can's neuron given its index
 """
 function show_connectivity(can::CAN, i::Int)
-    i = 1
     if length(can.n) == 1
         p = plot()
         for (n, W) in enumerate(can.Ws)
@@ -194,7 +202,7 @@ function show_connectivity(can::CAN, i::Int)
         for (n, W) in enumerate(can.Ws)
             # plot connectivity map
             w = reshape(W[:, i], can.n...)
-    
+
             Δx, Δy = can.n[2] * offsets[n][1], can.n[1] * offsets[n][2]
             x = collect(1:can.n[2]) .+ Δx
             y = collect(1:can.n[1]) .+ Δy
@@ -205,7 +213,6 @@ function show_connectivity(can::CAN, i::Int)
                 aspect_ratio=:equal,
                 xticks=[], yticks=[]
             )
-            break
         end
         # separate heatmaps
         vline!([can.n[2]], lw=4, color=:white, label=nothing)
@@ -221,7 +228,6 @@ function show_connectivity(can::CAN, i::Int)
                 color=:green,
                 label= nothing,
                 ms=8)
-                break
         end
 
     end

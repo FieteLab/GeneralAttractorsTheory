@@ -16,11 +16,12 @@ Euclidean metric on a Mobius strip space:
 The two `x` points are identified on the Mobius strip.
 To compute the distance:
     - given two points q=(x₁, y₁), p=(x₂, y₂)
-    - define p̂ = (x₂, 1-y₂)  if the shortest path p̄q̄ is
-        through the "glued" part of the strip. Otherwise
-        p̂ = p.
-    - compute the distance with a PeriodicEuclidean metric
+    - if the distance |Δx|>π (in the periodic direction)
+        - define p̂ = (x₂, 1-y₂)   and compute d(q, p̂)
+            where d = PeriodicEuclidean([2π, Inf])
+        - otherwise the distance is d(q, p)
 
+Δx is computed using a PeriodicEuclidean([2π]) metric. 
 
 """
 struct MobiusEuclidean <: UnionMetric
@@ -35,18 +36,17 @@ MobiusEuclidean() = MobiusEuclidean(
 
 
 function (dist::MobiusEuclidean)(x, y)
-    # flip y-coord for odd trips around the strip
     @inbounds begin
-        Δx = dist.periodic1D(x[1], y[1])
-        if Δx < 2π - Δx
-            return dist.periodic(x, y)
+        Δx = abs((x[1] - y[1]))
+
+        if Δx > π
+            return dist.periodic(
+                x, [y[1], 1-y[2]]
+            )
         else
-            ŷ = [y[1], 1-y[2]]
+            return dist.periodic(x, y)
         end
     end
-
-    # get distance
-    return dist.periodic(x, ŷ)
 end
 
 # Distances.result_type(::MobiusEuclidean, ::Float64, ::Float64) = Float64
