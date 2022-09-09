@@ -9,40 +9,102 @@ using Plots
 using Term.Progress
 
 
+
 @with_kw_noshow mutable struct Simulation
     can::AbstractCAN
     S::Matrix{Float64}   # n_neurons x 2d - state of all neurons
     Ṡ::Vector{Float64}   # n_neurons - holds activity change for one copy of neurons
     A::Matrix{Float64}   # variable space Φ → ℝᵈ projection matrix
-    b₀::Float64 = 0.0    # bias?
+    b₀::Float64 = 0.5    # baseline input activity
     η::Float64  = 0.1    # noise scale
-    dt::Float64 = 10.0    # simulation step - milliseconds
+    dt::Float64 = 5    # simulation step - milliseconds
     τ::Float64  = 10.0   # activity time constant - milliseconds
 end
 
-function Simulation(can::AbstractCAN; A=nothing, kwargs...)
+Base.string(sim::Simulation) = """
+    Simulation
+    ----------
+    $(sim.can)
+
+    S: $(size(sim.S))
+    A: $(size(sim.A))
+    η: $(round(sim.η, digits=2))
+    dt: $(sim.dt)
+    τ: $(sim.τ)
+"""
+
+Base.print(io::IO, sim::Simulation) = print(io, string(sim))
+Base.show(io::IO, ::MIME"plain/text", sim::Simulation) = print(io, string(sim))
+
+
+
+
+function Simulation(can::AbstractCAN; kwargs...)
     # initialize activity matrix
     N = *(can.n...)
-    S = rand(N, 2can.d)
+    S = zeros(Float64, N, 2can.d)
 
     # allocate Ṡ to speed up computation
-    Ṡ = zeros(N)
+    Ṡ = zeros(Float64, N)
 
     # define Φ → can mapping matrix
-    if isnothing(A)
-        K = 4  # dimensionality of variable space
-        A = Matrix(1.0I, K, can.d)
-    else
-        K = size(A, 1)
-    end
-
+    A = hcat(can.offset_directions...)
     return Simulation(can=can, S=S, Ṡ=Ṡ, A=A; kwargs...)
 end
 
+function Plots.plot(simulation::Simulation, timems, v::Vector; kwargs...)
+    can = simulation.can
+    plt = plot(;
+        title="elapsed: $(round(timems)) ms", 
+        # clims=(0.0, 0.05),
+        aspect_ratio=:equal, 
+        grid=false,
+    )
+
+    
+    for i in 1:can.d * 2
+        S = simulation.S[:, i]
+        S = reshape(S, can.n)'
+
+        # get offset position for plotting
+        ai = can.offset_directions[i]
+        offset = ceil.(ai) .* can.n
+        x = collect(1:can.n[2]) .+ offset[1]
+        y = collect(1:can.n[1]) .+ offset[2]
+
+        heatmap!(x, y, S)
+        x0, y0 = can.n[1]/2, can.n[2]/2
+        plot!([x0, x0+v[1]*20], [y0, y0+v[2]*20], lw=6, color=:black, label=nothing)
+        scatter!([x0], [y0], ms=8, color=:black, label=nothing)
+
+        # add text with Aᵢ
+        Ai = string(round.(ai; digits=3))
+        vi = ai ⋅ v
+        annotate!(
+            [offset[1]+5, x0], 
+            [offset[2]+20, y0+20],      
+            [
+                text(" I: $i\nAi: $Ai\nVi: $(round(vi; digits=4))", :white, :left, 7),
+                text("v⃗: $(round.(v; digits=2))", :black, :center, 8),
+            ]
+        )
+    end
+    plt
+end
+
+# ---------------------------------------------------------------------------- #
+#                                     utils                                    #
+# ---------------------------------------------------------------------------- #
 reset(simulation::Simulation) = begin
     simulation.Ṡ .*= 0.0
 end
+reset(Ṡ::Vector) = Ṡ * 0.0
 
+
+
+# ---------------------------------------------------------------------------- #
+#                                     STEP                                     #
+# ---------------------------------------------------------------------------- #
 function step!(
             simulation::Simulation, v::Vector{Float64}
         )
@@ -52,66 +114,37 @@ function step!(
     b₀, A = simulation.b₀, simulation.A
 
     for i in 1:2simulation.can.d
+        # rest Ṡ to 0.0
+        reset(Ṡ)
+
         # get random excitatory input 
         Ṡ += rand(Float64, length(Ṡ)) * simulation.η
 
         # get state and connection matrix.
-        Sᵢ::Vector{Float64} = simulation.S[:, i]  # use view to reduce allocations
-
-        # use view to reduce allocations
+        Sᵢ::Vector{Float64} = simulation.S[:, i] 
         W::Matrix{Float64} = can.Ws[i]
 
         # get effect of all copies of neurons
         # for j in 1:2can.d
-        #     Sⱼ = S[:, j]
+        #     j == i || continue
+        #     Sⱼ = simulation.S[:, j]
         #     Ṡ .+= W * Sⱼ  # ! ALLOCATIONS HEAVY
         # end        
-        Ṡ .+= W * sum(simulation.S, dims=2)
+        weights = ones(4) * .25
+        weights[i] = 1.0
+        Ṡ .+= (W) * sum(simulation.S * weights, dims=2)
 
         # get effect of bias and velocity input
-        a_idx = (Int ∘ ceil)(i / 2)
-        Aᵢ::Vector{Float64} = view(A, :, a_idx)
-        Ṡ .+= b₀ + Aᵢ ⋅ v  # bias + velocity input
+        Aᵢ = can.offset_directions[i]
+        Ṡ .+= b₀ + Aᵢ ⋅ v
 
         # update S
-        dSdt = (can.σ.(Ṡ) - Sᵢ) / simulation.τ
-        # i == 1 && (
-        #     @info "up" dSdt[1] Ṡ[1] Sᵢ[1]
-        # )
-        simulation.S[:, i] += dSdt
-
-        # rest Ṡ
-        reset(simulation)
+        simulation.S[:, i] += (can.σ.(Ṡ) - Sᵢ) / simulation.τ
     end
-    # println(simulation.S[1:5, 1])
-
 end
 
 
-function Plots.plot(simulation::Simulation, timems, v::Vector; kwargs...)
-    can = simulation.can
-    plt = plot(;
-        title="elapsed: $(round(timems)) ms", 
-        clims=(0.0, 0.1),
-        aspect_ratio=:equal, 
-    )
 
-    
-    for i in 1:can.d * 2
-        S = simulation.S[:, i]
-        S = reshape(S, can.n)
-
-        offset = can.offset_directions[i] .* can.n
-        x = collect(1:can.n[2]) .+ offset[1]
-        y = collect(1:can.n[1]) .+ offset[2]
-
-        heatmap!(x, y, S)
-        x0, y0 = can.n[1]/2, can.n[2]/2
-        plot!([x0, x0+v[1]*20], [y0, y0+v[2]*20], lw=6, color=:black, label=nothing)
-        scatter!([x0], [y0], ms=8, color=:black, label=nothing)
-    end
-    plt
-end
 
 
 # ------------------------------------ run ----------------------------------- #
@@ -129,23 +162,20 @@ function SimulationChunk(simulation::Simulation, v::Vector; duration::Int=500)
 end
 
 
-function run()
-    # define Φ → can mapping matrix
-    K = 2  # dimensionality of variable space
-    A = Matrix(1.0I, K, torus_attractor.d) .* .5
+function run(can::AbstractCAN)
+    simulation = Simulation(can)
+    println(simulation)
 
-    simulation = Simulation(torus_attractor; A=A)
+    # chunks = [
+    #     SimulationChunk(simulation, [cos(0), sin(0)]),
+    #     SimulationChunk(simulation, [cos(π/5), sin(π/5)]),
+    #     SimulationChunk(simulation, [cos(π/2-π/5), sin(π/2-π/5)]),
+    # ]
 
-    chunks = [
-        SimulationChunk(simulation, [cos(0), sin(0)]),
-        SimulationChunk(simulation, [cos(π/5), sin(π/5)]),
-        SimulationChunk(simulation, [cos(π/2-π/5), sin(π/2-π/5)]),
-        SimulationChunk(simulation, [0.0, 0.0]; duration=1000),
-        SimulationChunk(simulation, [1.0, 0.0]; duration=1000),
-        SimulationChunk(simulation, [-1.0, 0.0]; duration=1000),
-        SimulationChunk(simulation, [0.0, 1.0]; duration=1000),
-        SimulationChunk(simulation, [0.0, -1.0]; duration=1000),
-    ]
+    chunks = map(
+        θ -> SimulationChunk(simulation, [cos(θ), sin(θ)]; duration=250),
+        [0, π/4, π/2, 3/4*π, π, -3/4*π, -π/2, -π/4]
+    ) |> collect
 
     # setup animation
     T = sum(getfield.(chunks, :duration))
@@ -155,7 +185,7 @@ function run()
 
     pbar = ProgressBar()
     Progress.with(pbar) do
-        job = addjob!(pbar, description="Simulation",  N=length(time))
+        job = addjob!(pbar, description="Simulation",  N=length(time)+1)
         for chunk in chunks
             for i in 1:chunk.nframes
                 step!(simulation, chunk.v)
@@ -175,7 +205,10 @@ function run()
     gif(anim, "test.gif", fps=20)
 end
 
-run()
+run(torus_attractor)
 # TODO improve performance
 # TODO check validity
 # TODO add visualization
+
+# TODO test with non-square A
+# TODO test with 1D networks

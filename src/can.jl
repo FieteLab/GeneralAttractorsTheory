@@ -4,6 +4,7 @@ module Can
     import StaticArrays: SVector, SA_F64, SMatrix
     using Term.Progress
     using Plots
+    import LinearAlgebra: ⋅, I
     
     
     export AbstractCAN, CAN
@@ -44,11 +45,14 @@ module Can
     function CAN(
             n::NTuple{N,Int},
             ξ::Function,
-            d::Metric,
+            metric::Metric,
             kernel::AbstractKernel;
             σ::Union{Symbol, Function}=:relu,
-            offset_strength::Number=1.0
+            offset_strength::Number=1.0,
+            offsets::Union{Nothing, Matrix} = nothing,
         ) where N
+
+        d = length(n)
 
         # check that ξ has the right form
         nargs = first(methods(ξ)).nargs - 1
@@ -66,12 +70,14 @@ module Can
         X::Matrix = hcat(ξ̂.(lattice_idxs)...)
         @debug "X" size(X) typeof(X) eltype(X) 
     
-        # construct connectivity matrices with on vector offets
-        orientations = make_orientations_table(n)
+        # get connectivity offset vectors
+        offsets = get_offsets(offsets, d, n)
+        
+        # construct connectivity matrices
         Ws::Vector{Matrix} = []
-        for θ in orientations
+        for θ in offsets
             # get pairwise offset connectivity
-            D =  pairwise(d, X .+ offset_strength .* θ, X)
+            D =  pairwise(metric, X .+ offset_strength .* θ, X)
 
             # get connectivity matrix with kernel
             push!(Ws, kernel.k.(D ))
@@ -81,34 +87,50 @@ module Can
         σ = σ isa Symbol ? activations[σ] : σ
         
         @debug "ready" n lattice_idxs eltype(lattice_idxs) X eltype(X) typeof(Ws) eltype(Ws)
-        return CAN(n, length(n), lattice_idxs, X, Ws, kernel, σ, orientations)
+        return CAN(n, d, lattice_idxs, X, Ws, kernel, σ, offsets)
+    end
+
+    """
+        Aᵢ(A::Matrix, i::Int)
+
+    Get the correct row of `A` for copy `i`
+    of the data. This involves dealing with the 
+    different sizes of A and # of copies and the need
+    to invert the sign.
+    """
+    function Aᵢ(A::Matrix, i::Int)::Vector
+        î = (Int ∘ ceil)(i / 2)
+        return if i % 2 == 0
+            -A[:, î]
+        else
+            A[:, î]
+        end
     end
 
 
-    """
-        make_orientations_table(::NTuple{N, Int})::Vector{Int} where N
 
-    Given an N dimensional connectivity matrix, construct valid combinations
-    of positive/negative basis vectors. 
+    function get_offsets(offsets::Union{Nothing, Matrix}, d::Int, n::Tuple)::Vector
+        isnothing(offsets) && (offsets = Matrix(1.0I, d, d))
+        D, K = size(offsets)
+        @assert D == d "Offsets matrix `A` should have $(d) rows, not $D"
+        v₀ = ones(K)
+        
 
-    In ℝ, possible combinations are [-1], [1].
-    In ℝ²: [-1, 0], [1, 0], [0, -1], [0, 1]
-    In ℝ³: [1, 0, 0], [-1, 0, 0], [0, -1, 0], [0, 1, 0]...
+        basevec(i, x, d) = begin
+            î = (Int ∘ ceil)(i / 2)
+            bv = zeros(d) 
+            bv[î] = x
+            bv
+        end
+        
+        offsets = map(
+            i -> basevec(i, Aᵢ(offsets, i) ⋅ v₀, d), 1:2d
+        ) |> collect
+        @assert length(offsets)==2length(n) "Expected $(2length(n)) got $(length(offsets)) offsets"
+        @assert length(offsets[1])==d
 
-    Avoid diagonal ([1, 1]) and 0 vectors. 
-
-    These are used as offset vectors to create asymmetric connectivity matrix
-    for attractors with drifting dynamics.
-    """
-    function make_orientations_table(::NTuple{N, Int})::Vector{Vector} where N
-        v = [-1, 0, 1]  # possible values for each base vec of connection mtx
-        θ = ×(repeat([v], N)...) |> collect  # all possible combinations
-        θ = map(x -> [x...], vec(θ))  # turn into a vector of vectors
-
-        # keep only elements of the form: [0, 1], [-1, 0]... ∈ ℝ² | [1, 1, 0], [-1, 0, 1] ∈ ℝ²....
-        filter!(  
-            x -> abs(sum(x)) == 1.0, 
-            θ
-        )
+        @debug "Making CAN given offsets" size(offsets) typeof(offsets) v₀ Aᵢ d n offsets
+        return offsets
     end
+
 end

@@ -26,8 +26,9 @@ d_t = PeriodicEuclidean([2π, 2π])  # distance function over a torus manifold
 
 # connectivity kernel
 k_t = DiffOfExpKernel(; λ = 13/2π)
+
 # construct network
-torus_attractor = CAN(n, ξ_t, d_t, k_t; offset_strength=.5)
+torus_attractor = CAN(n, ξ_t, d_t, k_t; offset_strength=1)
 
 
 # ---------------------------------------------------------------------------- #

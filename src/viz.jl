@@ -245,5 +245,5 @@ function show_connectivity(can::CAN; kwargs...)
     idxs = rand(1:*(can.n...), 5)
     p = plot(can.kernel; title="Connectivity kernel")
     ps = map(i -> show_connectivity(can, i), idxs)
-    plot(p, ps...;  size=(800, 600), kwargs...)
+    plot(p, ps...;  size=(800, 600), kwargs...) |> display
 end
