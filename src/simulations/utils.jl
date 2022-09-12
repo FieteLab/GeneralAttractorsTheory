@@ -7,7 +7,7 @@ function Plots.plot(simulation::Simulation, timems, v::Vector; kwargs...)
     can = simulation.can
     plt = plot(;
         title="elapsed: $(round(timems)) ms", 
-        # clims=(0.0, 0.15),
+        clims=(0.0, 0.6),
         aspect_ratio=:equal, 
         grid=false,
     )

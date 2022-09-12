@@ -51,7 +51,7 @@ end
 # ---------------------------------------------------------------------------- #
 #                                     STEP                                     #
 # ---------------------------------------------------------------------------- #
-∑ⱼ(x) = sum(x, dims=2)
+∑ⱼ(x) = sum(x, dims=2) |> vec
 function step!(
     simulation::Simulation, v::Vector{Float64}
 )
@@ -66,8 +66,9 @@ function step!(
     d = 2simulation.can.d
     B = b₀ .+ α*(A*v)  # inputs vector of size 2d
     for i in 1:d
-        @views Ṡ[:, i] = W[:, :, i] * ∑ⱼ(S) .+ B[i] + η()
-        # @views Ṡ[:, i] .+= B[i]
+        @views Ṡ[:, i] .= W[:, :, i] * ∑ⱼ(S) .+ B[i] .+ η()
+        # @views Ṡ[:, i] = W[:, :, i] * ∑ⱼ(S) .+ B[i] + η()
+
     end
 
     # update activity
@@ -93,11 +94,12 @@ function run_simulation(simulation::Simulation, chunks::Vector{SimulationChunk})
     # do simulation steps and visualize
     pbar = ProgressBar()
     Progress.with(pbar) do
-        job = addjob!(pbar, description="Simulation",  N=length(time)+10)
+        job = addjob!(pbar, description="Simulation",  N=length(time)+1)
         for chunk in chunks
             for i in 1:chunk.nframes
                 step!(simulation, chunk.v)
-                framen > 500 && break
+                # framen > 500 && break
+
                 # add frame to animation
                 i % 20 == 0 && framen < length(time) && begin
                     plot(simulation, time[framen], chunk.v)
