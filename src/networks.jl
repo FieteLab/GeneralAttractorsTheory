@@ -17,13 +17,13 @@ ring_attractor = CAN(n, ξ_r, d_r, MexicanHatKernel(); offset_strength=0.25);
 n = (64, 64)  
 function ξ_t(i::Int, j::Int)::Vector  # neurons coordinates function
     p_i, p_j = (i-1)/(n[1]-1), (j-1)/(n[2]-1) # ∈ [0, 1]
+    n̂_i, n̂_j = Int(n[1]/2), Int(n[2]/2)
     [
-        2π*(p_i), 
-        2π*(p_j)
-    ]  # ∈ [0, 2π] × [0, 2π]
+        -n̂_i*(1-p_i)+n̂_i*p_i, 
+        -n̂_j*(1-p_j)+n̂_j*p_j, 
+    ]  # ∈ [-n/2, n/2] × [-n/2, n/2]
 end
-d_t = PeriodicEuclidean([2π, 2π])  # distance function over a torus manifold
-
+d_t = PeriodicEuclidean([n...])  # distance function over a torus manifold
 # connectivity kernel
 
 k_t = DiffOfExpKernel(; λ = 13.0)

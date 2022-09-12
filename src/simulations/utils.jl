@@ -2,8 +2,21 @@
 #                                      viz                                     #
 # ---------------------------------------------------------------------------- #
 
+function simulation_frame_1dcan(simulation::Simulation, timems, v::Vector; kwargs...)
+    can = simulation.can
+    plt = plot(;
+        title="elapsed: $(round(timems)) ms", 
+        clims=(0.0, 0.6),
+        aspect_ratio=:equal, 
+        grid=false,
+    )
 
-function Plots.plot(simulation::Simulation, timems, v::Vector; kwargs...)
+
+    plt
+end
+
+
+function simulation_frame_2dcan(simulation::Simulation, timems, v::Vector; kwargs...)
     can = simulation.can
     plt = plot(;
         title="elapsed: $(round(timems)) ms", 
@@ -43,6 +56,16 @@ function Plots.plot(simulation::Simulation, timems, v::Vector; kwargs...)
     end
     plt
 end
+
+
+
+Plots.plot(simulation::Simulation, timems, v::Vector; kwargs...) = if simulation.can.d == 1
+            simulation_frame_1dcan(simulation, timems, v; kwargs...)
+        elseif simulation.can.d == 2
+            simulation_frame_2dcan(simulation, timems, v; kwargs...)
+        else
+            error("Simulation plot for d>2 not implemented")
+        end
 
 
 # ---------------------------------------------------------------------------- #
