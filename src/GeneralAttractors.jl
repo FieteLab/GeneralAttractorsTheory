@@ -15,6 +15,10 @@ module GeneralAttractors
     include("viz.jl")
     include("networks.jl")
 
+    include("simulations/Simulations.jl")
+
+    using .Simulations
+    export Simulation, SimulationChunk, run_simulation
 
 end
  
