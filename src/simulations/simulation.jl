@@ -60,9 +60,6 @@ function step!(
     A, S, W     = simulation.A, simulation.S, simulation.W
     Ṡ           = simulation.Ṡ
 
-
-    # initialize Ṡ with noise
-    # Ṡ = rand(Float64, size(S)) * simulation.η
     η() = rand(size(S, 1)) * simulation.η
 
     # get effect of recurrent connectivity & external input
@@ -77,36 +74,7 @@ function step!(
     simulation.S += (can.σ.(Ṡ) - S)/(simulation.τ)
 end
 
-# function step!(
-#     simulation::Simulation, v::Vector{Float64}
-# )
 
-#     can = simulation.can
-#     Ṡ   = simulation.Ṡ
-#     b₀  = simulation.b₀
-#     S_tot = sum(simulation.S, dims=2)
-
-#     for i in 1:2simulation.can.d
-#         Ṡ *= 0.0
-
-#         # get random excitatory input 
-#         Ṡ += rand(Float64, length(Ṡ)) * simulation.η
-
-#         # get state and connection matrix.
-#         Sᵢ::Vector{Float64} = simulation.S[:, i] 
-#         W::Matrix{Float64} = can.Ws[i]
-
-#         # get effect of all copies of neurons lattice       
-#         Ṡ .+= W * S_tot
-
-#         # get effect of bias and velocity input
-#         Aᵢ = can.offset_directions[i]
-#         Ṡ .+= b₀ + simulation.α .* (Aᵢ⋅v)
-
-#         # update S
-#         simulation.S[:, i] += (can.σ.(Ṡ) - Sᵢ) / simulation.τ
-#     end
-# end
 
 
 
