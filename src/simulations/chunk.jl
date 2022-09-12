@@ -5,7 +5,7 @@ struct SimulationChunk
 end
 
 
-function SimulationChunk(v::Vector; dt::Int=5, duration::Int=500)
+function SimulationChunk(v::Vector; dt::Float64=0.5, duration::Int=500)
     nframes = (Int ∘ floor)(duration / dt)
     return SimulationChunk(duration, nframes, v)
 end

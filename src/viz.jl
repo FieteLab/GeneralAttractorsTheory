@@ -6,8 +6,9 @@ import Base.Iterators: product as ×  # cartesian product
 
 # ---------------------------------- kernel ---------------------------------- #
 function Plots.plot(K::AbstractKernel; kwargs...)
-    x = -10:.1:10 |> collect
+    x = -100:.1:100 |> collect
     y = K.(x)
+    x̂ = x[argmin(y)]
     Plots.plot(
         x, 
         y,
@@ -15,7 +16,9 @@ function Plots.plot(K::AbstractKernel; kwargs...)
         ylabel="w",
         lw=2,
         label=nothing,
-        color="black"; kwargs...)
+        color="black"; kwargs...,
+        xlim=[-4abs(x̂), 4abs(x̂)],
+        )
 end
 
 

@@ -7,7 +7,7 @@ function Plots.plot(simulation::Simulation, timems, v::Vector; kwargs...)
     can = simulation.can
     plt = plot(;
         title="elapsed: $(round(timems)) ms", 
-        # clims=(0.0, 0.05),
+        # clims=(0.0, 0.15),
         aspect_ratio=:equal, 
         grid=false,
     )
@@ -19,7 +19,8 @@ function Plots.plot(simulation::Simulation, timems, v::Vector; kwargs...)
 
         # get offset position for plotting
         ai = can.offset_directions[i]
-        offset = ceil.(ai) .* can.n
+        ai = argmax(abs, ai) >= 0 ? ceil.(ai) : floor.(ai)
+        offset = ai .* can.n
         x = collect(1:can.n[2]) .+ offset[1]
         y = collect(1:can.n[1]) .+ offset[2]
 
@@ -35,7 +36,7 @@ function Plots.plot(simulation::Simulation, timems, v::Vector; kwargs...)
             [offset[1]+5, x0], 
             [offset[2]+20, y0+20],      
             [
-                text(" I: $i\nAi: $Ai\nVi: $(round(vi; digits=4))", :white, :left, 7),
+                text(" I: $i\nAi: $Ai\nAv: $(round(vi; digits=4))", :white, :left, 8),
                 text("v⃗: $(round.(v; digits=2))", :black, :center, 8),
             ]
         )

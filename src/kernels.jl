@@ -97,7 +97,7 @@ module Kernels
         function DiffOfExpKernel(;
             a::Float64=1.0,
             λ::Float64=5/2π,
-            β::Float64=5/(λ^2),
+            β::Float64=3/(λ^2),
             γ::Float64=1.05 * β,
             )
 

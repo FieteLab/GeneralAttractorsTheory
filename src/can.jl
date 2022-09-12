@@ -77,7 +77,7 @@ module Can
         Ws::Vector{Matrix} = []
         for θ in offsets
             # get pairwise offset connectivity
-            D =  pairwise(metric, X .+ offset_strength .* θ, X)
+            D =  pairwise(metric, X .- offset_strength .* θ, X)
 
             # get connectivity matrix with kernel
             push!(Ws, kernel.k.(D ))
@@ -113,6 +113,7 @@ module Can
         isnothing(offsets) && (offsets = Matrix(1.0I, d, d))
         D, K = size(offsets)
         @assert D == d "Offsets matrix `A` should have $(d) rows, not $D"
+
         v₀ = ones(K)
         
 
