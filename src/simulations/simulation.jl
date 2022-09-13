@@ -51,7 +51,7 @@ end
 ∑ⱼ(x) = sum(x, dims=2) |> vec
 function step!(
     simulation::Simulation, v::Vector{Float64}
-)
+)   
     can         = simulation.can
     b₀          = simulation.b₀
     A, S, W     = simulation.can.A, simulation.S, simulation.W
@@ -120,9 +120,10 @@ end
 
 function run_simulation(
         simulation::Simulation, 
-        chunks::Vector{AbstractChunk};
+        chunks::Vector;
         savename::String=simulation.can.name*"_sim"
     )
+    @assert eltype(chunks) <: AbstractChunk
         
     # setup animation
     T = sum(getfield.(chunks, :duration))
@@ -140,7 +141,7 @@ function run_simulation(
         job = addjob!(pbar, description="Simulation",  N=length(time)+1)
         for chunk in chunks
             for i in 1:chunk.nframes
-                v = eltype(chunk.v) isa Vector ? chunk.v[i] : chunk.v
+                v = eltype(chunk.v) isa Number ? chunk.v : chunk.v[i] 
                 step!(simulation, v)
                 # framen > 300 && break
 
@@ -149,7 +150,7 @@ function run_simulation(
 
                 # add frame to animation
                 i % simulation.frame_every_n == 0 && framen < length(time) && begin
-                    plot(simulation, time[framen], chunk.v)
+                    plot(simulation, time[framen], v)
                     frame(anim)
                 end
 

@@ -38,12 +38,6 @@ function simulation_frame_2dcan(simulation::Simulation, timems, v::Vector; kwarg
 
     h = maximum(simulation.can.X)/2
     v̂ = v ./ norm(v) .* h
-    offsets = [
-        [1, 0],
-        [-1, 0],
-        [0, 1],
-        [0, -1]
-    ]
     for i in 1:can.d * 2
         S = simulation.S[:, i]
         
@@ -58,7 +52,7 @@ function simulation_frame_2dcan(simulation::Simulation, timems, v::Vector; kwarg
         )
 
         # plot input vector direction 
-        x0, y0 = maximum(simulation.can.X; dims=2)./2
+        x0, y0 = maximum(simulation.can.X; dims=2)./2.1
         
         plot!([x0, x0+v̂[1]], [y0, y0+v̂[2]], lw=6, color=:green, label=nothing)
         scatter!([x0], [y0], ms=8, color=:green, label=nothing)

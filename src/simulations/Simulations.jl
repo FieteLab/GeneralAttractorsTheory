@@ -5,10 +5,10 @@ module Simulations
     using Term.Progress
     using Tullio
 
-    import GeneralAttractors: save_simulation_history
+    import GeneralAttractors: save_simulation_history, moving_average
     import ..Can: AbstractCAN
 
-    export Simulation, ConstantChunk, run_simulation
+    export Simulation, ConstantChunk, run_simulation, RandomChunk
 
     include("chunk.jl")
     include("simulation.jl")

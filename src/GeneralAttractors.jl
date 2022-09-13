@@ -10,6 +10,7 @@ module GeneralAttractors
     export show_connectivity, plot_distance_function
     export ring_attractor, torus_attractor, mobius_attractor
     export MobiusEuclidean
+    export load_simulation_history
 
     using .Kernels: AbstractKernel, Kernel, MexicanHatKernel, DiffOfExpKernel
     using .Can: CAN
@@ -21,7 +22,7 @@ module GeneralAttractors
     include("simulations/Simulations.jl")
 
     using .Simulations
-    export Simulation, ConstantChunk, run_simulation
+    export Simulation, ConstantChunk, RandomChunk, run_simulation
 
 end
  
