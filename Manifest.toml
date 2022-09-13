@@ -61,6 +61,11 @@ version = "0.1.0"
 [[Artifacts]]
 uuid = "56f22d72-fd6d-98f1-02f0-08ddc0907c33"
 
+[[BSON]]
+git-tree-sha1 = "306bb5574b0c1c56d7e1207581516c557d105cad"
+uuid = "fbb218c0-5317-5bc6-957e-2ee96dd4b1f0"
+version = "0.3.5"
+
 [[Base64]]
 uuid = "2a0f44e3-6c83-55bd-87e4-b1978d98bd5f"
 
@@ -676,6 +681,12 @@ version = "0.4.11"
 [[NetworkOptions]]
 uuid = "ca575930-c2e3-43a9-ace4-1e988b2c1908"
 version = "1.2.0"
+
+[[ObjectivePaths]]
+deps = ["OrderedCollections", "Term", "Test"]
+git-tree-sha1 = "edf90f9e43351f25433fa99b9e59c108de2d0513"
+uuid = "f54fc8bb-b7bf-4bdb-b2c8-0a06351fc134"
+version = "0.1.0"
 
 [[OffsetArrays]]
 deps = ["Adapt"]

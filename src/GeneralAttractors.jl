@@ -1,7 +1,10 @@
 module GeneralAttractors
+    include("io.jl")
+    include("utils.jl")
 
     include("kernels.jl")
     include("can.jl")
+    
 
     export CAN, Kernel
     export show_connectivity, plot_distance_function
@@ -18,7 +21,7 @@ module GeneralAttractors
     include("simulations/Simulations.jl")
 
     using .Simulations
-    export Simulation, SimulationChunk, run_simulation
+    export Simulation, ConstantChunk, run_simulation
 
 end
  

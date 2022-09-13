@@ -5,7 +5,7 @@ simulation = Simulation(
 )
 
 chunks = map(
-    θ -> SimulationChunk([Float64(θ)], simulation; duration=250),
+    θ -> ConstantChunk([Float64(θ)], simulation; duration=250),
     [0, -1, 0, 1]
 ) |> collect
 

@@ -1,38 +1,3 @@
-""" store simulation data """
-mutable struct History
-    S::Array        # activation at each timestep, n_neurons × 2d × T
-    v::Array        # input vector at each timestep
-    W::Array{Float64}       # n_neurons × n_neurons × 2d - all connection weights
-    metadata::Dict  # can info, sim params, timestamp...
-end
-
-
-function History(simulation::Simulation, nframes::Int)
-    S = Array{Float64}(undef, (size(simulation.S)..., nframes))
-    v = Array{Float64}(undef, (size(simulation.can.A, 2), nframes))
-    metadata = Dict{Symbol, Union{Int, String, Function, Matrix}}(
-        :can=>simulation.can.name,
-        :n=>simulation.can.n,
-        :kernel=>(string ∘ typeof)(simulation.can.kernel),
-        :σ=>simulation.can.σ,
-        :A=>simulation.can.A,
-        :b₀=>simulation.b₀,
-        :η=>simulation.η,
-        :dt=>simulation.dt,
-        :τ=>simulation.τ,
-    )
-
-    return History(S, v, simulation.W, metadata)
-end
-
-function add!(history::History, framen::Int, simulation::Simulation, v::Vector{Float64})
-    @assert size(history.v, 2) >= framen "Attempted to instert data for frame $framen and history length $(size(history.v, 2))"
-    history.S[:, framen] = simulation.S
-    history.v[:, framen] = v
-end
-
-
-
 
 # ---------------------------------------------------------------------------- #
 #                                  SIMULATION                                  #
@@ -88,7 +53,7 @@ function step!(
     simulation::Simulation, v::Vector{Float64}
 )
     can         = simulation.can
-    b₀, α       = simulation.b₀, simulation.α
+    b₀          = simulation.b₀
     A, S, W     = simulation.can.A, simulation.S, simulation.W
     Ṡ           = simulation.Ṡ
 
@@ -96,16 +61,54 @@ function step!(
 
     # get effect of recurrent connectivity & external input
     d = 2simulation.can.d
-    B = b₀ .+ α*(A*v)  # inputs vector of size 2d
+    B = b₀ .+ A*v  # inputs vector of size 2d
+
     for i in 1:d
         @views Ṡ[:, i] .= W[:, :, i] * ∑ⱼ(S) .+ B[i] .+ η()
-        # @views Ṡ[:, i] = W[:, :, i] * ∑ⱼ(S) .+ B[i] + η()
-
     end
 
     # update activity
     simulation.S += (can.σ.(Ṡ) - S)/(simulation.τ)
 end
+
+
+# ---------------------------------------------------------------------------- #
+#                                    HISTORY                                   #
+# ---------------------------------------------------------------------------- #    
+
+""" store simulation data """
+mutable struct History
+    S::Array        # activation at each timestep, n_neurons × 2d × T
+    v::Array        # input vector at each timestep
+    W::Array{Float64}       # n_neurons × n_neurons × 2d - all connection weights
+    metadata::Dict  # can info, sim params, timestamp...
+end
+
+
+function History(simulation::Simulation, nframes::Int)
+    S = Array{Float64}(undef, (size(simulation.S)..., nframes))
+    v = Array{Float64}(undef, (size(simulation.can.A, 2), nframes))
+    metadata = Dict{Symbol, Any}(
+        :can=>simulation.can.name,
+        :n=>simulation.can.n,
+        :kernel=>(string ∘ typeof)(simulation.can.kernel),
+        :σ=>simulation.can.σ,
+        :A=>simulation.can.A,
+        :b₀=>simulation.b₀,
+        :η=>simulation.η,
+        :dt=>simulation.dt,
+        :τ=>simulation.τ,
+    )
+
+    return History(S, v, simulation.W, metadata)
+end
+
+function add!(history::History, framen::Int, simulation::Simulation, v::Vector{Float64})
+    @assert size(history.v, 2) >= framen "Attempted to instert data for frame $framen and history length $(size(history.v, 2))"
+    history.S[:, :, framen] = simulation.S
+    history.v[:, framen] = v
+end
+
 
 
 
@@ -115,7 +118,11 @@ end
 #                                      RUN                                     #
 # ---------------------------------------------------------------------------- #
 
-function run_simulation(simulation::Simulation, chunks::Vector{SimulationChunk})
+function run_simulation(
+        simulation::Simulation, 
+        chunks::Vector{AbstractChunk};
+        savename::String=simulation.can.name*"_sim"
+    )
         
     # setup animation
     T = sum(getfield.(chunks, :duration))
@@ -133,12 +140,12 @@ function run_simulation(simulation::Simulation, chunks::Vector{SimulationChunk})
         job = addjob!(pbar, description="Simulation",  N=length(time)+1)
         for chunk in chunks
             for i in 1:chunk.nframes
-                v = eltype(chunk.v) == Vector ? chunk.v[i] : chunk.v
+                v = eltype(chunk.v) isa Vector ? chunk.v[i] : chunk.v
                 step!(simulation, v)
                 # framen > 300 && break
 
                 # add data to history
-
+                add!(history, framen, simulation, v)
 
                 # add frame to animation
                 i % simulation.frame_every_n == 0 && framen < length(time) && begin
@@ -151,8 +158,8 @@ function run_simulation(simulation::Simulation, chunks::Vector{SimulationChunk})
             end
         end
     end
-
-    @info "saving animation"
+    
     gif(anim, "test.gif", fps=20)
+    save_simulation_history(history, savename)
 end
 

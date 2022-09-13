@@ -5,9 +5,10 @@ module Simulations
     using Term.Progress
     using Tullio
 
+    import GeneralAttractors: save_simulation_history
     import ..Can: AbstractCAN
 
-    export Simulation, SimulationChunk, run_simulation
+    export Simulation, ConstantChunk, run_simulation
 
     include("chunk.jl")
     include("simulation.jl")
