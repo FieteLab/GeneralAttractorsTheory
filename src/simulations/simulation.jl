@@ -1,3 +1,39 @@
+""" store simulation data """
+mutable struct History
+    S::Array        # activation at each timestep, n_neurons × 2d × T
+    v::Array        # input vector at each timestep
+    W::Array{Float64}       # n_neurons × n_neurons × 2d - all connection weights
+    metadata::Dict  # can info, sim params, timestamp...
+end
+
+
+function History(simulation::Simulation, nframes::Int)
+    S = Array{Float64}(undef, (size(simulation.S)..., nframes))
+    v = Array{Float64}(undef, (size(simulation.can.A, 2), nframes))
+    metadata = Dict{Symbol, Union{Int, String, Function, Matrix}}(
+        :can=>simulation.can.name,
+        :n=>simulation.can.n,
+        :kernel=>(string ∘ typeof)(simulation.can.kernel),
+        :σ=>simulation.can.σ,
+        :A=>simulation.can.A,
+        :b₀=>simulation.b₀,
+        :η=>simulation.η,
+        :dt=>simulation.dt,
+        :τ=>simulation.τ,
+    )
+
+    return History(S, v, simulation.W, metadata)
+end
+
+function add!(history::History, framen::Int, simulation::Simulation, v::Vector{Float64})
+    @assert size(history.v, 2) >= framen "Attempted to instert data for frame $framen and history length $(size(history.v, 2))"
+    history.S[:, framen] = simulation.S
+    history.v[:, framen] = v
+end
+
+
+
+
 # ---------------------------------------------------------------------------- #
 #                                  SIMULATION                                  #
 # ---------------------------------------------------------------------------- #
@@ -9,7 +45,6 @@
     Ṡ::Matrix{Float64}
     b₀::Float64 = 1.0       # baseline input activity
     η::Float64  = 0.1       # noise scale
-    α::Float64  = 0.10315   # input scaling
     dt::Float64 = 0.5       # simulation step - milliseconds
     τ::Float64  = 10.0      # activity time constant - milliseconds
     frame_every_n::Int = 20  # how frequently to save an animation frame
@@ -88,14 +123,22 @@ function run_simulation(simulation::Simulation, chunks::Vector{SimulationChunk})
     framen = 1
     anim = Animation()
 
+    # get history to track data
+    tot_frames = sum(getfield.(chunks, :nframes))
+    history = History(simulation, tot_frames)
+
     # do simulation steps and visualize
     pbar = ProgressBar()
     Progress.with(pbar) do
         job = addjob!(pbar, description="Simulation",  N=length(time)+1)
         for chunk in chunks
             for i in 1:chunk.nframes
-                step!(simulation, chunk.v)
+                v = eltype(chunk.v) == Vector ? chunk.v[i] : chunk.v
+                step!(simulation, v)
                 # framen > 300 && break
+
+                # add data to history
+
 
                 # add frame to animation
                 i % simulation.frame_every_n == 0 && framen < length(time) && begin

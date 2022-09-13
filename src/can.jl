@@ -28,6 +28,7 @@ module Can
     #                                      CAN                                     #
     # ---------------------------------------------------------------------------- #
     mutable struct CAN <: AbstractCAN
+        name::String
         n::NTuple{N,Int} where N           # number of neurons in each dimension
         d::Int                             # number of dimensions
         I::Vector{Tuple}                   # index (i,j...) of each neuron in the lattice
@@ -43,6 +44,7 @@ module Can
     Base.show(io::IO, ::MIME"text/plain", can::CAN) = print(io, string(can))
 
     function CAN(
+            name::String,
             n::NTuple{N,Int},
             ξ::Function,
             metric::Metric,
@@ -88,7 +90,7 @@ module Can
         σ = σ isa Symbol ? activations[σ] : σ
         
         @debug "ready" n lattice_idxs eltype(lattice_idxs) X eltype(X) typeof(Ws) eltype(Ws)
-        return CAN(n, d, lattice_idxs, X, Ws, kernel, σ, α .* Matrix(hcat(offsets...)'))
+        return CAN(name, n, d, lattice_idxs, X, Ws, kernel, σ, α .* Matrix(hcat(offsets...)'))
     end
 
     """

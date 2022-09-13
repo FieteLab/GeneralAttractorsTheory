@@ -36,7 +36,8 @@ function simulation_frame_2dcan(simulation::Simulation, timems, v::Vector; kwarg
         size=simulation.can.n .* 10
     )
 
-    v̂ = v ./ norm(v)
+    h = maximum(simulation.can.X)/2
+    v̂ = v ./ norm(v) .* h
     offsets = [
         [1, 0],
         [0, 1],
@@ -58,7 +59,8 @@ function simulation_frame_2dcan(simulation::Simulation, timems, v::Vector; kwarg
 
         # plot input vector direction 
         x0, y0 = maximum(simulation.can.X; dims=2)./2
-        plot!([x0, x0+v̂[1]*20], [y0, y0+v̂[2]*20], lw=6, color=:green, label=nothing)
+        
+        plot!([x0, x0+v̂[1]], [y0, y0+v̂[2]], lw=6, color=:green, label=nothing)
         scatter!([x0], [y0], ms=8, color=:green, label=nothing)
 
         # # add text with Aᵢ
