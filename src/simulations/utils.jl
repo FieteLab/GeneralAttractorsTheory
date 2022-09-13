@@ -7,10 +7,20 @@ function simulation_frame_1dcan(simulation::Simulation, timems, v::Vector; kwarg
     plt = plot(;
         title="elapsed: $(round(timems)) ms", 
         clims=(0.0, 0.6),
-        aspect_ratio=:equal, 
+        ylim=[0, 5],
+        # aspect_ratio=:equal, 
         grid=false,
     )
 
+    heatmap!(simulation.S')
+    hline!([1.5], lw=5, color=:white, label=nothing)
+
+    x0 = size(simulation.S, 1)/2
+    v̂ = v ./ norm(v)
+    plot!(
+        [x0, x0+v̂[1]*x0/4], [3, 3], lw=10, color=:black, label=nothing
+    )
+    scatter!([x0], [3], ms=10, color=:black, label=nothing)
 
     plt
 end
@@ -23,36 +33,46 @@ function simulation_frame_2dcan(simulation::Simulation, timems, v::Vector; kwarg
         clims=(0.0, 0.6),
         aspect_ratio=:equal, 
         grid=false,
+        size=simulation.can.n .* 10
     )
 
-    
+    v̂ = v ./ norm(v)
+    offsets = [
+        [1, 0],
+        [0, 1],
+        [-1, 0],
+        [0, -1]
+    ]
     for i in 1:can.d * 2
         S = simulation.S[:, i]
-        S = reshape(S, can.n)'
-
+        
         # get offset position for plotting
-        ai = can.A[i, :]
-        ai = argmax(abs, ai) >= 0 ? ceil.(ai) : floor.(ai)
-        offset = ai .* can.n
-        x = collect(1:can.n[2]) .+ offset[1]
-        y = collect(1:can.n[1]) .+ offset[2]
-
-        heatmap!(x, y, S)
-        x0, y0 = can.n[1]/2, can.n[2]/2
-        plot!([x0, x0+v[1]*20], [y0, y0+v[2]*20], lw=6, color=:black, label=nothing)
-        scatter!([x0], [y0], ms=8, color=:black, label=nothing)
-
-        # add text with Aᵢ
-        Ai = string(round.(ai; digits=3))
-        vi = ai ⋅ v
-        annotate!(
-            [offset[1]+5, x0], 
-            [offset[2]+20, y0+20],      
-            [
-                text(" I: $i\nAi: $Ai\nAv: $(round(vi; digits=4))", :white, :left, 8),
-                text("v⃗: $(round.(v; digits=2))", :black, :center, 8),
-            ]
+        offset = offsets[i] .* vec(maximum(simulation.can.X; dims=2))
+        
+        # plot activity heatmap
+        x = offset[1] .+ range(0, maximum(simulation.can.X[1, :]), length=can.n[1])
+        y = offset[2] .+ range(0, maximum(simulation.can.X[2, :]), length=can.n[2])
+        contourf!(
+            x, y, reshape(S, can.n)', levels=3
         )
+
+        # plot input vector direction 
+        x0, y0 = maximum(simulation.can.X; dims=2)./2
+        plot!([x0, x0+v̂[1]*20], [y0, y0+v̂[2]*20], lw=6, color=:green, label=nothing)
+        scatter!([x0], [y0], ms=8, color=:green, label=nothing)
+
+        # # add text with Aᵢ
+        # Ai = string(round.(ai; digits=3))
+        # vi = ai ⋅ v
+
+        # annotate!(
+        #     [offset[1]+5, x0], 
+        #     [offset[2]+20, y0+20],      
+        #     [
+        #         text(" I: $i\nAi: $Ai\nAv: $(round(vi; digits=4))", :white, :left, 8),
+        #         text("v⃗: $(round.(v; digits=2))", :black, :center, 8),
+        #     ]
+        # )
     end
     plt
 end

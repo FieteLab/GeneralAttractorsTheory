@@ -1,5 +1,5 @@
 module Simulations
-    using LinearAlgebra: I, ⋅, mul!  # import identity matrix and dot product
+    using LinearAlgebra: I, ⋅, mul!, norm  # import identity matrix and dot product
     using Parameters: @with_kw_noshow
     using Plots
     using Term.Progress

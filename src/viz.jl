@@ -6,7 +6,7 @@ import Base.Iterators: product as ×  # cartesian product
 
 # ---------------------------------- kernel ---------------------------------- #
 function Plots.plot(K::AbstractKernel; kwargs...)
-    x = -100:.1:100 |> collect
+    x = -100:.001:100 |> collect
     y = K.(x)
     x̂ = x[argmin(y)]
     Plots.plot(
@@ -59,7 +59,7 @@ function plot_distance_2d(
     X = [[x...] for x in vec(X)]
 
     # get distance from a point
-    points = isnothing(points) ? rand(X, 4) : points
+    points = isnothing(points) ? [[0, 0], rand(X, 3)...] : points
     pts = []
     for p in points
         Δx = [evaluate(d, p, x) for x in X]
@@ -245,7 +245,7 @@ Show the connectivity for a can, the kernel and a
 few randomly selected neurons.
 """
 function show_connectivity(can::CAN; kwargs...)
-    idxs = rand(1:*(can.n...), 5)
+    idxs = [1, rand(1:*(can.n...), 4)...]
     p = plot(can.kernel; title="Connectivity kernel")
     ps = map(i -> show_connectivity(can, i), idxs)
     plot(p, ps...;  size=(800, 600), kwargs...) |> display

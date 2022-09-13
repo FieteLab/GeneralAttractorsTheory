@@ -12,6 +12,7 @@
     α::Float64  = 0.10315   # input scaling
     dt::Float64 = 0.5       # simulation step - milliseconds
     τ::Float64  = 10.0      # activity time constant - milliseconds
+    frame_every_n::Int = 20  # how frequently to save an animation frame
 end
 
 Base.string(sim::Simulation) = """
@@ -94,10 +95,10 @@ function run_simulation(simulation::Simulation, chunks::Vector{SimulationChunk})
         for chunk in chunks
             for i in 1:chunk.nframes
                 step!(simulation, chunk.v)
-                framen > 1000 && break
+                # framen > 300 && break
 
                 # add frame to animation
-                i % 20 == 0 && framen < length(time) && begin
+                i % simulation.frame_every_n == 0 && framen < length(time) && begin
                     plot(simulation, time[framen], chunk.v)
                     frame(anim)
                 end
@@ -108,6 +109,7 @@ function run_simulation(simulation::Simulation, chunks::Vector{SimulationChunk})
         end
     end
 
+    @info "saving animation"
     gif(anim, "test.gif", fps=20)
 end
 

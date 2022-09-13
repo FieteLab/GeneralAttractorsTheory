@@ -16,7 +16,7 @@ Euclidean metric on a Mobius strip space:
 The two `x` points are identified on the Mobius strip.
 To compute the distance:
     - given two points q=(x₁, y₁), p=(x₂, y₂)
-    - if the distance |Δx|>π (in the periodic direction)
+    - if the distance |Δx|>L/2 (half length in the periodic direction)
         - define p̂ = (x₂, 1-y₂)   and compute d(q, p̂)
             where d = PeriodicEuclidean([2π, Inf])
         - otherwise the distance is d(q, p)
@@ -25,11 +25,15 @@ To compute the distance:
 
 """
 struct MobiusEuclidean <: UnionMetric
+    x₀::Float64  # "height" of the mfld in the non-periodic direction
     periodic1D::PeriodicEuclidean
     periodic::PeriodicEuclidean
 end
 
-MobiusEuclidean() = MobiusEuclidean(
+MobiusEuclidean() = MobiusEuclidean(1.0)
+
+MobiusEuclidean(x₀::Float64) = MobiusEuclidean(
+        x₀,
         PeriodicEuclidean([2π]),
         PeriodicEuclidean([2π, Inf])
     )
@@ -37,11 +41,12 @@ MobiusEuclidean() = MobiusEuclidean(
 
 function (dist::MobiusEuclidean)(x, y)
     @inbounds begin
-        Δx = abs((x[1] - y[1]))
+        Δx = abs(x[1] - y[1])
+        th = dist.periodic1D.periods[1]/2
 
-        if Δx > π
+        if Δx > th
             return dist.periodic(
-                x, [y[1], 1-y[2]]
+                x, [y[1], dist.x₀-y[2]]
             )
         else
             return dist.periodic(x, y)
