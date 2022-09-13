@@ -8,7 +8,7 @@ n = (256,)  # number of neurons in the ring
 d_r = PeriodicEuclidean([2π])  # distance function
 
 # construct network
-ring_attractor = CAN(n, ξ_r, d_r, MexicanHatKernel(); offset_strength=0.25);
+ring_attractor = CAN(n, ξ_r, d_r, MexicanHatKernel(); offset_size=0.25);
 
 # ---------------------------------------------------------------------------- #
 #                                TORUS ATTRACTOR                               #
@@ -29,7 +29,7 @@ d_t = PeriodicEuclidean([n...])  # distance function over a torus manifold
 k_t = DiffOfExpKernel(; λ = 13.0)
 
 # construct network
-torus_attractor = CAN(n, ξ_t, d_t, k_t; offset_strength=1)
+torus_attractor = CAN(n, ξ_t, d_t, k_t; offset_size=1, α=0.10315)
 
 # ---------------------------------------------------------------------------- #
 #                               MOBIUS ATTRACTOR                               #
@@ -48,4 +48,4 @@ d_m = MobiusEuclidean()
 # connectivity kernel
 k_m = DiffOfExpKernel(; λ = 5/2π)
 
-mobius_attractor = CAN(n, ξ_m, d_m, k_m; offset_strength=0.1)
+mobius_attractor = CAN(n, ξ_m, d_m, k_m; offset_size=0.1)

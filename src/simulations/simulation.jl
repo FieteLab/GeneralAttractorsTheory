@@ -6,7 +6,6 @@
     can::AbstractCAN
     S::Matrix{Float64}      # n_neurons x 2d - state of all neurons
     W::Array{Float64}       # n_neurons × n_neurons × 2d - all connection weights
-    A::Matrix{Float64}      # 2x × dim(Φ) - variable vel vector projection
     Ṡ::Matrix{Float64}
     b₀::Float64 = 1.0       # baseline input activity
     η::Float64  = 0.1       # noise scale
@@ -41,10 +40,7 @@ function Simulation(can::AbstractCAN; kwargs...)
     # get all connection weights
     W = cat(can.Ws..., dims=3)  # n×n×2d
 
-    # get Φ → neural activity projection mtx
-    A = Matrix(hcat(can.offset_directions...)')
-
-    return Simulation(can=can, S=S, Ṡ=Ṡ, W=W, A=A; kwargs...)
+    return Simulation(can=can, S=S, Ṡ=Ṡ, W=W; kwargs...)
 end
 
 
@@ -57,7 +53,7 @@ function step!(
 )
     can         = simulation.can
     b₀, α       = simulation.b₀, simulation.α
-    A, S, W     = simulation.A, simulation.S, simulation.W
+    A, S, W     = simulation.can.A, simulation.S, simulation.W
     Ṡ           = simulation.Ṡ
 
     η() = rand(size(S, 1)) * simulation.η
@@ -98,7 +94,7 @@ function run_simulation(simulation::Simulation, chunks::Vector{SimulationChunk})
         for chunk in chunks
             for i in 1:chunk.nframes
                 step!(simulation, chunk.v)
-                # framen > 500 && break
+                framen > 1000 && break
 
                 # add frame to animation
                 i % 20 == 0 && framen < length(time) && begin
@@ -115,4 +111,3 @@ function run_simulation(simulation::Simulation, chunks::Vector{SimulationChunk})
     gif(anim, "test.gif", fps=20)
 end
 
-run_simulation(can::AbstractCAN, chunks::Vector{SimulationChunk}) = run_simulation(Simulation(can), chunks)

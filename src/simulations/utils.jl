@@ -31,7 +31,7 @@ function simulation_frame_2dcan(simulation::Simulation, timems, v::Vector; kwarg
         S = reshape(S, can.n)'
 
         # get offset position for plotting
-        ai = can.offset_directions[i]
+        ai = can.A[i, :]
         ai = argmax(abs, ai) >= 0 ? ceil.(ai) : floor.(ai)
         offset = ai .* can.n
         x = collect(1:can.n[2]) .+ offset[1]

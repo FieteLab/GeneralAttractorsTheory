@@ -35,7 +35,7 @@ module Can
         Ws::Vector{Array}                  # connectivity matrices with lateral offsets | length N
         kernel::AbstractKernel             # connectivity kernel
         σ::Function                        # activation function
-        offset_directions::Vector{Vector}  # offset direction for each copy of the neurons
+        A::Matrix{Float64}                 # K×D map projecting v∈Φ to manifold dimensions
     end
 
     Base.string(can::CAN) = "CAN (dim=$(length(can.n))) - n neurons: $(can.n)"
@@ -48,8 +48,9 @@ module Can
             metric::Metric,
             kernel::AbstractKernel;
             σ::Union{Symbol, Function}=:relu,
-            offset_strength::Number=1.0,
-            offsets::Union{Nothing, Matrix} = nothing,
+            offset_size::Number=1.0,                        # magnitude of weights offset (distance)
+            offsets::Union{Nothing, Matrix} = nothing,      # offset directions, rows Aᵢ of A
+            α::Float64=1.0,                                   # scales A matrix
         ) where N
 
         d = length(n)
@@ -77,7 +78,7 @@ module Can
         Ws::Vector{Matrix} = []
         for θ in offsets
             # get pairwise offset connectivity
-            D =  pairwise(metric, X .- offset_strength .* θ, X)
+            D =  pairwise(metric, X .- offset_size .* θ, X)
 
             # get connectivity matrix with kernel
             push!(Ws, kernel.k.(D ))
@@ -87,7 +88,7 @@ module Can
         σ = σ isa Symbol ? activations[σ] : σ
         
         @debug "ready" n lattice_idxs eltype(lattice_idxs) X eltype(X) typeof(Ws) eltype(Ws)
-        return CAN(n, d, lattice_idxs, X, Ws, kernel, σ, offsets)
+        return CAN(n, d, lattice_idxs, X, Ws, kernel, σ, α .* Matrix(hcat(offsets...)'))
     end
 
     """
