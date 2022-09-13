@@ -17,12 +17,13 @@ module GeneralAttractors
 
     include("metrics.jl")
     include("viz.jl")
-    include("networks.jl")
-
     include("simulations/Simulations.jl")
 
     using .Simulations
     export Simulation, ConstantChunk, RandomChunk, run_simulation
+
+
+    include("networks.jl")
 
 end
  

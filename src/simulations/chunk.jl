@@ -33,7 +33,7 @@ end
 Pseudo random input combining smoothed white noise with
 a sine wave
 """
-function RandomChunk(simulation; duration::Int=500, smoothing_window::Int=25)
+function RandomChunk(simulation; duration::Int=500, smoothing_window::Int=40)
     nframes = (Int ∘ floor)(duration / simulation.dt)
 
 
@@ -43,7 +43,7 @@ function RandomChunk(simulation; duration::Int=500, smoothing_window::Int=25)
             rand(Float64, nframes), smoothing_window
             ), 
         -1, 1
-    ) .+ 2π .* sin.((1:nframes) ./ (150 / simulation.dt))
+    ) .+ 2π .* sin.((1:nframes) ./ (1000 / simulation.dt))
     
     d = simulation.can.d
     v = if d == 1

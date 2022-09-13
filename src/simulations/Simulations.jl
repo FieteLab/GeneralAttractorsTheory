@@ -4,6 +4,7 @@ module Simulations
     using Plots
     using Term.Progress
     using Tullio
+    using Statistics
 
     import GeneralAttractors: save_simulation_history, moving_average
     import ..Can: AbstractCAN

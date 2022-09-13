@@ -30,13 +30,13 @@ function simulation_frame_2dcan(simulation::Simulation, timems, v::Vector; kwarg
     can = simulation.can
     plt = plot(;
         title="elapsed: $(round(timems)) ms", 
-        clims=(0.0, 0.6),
+        clims=(0.0, 1.0),
         aspect_ratio=:equal, 
         grid=false,
         size=simulation.can.n .* 10
     )
 
-    h = maximum(simulation.can.X)/2
+    h = maximum(simulation.can.X)/2.5
     v̂ = v ./ norm(v) .* h
     for i in 1:can.d * 2
         S = simulation.S[:, i]

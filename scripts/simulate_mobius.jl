@@ -5,7 +5,7 @@ using Distances
 
 
 simulation = Simulation(
-    mobius_attractor; frame_every_n=10, 
+    mobius_attractor;  
 )
 
 chunks = ConstantChunk[
@@ -19,4 +19,4 @@ chunks = ConstantChunk[
     ConstantChunk([0.0, -1.0], simulation; duration=800), 
 ]
 
-run_simulation(simulation, chunks)
+run_simulation(simulation, chunks; frame_every_n=10)
