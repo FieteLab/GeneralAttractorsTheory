@@ -83,14 +83,19 @@ mutable struct History
     v̂::Array                # for averaging
     W::Array{Float64}       # n_neurons × n_neurons × 2d - all connection weights
     average_over::Int       # average every N frames
+    discard::Int            # discard first N frames
     metadata::Dict          # can info, sim params, timestamp...
+    entry_n::Int            # keep track of were we should be updating stuff
 end
 
 
-function History(simulation::Simulation, nframes::Int; average_over_ms::Int=10)
+function History(simulation::Simulation, nframes::Int; average_over_ms::Int=10, discard_first_ms=250)
+    # see how many frames are we skipping at start
+    n_discard  = (Int ∘ round)(discard_first_ms / simulation.dt)
+
     # see over how many frames we average
     average_over = (Int ∘ round)(average_over_ms / simulation.dt)
-    keep_frames = (Int ∘ floor)(nframes / average_over)
+    keep_frames = (Int ∘ floor)((nframes-n_discard) / average_over)
 
     S = Array{Float64}(undef, (size(simulation.S)..., keep_frames))
     Ŝ = Array{Float64}(undef, (size(simulation.S)..., average_over))
@@ -109,15 +114,22 @@ function History(simulation::Simulation, nframes::Int; average_over_ms::Int=10)
         :average_over_ms=>average_over_ms,
     )
 
-    @info "Simulation history saving: $(size(S)[end]) frames" "($(round(nframes*simulation.dt; digits=3)) ms tot , averaging every $average_over_ms ms)"
-    return History(S, Ŝ, v, v̂, simulation.W, average_over, metadata)
+    @info "Simulation history saving: $(size(S)[end]) frames" "($(round((nframes-n_discard)*simulation.dt; digits=3)) ms tot , averaging every $average_over_ms ms)" "Discarding first $n_discard frames ($discard_first_ms ms)"
+    return History(S, Ŝ, v, v̂, simulation.W, average_over, n_discard,  metadata, 1)
 end
 
 function add!(history::History, framen::Int, simulation::Simulation, v::Vector{Float64})
-    k = size(history.Ŝ, 3)
-    framen > k*history.average_over && return
+    framen < history.discard && return  # skip first N frames
+    
+    # make sure it fits in history
+    framen > size(history.S, 3)*history.average_over+history.discard && begin
+        @info "skipping" size(history.S, 3) history.average_over framen k*history.average_over+history.discard
+        error()
+        return
+end
 
-    # @info "appending for history" framen mod(framen, history.average_over)
+    # add to "averaging buffer"
+    k = size(history.Ŝ, 3)
     Ŝ, v̂ = history.Ŝ, history.v̂
     
     F = mod(framen, k)
@@ -126,9 +138,13 @@ function add!(history::History, framen::Int, simulation::Simulation, v::Vector{F
 
     # update main registry
     if F == 0 || framen==1
-        i = framen==1 ? framen : (Int ∘ floor)(framen/k)
-        history.S[:, :, i] = mean(Ŝ; dims=3)
-        history.v[:, i] = mean(v̂; dims=2)
+        history.entry_n > size(history.S, 3) && begin
+            @warn "Can't append to history, ran out of space"
+            return
+        end
+        history.S[:, :, history.entry_n] = mean(Ŝ; dims=3)
+        history.v[:, history.entry_n] = mean(v̂; dims=2)
+        history.entry_n +=1
     end
 end
 
@@ -154,8 +170,8 @@ function run_simulation(
         simulation::Simulation, 
         chunks::Vector;
         savename::String=simulation.can.name*"_sim",
-        frame_every_n::Union{Nothing, Int} = 20  # how frequently to save an animation frame
-
+        frame_every_n::Union{Nothing, Int} = 20,   # how frequently to save an animation frame
+        kwargs...
     )
     @assert eltype(chunks) <: AbstractChunk
         
@@ -167,7 +183,7 @@ function run_simulation(
 
     # get history to track data
     tot_frames = sum(getfield.(chunks, :nframes))
-    history = History(simulation, tot_frames)
+    history = History(simulation, tot_frames; kwargs...)
 
     # do simulation steps and visualize
     pbar = ProgressBar()
@@ -196,7 +212,7 @@ function run_simulation(
         end
     end
     
-    gif(anim, "test.gif", fps=20)
+    isnothing(frame_every_n) || gif(anim, "test.gif", fps=20)
     save_simulation_history(history, savename)
     return history
 end
