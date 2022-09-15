@@ -17,10 +17,10 @@ if MODE == :CONSTANT
 else
     chunks = [
         # ConstantChunk([0.0, 0.0], simulation; duration=500),
-        RandomChunk(simulation; duration=50_000, μ₀=2.0, σ=4),
+        RandomChunk(simulation; duration=100_000, μ₀=1.0, σ=1),
     ]
 end
 # plot(chunks[1])
  
-h = run_simulation(simulation, chunks;  frame_every_n=20, discard_first_ms=500)
+h = run_simulation(simulation, chunks;  frame_every_n=nothing, discard_first_ms=1000, average_over_ms=15)
  
