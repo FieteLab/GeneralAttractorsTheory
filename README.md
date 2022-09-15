@@ -38,8 +38,6 @@ For each matrix $\Delta x$ is choen to offset the distances by $\pm$ a "basis" o
 ## Note
 Currently `Kernel`s are considered to be radially symmetric, hence why they work as maps `k: \mathbb R \to \mathbb R` and why we can create the $W_i$ by offetting the pairwise distance matrix. Shuld we need asymmetric connection kernels this would have to be changed. However this solution is the most compiutationally efficient for now. 
 
-## TODO
-- [x] connect $W_i$
-- [ ] simulate
-- [ ] visualize activity
-- [ ] PCA/isomap/TDA -> visualize and reconstruct activity manifold
+
+## Todo
+See github project here: https://github.com/users/FedeClaudi/projects/1/views/1
