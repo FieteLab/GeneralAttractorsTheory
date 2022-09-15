@@ -7,6 +7,8 @@ using Parameters
 using GeneralAttractors
 using GeneralAttractors.Analysis
 using Plots
+using Term.Progress
+using Statistics
 
 # ---------------------------------------------------------------------------- #
 #                                MANIFOLD TYPES                                #
@@ -76,13 +78,23 @@ M =  generate_manifold_pointcloud(manifold)
 function test_intrinsic_dimensionality(manifold::AbstractPointManifold)
     N, F = collect(0:.025:1), collect(0.5:.1:5)
     D = []
-    for η in N, f in F
-        params = AnalysisParameters(
-            intrinsic_d_data_fraction_threshold=f,
-        )
-        M = generate_manifold_pointcloud(manifold; η=η)
 
-        push!(D, estimate_intrinsic_dimensionality(M, params; verbose=false) |> mean)
+    pbar = ProgressBar()
+    job = addjob!(pbar, N=length(N)*length(F))
+    Progress.with(pbar) do
+        for η in N, f in F
+            params = AnalysisParameters(
+                intrinsic_d_data_fraction_threshold=f,
+            )
+            M = generate_manifold_pointcloud(manifold; η=η)
+
+            @info typeof(M) typeof(params)
+            estimate_intrinsic_dimensionality(M, params; verbose=false)
+            return
+            push!(D, estimate_intrinsic_dimensionality(M, params; verbose=false) |> mean)
+
+            update!(pbar)
+        end
     end
 
     contourf(

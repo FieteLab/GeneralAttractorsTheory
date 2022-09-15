@@ -6,7 +6,7 @@ module Simulations
     using Tullio
     using Statistics
 
-    import GeneralAttractors: save_simulation_history, moving_average
+    import GeneralAttractors: save_simulation_history, moving_average, savepath
     import ..Can: AbstractCAN
 
     export Simulation, ConstantChunk, run_simulation, RandomChunk

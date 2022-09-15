@@ -29,8 +29,6 @@ Base.string(sim::Simulation) = """
 Base.print(io::IO, sim::Simulation) = print(io, string(sim))
 Base.show(io::IO, ::MIME"text/plain", sim::Simulation) = print(io, string(sim))
 
-
-
 function Simulation(can::AbstractCAN; kwargs...)
     # initialize activity matrices
     N = *(can.n...)
@@ -48,6 +46,7 @@ end
 #                                     STEP                                     #
 # ---------------------------------------------------------------------------- #
 ∑ⱼ(x) = sum(x, dims=2) |> vec
+
 function step!(
     simulation::Simulation, v::Vector{Float64}
 )   
@@ -212,7 +211,7 @@ function run_simulation(
         end
     end
     
-    isnothing(frame_every_n) || gif(anim, "test.gif", fps=20)
+    isnothing(frame_every_n) || gif(anim, savepath(savename, savename, "gif"), fps=20)
     save_simulation_history(history, savename, savename)
     return history
 end

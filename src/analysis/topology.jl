@@ -197,14 +197,14 @@ module ManifoldAnalysis
         kwargs...
     )::Vector{Int}
 
-    # load
-    M = load_data(simulation_name, "pca_space")
-    estimate_intrinsic_dimensionality(M, args...; kwargs...)
+        # load
+        M = load_data(simulation_name, "pca_space")
+        estimate_intrinsic_dimensionality(M, args...; kwargs...)
     end
     
     function estimate_intrinsic_dimensionality(
         M::Matrix,
-        params::AnalysisParameters=AnalysisParameters(),
+        params::AnalysisParameters=AnalysisParameters();
         verbose::Bool = true
     )::Vector{Int}
 

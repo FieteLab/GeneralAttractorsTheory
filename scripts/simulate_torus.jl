@@ -24,3 +24,6 @@ end
  
 h = run_simulation(simulation, chunks;  frame_every_n=nothing, discard_first_ms=1000, average_over_ms=15)
  
+
+# TODO make it work
+# TODO save gif in the right place
