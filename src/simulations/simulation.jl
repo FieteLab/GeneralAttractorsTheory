@@ -213,7 +213,7 @@ function run_simulation(
     end
     
     isnothing(frame_every_n) || gif(anim, "test.gif", fps=20)
-    save_simulation_history(history, savename)
+    save_simulation_history(history, savename, savename)
     return history
 end
 

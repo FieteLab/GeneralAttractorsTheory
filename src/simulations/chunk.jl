@@ -8,7 +8,7 @@ struct ConstantChunk <: AbstractChunk
     duration::Int  # duration in ms
     nframes::Int
     v::Vector{Float64}
-    dt::Int
+    dt::Float64
 end
 
 

@@ -7,48 +7,50 @@ import NearestNeighbors
 
 DATADIR = path(pwd()) / "data"
 
-function savepath(savename::String, extension="bson")
+function savepath(fld::String, savename::String, extension="bson")
     # get destination path
-    svp = DATADIR / "$savename.$extension"
+    base = DATADIR / fld 
+    !exists(base) && mkdir(base)
+    svp = base / "$savename.$extension"
     exists(svp) && @warn "Saving $extension file at $(svp.path) - overwriting data"
     return svp.path
 end
 
-function loadpath(loadname::String, extension="bson")
+function loadpath(fld::String, loadname::String, extension="bson")
     # get destination path
-    lp = DATADIR / "$loadname.$extension"
+    lp = DATADIR / fld / "$loadname.$extension"
     exists(lp) || error("Destination file not found at $(lp.path)")
     lp.path
 end
 # ---------------------------------------------------------------------------- #
 #                                    SAVING                                    #
 # ---------------------------------------------------------------------------- #
-save_simulation_history(history, savename::String) = bson(
-        savepath(savename), 
+save_simulation_history(history, save_fld::String, savename::String) = bson(
+        savepath(save_fld, savename), 
         Dict(:history=>history),
 )
     
-save_model(model, savename::String, model_name::Symbol) = bson(
-        savepath(savename), 
+save_model(model, save_fld::String, savename::String, model_name::Symbol) = bson(
+        savepath(save_fld, savename), 
         Dict(model_name=>model),
 )
 
 
-save_data(X::Array, savename::String) =  npzwrite(
-        savepath(savename, "npz"), X
+save_data(X::Array, save_fld::String, savename::String) =  npzwrite(
+        savepath(save_fld, savename, "npz"), X
     )
 
 # ---------------------------------------------------------------------------- #
 #                                    LOADING                                   #
 # ---------------------------------------------------------------------------- #
-load_simulation_history(loadname::String) = BSON.load(
-    loadpath(loadname)
+load_simulation_history(load_fld::String, loadname::String) = BSON.load(
+    loadpath(load_fld, loadname)
 )[:history]
 
-load_model(loadname::String, model_name::Symbol) = BSON.load(
-    loadpath(loadname)
+load_model(load_fld::String, loadname::String, model_name::Symbol) = BSON.load(
+    loadpath(load_fld, loadname)
 )[model_name]
 
-load_data(loadname::String) = npzread(
-    loadpath(loadname, "npz")
+load_data(load_fld::String, loadname::String) = npzread(
+    loadpath(load_fld, loadname, "npz")
 )

@@ -39,7 +39,7 @@ torus_attractor = CAN("torus", n, ξ_t, d_t, k_t; offset_size=1, α=0.10315)
 # ---------------------------------------------------------------------------- #
 @info "creating mobius attractor"
 n = (64, 64)
-function ξ_m(i::Int, j::Int)
+function ξ_m(i::Int, j::Int)::Vector
     p_i, p_j = (i-1)/(n[1]-1), (j-1)/(n[2]-1) # ∈ [0, 1]
     [
         2π*p_i, 

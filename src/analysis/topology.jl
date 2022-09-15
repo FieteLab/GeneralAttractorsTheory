@@ -1,5 +1,8 @@
 
-
+"""
+Function to process (e.g. dimensionality reduction) a point
+cloud of data an analyze its topology. 
+"""
 module ManifoldAnalysis
     using ManifoldLearning
     using NearestNeighbors
@@ -8,9 +11,12 @@ module ManifoldAnalysis
     using Plots
     using Term.Progress
     using Term
+    using Ripserer
+    using PersistenceDiagrams: PersistenceDiagram
 
     import GeneralAttractors: load_simulation_history, save_data, load_data, save_model, load_model, savepath
-    import ..Simulations: History
+    import GeneralAttractors.Simulations: History
+    import GeneralAttractors.Analysis: AnalysisParameters
 
     export pca_dimensionality_reduction, isomap_dimensionality_reduction, estimate_manifold_topology, estimate_intrinsic_dimensionality
 
@@ -36,7 +42,7 @@ module ManifoldAnalysis
             simulation_name::String, 
             params::AnalysisParameters=AnalysisParameters(),
         )   
-            history = load_simulation_history(simulation_name)
+            history = load_simulation_history(simulation_name, simulation_name)
 
             # flatten out S
             N = size(history.S, 1) * size(history.S, 2)  # tot neurons
@@ -63,8 +69,8 @@ module ManifoldAnalysis
             ) |> display
 
             # save results to file
-            save_model(pca_model, simulation_name*"_pca_model", :PCA)
-            save_data(S_pca_space, simulation_name*"_pca")
+            save_model(pca_model, simulation_name, "pca_model", :PCA)
+            save_data(S_pca_space, simulation_name, "pca_space")
     end
 
 
@@ -85,7 +91,7 @@ module ManifoldAnalysis
         params::AnalysisParameters=AnalysisParameters(),
     )   
         # load
-        X = load_data(simulation_name*"_pca")
+        X = load_data(simulation_name, "pca_space")
 
         # fit
         @info "Performing ISOMAP" size(X) params.n_isomap_dimensions
@@ -94,7 +100,6 @@ module ManifoldAnalysis
                 X;
                 k=params.isomap_k,
                 maxoutdim=params.n_isomap_dimensions,
-                # nntype=params.nntype
             )
         M = predict(iso, X)
         @info "isomap fitting completed" size(M)
@@ -103,8 +108,8 @@ module ManifoldAnalysis
         animate_3d_scatter(M, simulation_name*"_iso_embedding"; alpha=.25, title=simulation_name)
 
         # save
-        save_model(iso, simulation_name*"_iso_model", :ISOMAP)
-        save_data(M, simulation_name*"_iso")
+        save_model(iso, simulation_name, "isomap_model", :ISOMAP)
+        save_data(M, simulation_name, "isomap_space")
         M
     end
 
@@ -126,37 +131,48 @@ module ManifoldAnalysis
         Ref: https://mtsch.github.io/Ripserer.jl/dev/
     """
     function tda_on_pointcloud(
-    simulation_name::String, 
-    params::AnalysisParameters=AnalysisParameters(),
-    )
-
-    # load
-    X = load_data(simulation_name*"_pca")
-
-    # convert M in a vector of tuples for TDA
-    X̄ = [
-        Tuple(X[:, i]) for i in 1:params.tda_downsample_factor:size(M, 2)
-    ]
-
-    # fit TDA
-    @info "Fitting TDA on X̄" length(X̄) length(X̄[1])
-    tda = @time ripserer(
-        X̄; dim_max=tda.tda_dim_max, verbose=true, reps=true
-    )
-
-    # plot results
-    resplot = plot(
-        plot(tda),
-        barcode(tda)
-    )
-    savefig(savepath(simulation_name*"_tda_results.jpg"))
-
-    save_model(tda, simulation_name*"_tda_results", :TDA)
+        simulation_name::String, 
+        params::AnalysisParameters,
+    )::Vector{PersistenceDiagram}
+        # load
+        X = load_data(simulation_name, "pca_space")
+        tda_on_pointcloud(X, params, simulation_name)
     end
 
-    function estimate_manifold_topology(simulation_name, params)
+    function tda_on_pointcloud(X::Matrix, params::AnalysisParameters, savename::String)::Vector{PersistenceDiagram}
+        # convert M in a vector of tuples for TDA
+        n = (Int ∘ round)(size(X, 2)/params.tda_downsample_factor)
+        X̄ = [
+            Tuple(x) for x in rand(collect(eachcol(X)), n)
+        ]
+
+        # fit TDA
+        @info "Fitting TDA on X̄" length(X̄) length(X̄[1])
+        tda = ripserer(
+            X̄; dim_max=params.tda_dim_max, verbose=true, reps=true, threshold=params.tda_threshold
+        )
+
+        # plot results
+        resplot = plot(
+            plot(tda),
+            barcode(tda)
+        )
+        savefig(savepath(savename, "tda_results", "png"))
+        save_model(tda, savename, "tda_barcode", :TDA)
+        return tda
+    end
+
+    function estimate_manifold_topology(simulation_name::String, params::AnalysisParameters=AnalysisParameters())
         # tda = tda_on_pointcloud(simulation_name, params)
         error("Need to analyze the results of TDA on data")
+    end
+
+    function estimate_manifold_topology(
+                X::Matrix, 
+                params::AnalysisParameters=AnalysisParameters(), 
+                savename::String="test"
+            )
+        tda = tda_on_pointcloud(X, params, savename)
     end
 
     # ---------------------------------------------------------------------------- #
@@ -177,15 +193,23 @@ module ManifoldAnalysis
     """
     function estimate_intrinsic_dimensionality(
         simulation_name::String,
-        params::AnalysisParameters=AnalysisParameters();
-        verbose::Bool = true
+        args...;
+        kwargs...
     )::Vector{Int}
 
     # load
-    X = load_data(simulation_name*"_pca")
+    M = load_data(simulation_name, "pca_space")
+    estimate_intrinsic_dimensionality(M, args...; kwargs...)
+    end
+    
+    function estimate_intrinsic_dimensionality(
+        M::Matrix,
+        params::AnalysisParameters=AnalysisParameters(),
+        verbose::Bool = true
+    )::Vector{Int}
 
     # build nearest neighbor tree
-    nntree = @time KDTree(M)
+    nntree = KDTree(M)
 
     # sample random points on the manifold
     seeds = M[:, rand(1:size(M, 2), params.intrinsic_d_npoints)]
@@ -193,7 +217,7 @@ module ManifoldAnalysis
     # get local neighborhoods on the data manifold
     ϵ = params.intrinsic_d_ϵ₀               # search ball radius around each point
     μ, Us, σ = 0.0, nothing, nothing
-    while μ < data_fraction_threshold
+    while μ < params.intrinsic_d_data_fraction_threshold
         Us = inrange(nntree, seeds, ϵ, true)
         # get coverage
         nᵤ = length.(Us) ./ size(M, 2) * 100
@@ -211,8 +235,7 @@ module ManifoldAnalysis
         pca_model = fit(PCA, M[:, U]; pratio=params.intrinsic_d_pratio, );
         push!(D, length(principalvars(pca_model)))
     end
-    D
     end
 
-    error("Need to analyze the results further")
+    
 end
