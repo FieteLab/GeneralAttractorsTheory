@@ -19,3 +19,26 @@ function moving_average(A::AbstractArray, m::Int)
     return out
 end
 
+
+"""
+    bounding_box(m::Matrix)::NamedTuple
+
+Min and Max along each dimension (row) of a matrix with points cloud data.
+Rows are dimensions, columns are points.
+"""
+function bounding_box(m::Matrix)::NamedTuple
+    (;
+        min=minimum.(eachrow(m)),
+        max=maximum.(eachrow(m))
+    )
+end
+
+"""
+    bounding_box_size(m::Matrix)::Float64
+
+Magnitude of the diagonal of the bounding box of a points cloud
+"""
+function bounding_box_size(m::Matrix)::Float64 
+    bb = bounding_box(m)
+    norm(bb.max-bb.min)
+end

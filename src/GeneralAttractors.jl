@@ -1,4 +1,6 @@
 module GeneralAttractors
+    using LinearAlgebra: norm
+    
     include("io.jl")
     include("utils.jl")
 

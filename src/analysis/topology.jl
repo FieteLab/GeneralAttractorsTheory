@@ -13,8 +13,16 @@ module ManifoldAnalysis
     using Term
     using Ripserer
     using PersistenceDiagrams: PersistenceDiagram
+    using Statistics
 
-    import GeneralAttractors: load_simulation_history, save_data, load_data, save_model, load_model, savepath
+    import GeneralAttractors: 
+        load_simulation_history,
+        save_data,
+        load_data,
+        save_model,
+        load_model,
+        savepath,
+        bounding_box_size
     import GeneralAttractors.Simulations: History
     import GeneralAttractors.Analysis: AnalysisParameters
 
@@ -195,18 +203,19 @@ module ManifoldAnalysis
         simulation_name::String,
         args...;
         kwargs...
-    )::Vector{Int}
+    )
 
         # load
         M = load_data(simulation_name, "pca_space")
         estimate_intrinsic_dimensionality(M, args...; kwargs...)
     end
     
+
     function estimate_intrinsic_dimensionality(
         M::Matrix,
         params::AnalysisParameters=AnalysisParameters();
         verbose::Bool = true
-    )::Vector{Int}
+    )
 
     # build nearest neighbor tree
     nntree = KDTree(M)
@@ -214,27 +223,16 @@ module ManifoldAnalysis
     # sample random points on the manifold
     seeds = M[:, rand(1:size(M, 2), params.intrinsic_d_npoints)]
 
-    # get local neighborhoods on the data manifold
-    ϵ = params.intrinsic_d_ϵ₀               # search ball radius around each point
-    μ, Us, σ = 0.0, nothing, nothing
-    while μ < params.intrinsic_d_data_fraction_threshold
-        Us = inrange(nntree, seeds, ϵ, true)
-        # get coverage
-        nᵤ = length.(Us) ./ size(M, 2) * 100
-        μ = round(mean(nᵤ); digits=2)
-        σ = round(std(nᵤ); digits=2)
-
-        # increment search radius
-        ϵ *= 1.5
-    end
-    verbose && tprintln("$(length(Us)) neighborhoods with $μ{red}±{/red}$σ % of the data each. ($(mean(length.(Us))) data points)")
+    # get neighborhoods
+    Us, _ = knn(nntree, seeds, (Int ∘ round)(params.intrinsic_d_bbox_fraction_threshold)) 
 
     # for each neighborhood fit PCA and get the number of PCs
-    D = Int[]  # store "dimensionality" of each tangent vector space
+    D = []  # store "dimensionality" of each tangent vector space
     for U in Us
-        pca_model = fit(PCA, M[:, U]; pratio=params.intrinsic_d_pratio, );
+        pca_model = fit(PCA, M[:, U]; pratio=params.intrinsic_d_pratio);
         push!(D, length(principalvars(pca_model)))
     end
+    return D
     end
 
     
