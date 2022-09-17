@@ -33,6 +33,38 @@ module ManifoldAnalysis
     # ---------------------------------------------------------------------------- #
     fraction_variance_explained(M::PCA) = principalvars(M) ./ tvar(M) * 100
 
+    """
+        find_fraction_variance_explained_elbow(σ::Vector{Float64})::Int
+
+    Given a vector σ with the fraction of variance explained of each PC, 
+    find the "elbow" to identify the "relevant" number of PC.
+
+    See: https://ieeexplore.ieee.org/document/5961514
+    https://towardsdatascience.com/detecting-knee-elbow-points-in-a-graph-d13fc517a63c
+    """
+    function find_fraction_variance_explained_elbow(σ::Vector{Float64})::Int
+        length(σ) == 1 && return 1
+        # check input
+        @assert σ[1] > σ[end] string(σ)
+
+        # fit a line through the first and last point
+        # consider that σ₁ = f(x₁) - x₁=1
+        # we don't start at x=0 so fix the intercept
+        m = (σ[end] - σ[1])/(length(σ)-1)
+        y₀ = σ[1]
+        ŷ(x) = m*x + y₀
+
+        # compute the line between the start and end value
+        x = 0:length(σ)-1
+        y = ŷ.(x)
+
+        # get the vertical distance between σ and the line
+        Δ = σ .- y  
+
+        # get the point with the largest vertical distance
+        return argmax(Δ)
+    end
+
 
     """
         pca_dimensionality_reduction(
@@ -214,23 +246,29 @@ module ManifoldAnalysis
     function estimate_intrinsic_dimensionality(
         M::Matrix,
         params::AnalysisParameters=AnalysisParameters();
-        verbose::Bool = true
     )
 
     # build nearest neighbor tree
-    nntree = KDTree(M)
+    nntree = KDTree(M; reorder=false, leafsize=100)
 
     # sample random points on the manifold
-    seeds = M[:, rand(1:size(M, 2), params.intrinsic_d_npoints)]
+    seeds_idxs = rand(1:size(M, 2), params.intrinsic_d_npoints)
+    seeds = M[:, seeds_idxs]
 
     # get neighborhoods
-    Us, _ = knn(nntree, seeds, (Int ∘ round)(params.intrinsic_d_bbox_fraction_threshold)) 
+    k = (Int ∘ round)(params.intrinsic_d_bbox_fraction_threshold)
+    Us, _ = knn(nntree, seeds, k) 
 
     # for each neighborhood fit PCA and get the number of PCs
     D = []  # store "dimensionality" of each tangent vector space
     for U in Us
-        pca_model = fit(PCA, M[:, U]; pratio=params.intrinsic_d_pratio);
-        push!(D, length(principalvars(pca_model)))
+        @assert length(U) == k
+        pca_model = fit(PCA, M[:, U]; pratio=0.999999, maxoutdim=size(M, 2))
+        d = find_fraction_variance_explained_elbow(principalvars(pca_model))
+
+        # pca_model = fit(PCA, M[:, U]; pratio=0.8, maxoutdim=size(M, 2))
+        # d = length(principalvars(pca_model))
+        push!(D, d)
     end
     return D
     end

@@ -12,6 +12,10 @@ using Statistics: mean
 using LinearAlgebra: norm
 using MultivariateStats
 using NearestNeighbors
+import Manifolds: Sphere as MSphere
+import Manifolds: Torus as MTorus
+import Manifolds: uniform_distribution
+
 
 import GeneralAttractors: bounding_box_size, bounding_box
 
@@ -32,7 +36,7 @@ end
 @with_kw struct Torus <: AbstractPointManifold
     d::Int           = 2
     size::Vector     = [2π, 2π]
-    ϕ::Function      = (θ₁, θ₂; R=1.0, r=0.75) -> [
+    ϕ::Function      = (θ₁, θ₂; R=1.0, r=0.25) -> [
         (R + r * cos(θ₁)) * cos(θ₂),
         (R + r * cos(θ₁)) * sin(θ₂),
         r * sin(θ₁),
@@ -82,25 +86,42 @@ struct Sphere_ℝᵈ <: HigherDimensionalManifold
     pts::Matrix  # d x N
 
     function Sphere_ℝᵈ(k::Int; N=1000, η=0.0)
-        u = rand(-1:.1:1, (k, N*k))
+        sphere = MSphere(k-1)
+        u = hcat(rand(uniform_distribution(sphere), N)...)
 
-        radius = map(
-            x -> abs(norm(x) - 1), eachcol(u)
+        u = mapslices(
+            x -> x ./ norm(x), u; dims=1
         )
-        u = u[:, radius .< η + 0.01]
-
-        # u = mapslices(
-        #     x -> x/norm(x), u; dims=1
-        # )
-
+        
         # get noise
-        # η != 0.0 && begin
-        #     η = η/2
-        #     u .+= η .* rand(size(u)...) .- η/2 
-        # end
-        new(2, k, u)
+        η != 0.0 && begin
+            # η = η/2
+            u .+= η .* rand(size(u)...) .- η/2 
+        end
+
+        new(k-1, k, u)
     end
 end
+
+# struct NTorus <: HigherDimensionalManifold
+#     d::Int
+#     k::Int
+#     pts::Matrix  # d x N
+
+#     function Sphere_ℝᵈ(k::Int; N=1000, η=0.0)
+#         torus = MTorus(k-1)
+#         u = hcat(rand(uniform_distribution(sphere), N)...)
+        
+#         # get noise
+#         η != 0.0 && begin
+#             η = η/2
+#             u .+= η .* rand(size(u)...) .- η/2 
+#         end
+
+#         new(2, k, u)
+#     end
+# end
+
 
 
 
@@ -136,7 +157,11 @@ function generate_manifold_pointcloud(
 end
 
 function generate_manifold_pointcloud(m::HigherDimensionalManifold; N=1000, η=.1)
-    typeof(m)(m.k; N=N*m.k, η=η).pts
+    M = typeof(m)(m.k; N=N, η=η).pts
+    @assert size(M, 2) == N size(M)
+    @assert size(M, 1) == m.k size(M)
+    
+    M
 end
 
 
@@ -149,18 +174,76 @@ function project_to_ℝ³(M::Matrix)
 
 end
 
+function project_to_ℝ⁵(M::Matrix)
+    size(M, 1) <= 5 && return M
+
+    pca = fit(PCA, M; maxoutdim=5, pratio=0.9999999)
+    return predict(pca, M)
+
+end
 
 # ---------------------------------------------------------------------------- #
 #                                   VISUALIZATION                              #
 # ---------------------------------------------------------------------------- #
+
+function plot!_boundingbox(M::Matrix)
+
+    l, h = bounding_box(M)
+    xl, yl, zl = l
+    xh, yh, zh = h
+
+    plot!(
+        [xl,xh], [yl, yl], [zl, zl], lw=5, color="red", label=nothing,
+        xlim=[xl-0.1, xh+0.1],
+        ylim=[yl-0.1, yh+0.1],
+        zlim=[zl-0.1, zh+0.1],
+    )
+    plot!(
+        [xl,xh], [yh, yh], [zl, zl], lw=5, color="red", label=nothing
+    )
+    plot!(
+        [xl,xh], [yl, yl], [zh, zh], lw=5, color="red", label=nothing
+    )
+    plot!(
+        [xl,xh], [yh, yh], [zh, zh], lw=5, color="red", label=nothing
+    )
+
+    plot!(
+        [xl,xl], [yl, yh], [zh, zh], lw=5, color="red", label=nothing
+    )
+    plot!(
+        [xh,xh], [yl, yh], [zh, zh], lw=5, color="red", label=nothing
+    )
+    plot!(
+        [xl,xl], [yl, yh], [zl, zl], lw=5, color="red", label=nothing
+    )
+    plot!(
+        [xh,xh], [yl, yh], [zl, zl], lw=5, color="red", label=nothing
+    )
+
+    plot!(
+        [xl,xl], [yl, yl], [zl, zh], lw=5, color="red", label=nothing
+    )
+    plot!(
+        [xh,xh], [yl, yl], [zl, zh], lw=5, color="red", label=nothing
+    )
+    plot!(
+        [xl,xl], [yh, yh], [zl, zh], lw=5, color="red", label=nothing
+    )
+    plot!(
+        [xh,xh], [yh, yh], [zl, zh], lw=5, color="red", label=nothing
+    )
+    
+end
+
+
 function plot_manifold_vs_noise(manifold::AbstractPointManifold)
     # get the size of the bounding box
     M = generate_manifold_pointcloud(manifold)
-    bb = bounding_box(M)
     σ = bounding_box_size(M)
 
     # get noise values
-    noise = range(0, σ/3, length=9)./σ |> collect
+    noise = range(0, 2σ, length=9)./σ |> collect
 
     # plot manifolds
     plt = []
@@ -168,10 +251,13 @@ function plot_manifold_vs_noise(manifold::AbstractPointManifold)
         M = generate_manifold_pointcloud(manifold; η=η, N=500) |> project_to_ℝ³
         
         p = plot()
+        plot!_boundingbox(M)
         scatter!(eachrow(M)..., label=nothing, color="black", ms=2)
+
+        bb = bounding_box(M)
+        Δ = mean(bb.max .- bb.min)
         plot!(
-            title="Noise: $(round(η*100; digits=2))%",
-            # xlim=[-1, 1], ylim=[-1, 1], zlim=[-1, 1],
+            title="Noise scale: $(round(η; digits=2))\nBbox scale $(round(Δ; digits=2))",
             camera=(30, 40)
         )
 
@@ -197,7 +283,7 @@ function visualize_nn(manifold::AbstractPointManifold; K=70)
     M̄ = project_to_ℝ³(M)
 
     p = scatter(eachrow(M̄)..., color=:black, alpha=.8, ms=5,
-        xlim=[-1, 1], ylim=[-1, 1], zlim=[-1, 1], camera=(90, 0),
+        xlim=[-1.1, 1.1], ylim=[-1.1, 1.1], zlim=[-1.1, 1.1], camera=(90, 0),
         label=nothing,
     )
     scatter!(eachrow(M̄[:, U])..., color=:red, ms=5, label="in radius")
@@ -230,56 +316,54 @@ end
 
 # ------------------------- intrinsic dimensionality ------------------------- #
 
-function nanmean(x) 
-    x̄ = filter(!isnan,x)
-
-    return if length(x̄) > 0
-        mean(x̄)
-    else
-        NaN
-    end
-end
-
-function test_intrinsic_dimensionality(manifold::AbstractPointManifold; K=3000)
+function test_intrinsic_dimensionality(manifold::AbstractPointManifold; K=10_000)
     # get size of bounding box of clean manifold
     M = generate_manifold_pointcloud(manifold)
     σ = bounding_box_size(M)
-
-
-    n_samples = 10
+    
     # get noise scale (fraction of bb)
-    N = collect(range(0, 0.1σ, length=n_samples)./σ)
+    nN, nF = 10, 20
+    N = collect(range(0, 1σ, length=nN)./σ)
 
     # K in knn
-    F = collect(range(10, 100, length=n_samples))
+    F = collect(range(2, 100, length=nF))
 
+    # estimate intrinsic dimensionality over all combinations
     D = []
     pbar = ProgressBar()
     job = addjob!(pbar, N=length(N)*length(F))
+    D = zeros(nN, nF)
     Progress.with(pbar) do
-        for η in N, f in F
-            params = AnalysisParameters(
-                intrinsic_d_bbox_fraction_threshold=f,
-                intrinsic_d_npoints=50,
-            )
+        for (i, η) in enumerate(N)
+            m̂ = generate_manifold_pointcloud(manifold; η=η, N=K) # |> project_to_ℝ⁵
 
-            mfld = generate_manifold_pointcloud(manifold; η=η, N=K)
-            d = estimate_intrinsic_dimensionality(mfld, params; verbose=true)
-            push!(D, d |> nanmean)
-            Progress.update!(job)
+            for (j, f) in enumerate(F)
+                params = AnalysisParameters(
+                    intrinsic_d_bbox_fraction_threshold=f,
+                    intrinsic_d_npoints=50,
+                )
+                d = estimate_intrinsic_dimensionality(m̂, params)
+                D[i, j] = mean(d)
+                Progress.update!(job)
+            end
         end
     end
 
+
     contourf(
-        N, F, reshape(D, (length(N), length(F))),
-        xlabel="noise scale",
-        ylabel="neighborhood scale",
-        title = "Estimated intrinsic dimensionality | K=$K",
-        clims=(0, 2*manifold.d),
+        F, N, D,
+        ylabel="noise scale",
+        xlabel="neighborhood scale",
+        title = "'$(string(typeof(manifold)))' estimated d | K=$K",
+        # clims=(0, 2manifold.d),
+        clims=(manifold.d-3, manifold.d+3),
         levels = 4*manifold.d,
         lc="black",
-        c=:bwr
+        c=:bwr,
+        colorbar_title="estimated d"
     ) |> display
+
+    # heatmap(D) |> display
 end
 
 
@@ -288,45 +372,14 @@ end
 # ---------------------------------------------------------------------------- #
 #                                      run                                     #
 # ---------------------------------------------------------------------------- #
-# manifold = Sphere_ℝᵈ(10)
-manifold = Cylinder()
+manifold = Sphere_ℝᵈ(5)
+# manifold = Sphere()
 
 # visuals
-plot_manifold_vs_noise(manifold)
+# plot_manifold_vs_noise(manifold)
 # visualize_nn(manifold)
 
 
 # intrinsic dimensionality
-# test_intrinsic_dimensionality(manifold)
+test_intrinsic_dimensionality(manifold)
 
-
-
-# ------------------------------------- x ------------------------------------ #
-fraction_variance_explained(pca::PCA) = principalvars(pca) ./ var(pca) * 100
-
-M = generate_manifold_pointcloud(manifold; N=10000, η=0.01)
-@warn size(M) 
-
-
-# build nearest neighbor tree
-# nntree = BruteTree(M; leafsize=2)
-nntree = KDTree(M; leafsize=2)
-
-# sample random points on the manifold
-seeds = M[:, rand(1:size(M, 2), 10)]
-
-# get neighborhoods
-Us, _ = knn(nntree, seeds, 200) 
-# Us = inrange(nntree, seeds, .3)
-
-# for each neighborhood fit PCA and get the number of PCs
-p = plot()
-for U in Us
-    pca_model = fit(PCA, M[:, U]; pratio=.999999);
-    plot!(fraction_variance_explained(pca_model), lw=2, label=nothing)
-end
-
-display(p)
-
-# TODO work on computing the elbow
-# TODO summary plot for each manifold as a fn of noise
