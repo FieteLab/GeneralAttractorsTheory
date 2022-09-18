@@ -34,8 +34,8 @@ module Analysis
         tda_downsample_factor::Int                      = 3        # temporal downsampling of data for TDA
         tda_dim_max::Int                                = 2        # max feature dimension, starting at 0
         # intrinsic dimensionality (local PCA)
-        intrinsic_d_npoints::Int                        = 200      # number of seed points for local PCA
-        intrinsic_d_bbox_fraction_threshold::Float64    = 1.0  # fraction of data in each neighborhood
+        intrinsic_d_nseeds::Int                        = 200      # number of seed points for local PCA
+        intrinsic_d_neighborhood_size::Float64    = 1.0  # fraction of data in each neighborhood
         intrinsic_d_ϵ₀::Float64                         = 1.0      # starting ball radius for knn
         intrinsic_d_pratio::Float64                     = .95      # fraction of variance explained for local PCA
         

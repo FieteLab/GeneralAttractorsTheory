@@ -179,7 +179,7 @@ module ManifoldAnalysis
         tda_on_pointcloud(X, params, simulation_name)
     end
 
-    function tda_on_pointcloud(X::Matrix, params::AnalysisParameters, savename::String)::Vector{PersistenceDiagram}
+    function tda_on_pointcloud(X::Matrix, params::AnalysisParameters, savename::String) #::Tuple{Vector{PersistenceDiagram}, Plot}
         # convert M in a vector of tuples for TDA
         n = (Int ∘ round)(size(X, 2)/params.tda_downsample_factor)
         X̄ = [
@@ -189,17 +189,22 @@ module ManifoldAnalysis
         # fit TDA
         @info "Fitting TDA on X̄" length(X̄) length(X̄[1])
         tda = ripserer(
-            X̄; dim_max=params.tda_dim_max, verbose=true, reps=true, threshold=params.tda_threshold
+            X̄; 
+            dim_max=params.tda_dim_max, 
+            verbose=true, 
+            reps=false, 
+            threshold=params.tda_threshold
         )
 
         # plot results
-        resplot = plot(
-            plot(tda),
-            barcode(tda)
-        )
-        savefig(savepath(savename, "tda_results", "png"))
-        save_model(tda, savename, "tda_barcode", :TDA)
-        return tda
+        # resplot = plot(
+        #     plot(tda),
+        #     barcode(tda),
+        #     size=(1000, 800)
+        # )
+        # savefig(savepath(savename, "tda_results", "png"))
+        # save_model(tda, savename, "tda_barcode", :TDA)
+        return tda, plot(tda, size=(800, 800))
     end
 
     function estimate_manifold_topology(simulation_name::String, params::AnalysisParameters=AnalysisParameters())
@@ -212,7 +217,7 @@ module ManifoldAnalysis
                 params::AnalysisParameters=AnalysisParameters(), 
                 savename::String="test"
             )
-        tda = tda_on_pointcloud(X, params, savename)
+        return tda_on_pointcloud(X, params, savename)
     end
 
     # ---------------------------------------------------------------------------- #
@@ -249,14 +254,14 @@ module ManifoldAnalysis
     )
 
     # build nearest neighbor tree
-    nntree = KDTree(M; reorder=false, leafsize=100)
+    nntree = KDTree(M; reorder=false, leafsize=5)
 
     # sample random points on the manifold
-    seeds_idxs = rand(1:size(M, 2), params.intrinsic_d_npoints)
+    seeds_idxs = rand(1:size(M, 2), params.intrinsic_d_nseeds)
     seeds = M[:, seeds_idxs]
 
     # get neighborhoods
-    k = (Int ∘ round)(params.intrinsic_d_bbox_fraction_threshold)
+    k = (Int ∘ round)(params.intrinsic_d_neighborhood_size)
     Us, _ = knn(nntree, seeds, k) 
 
     # for each neighborhood fit PCA and get the number of PCs
