@@ -8,6 +8,7 @@ using Plots
 using Term.Progress
 using Statistics: mean
 using LinearAlgebra: norm
+using LinearAlgebra: ⋅
 using MultivariateStats
 using NearestNeighbors
 import Manifolds: Sphere as MSphere
@@ -31,8 +32,8 @@ function validate_manifold(manifold::AbstractPointManifold)
     noise = range(0, σ, length=5)./σ |> collect
 
     # local PCA neighborhood size
-    local_pca_nsize = collect(range(2, 100, length=20))
-    local_pca_npoints = (Int ∘ round).(collect(range(1000, 5000, length=20)))
+    local_pca_nsize = collect(range(2, 500, length=20))
+    local_pca_npoints = (Int ∘ round).(collect(range(500, 5000, length=25)))
 
     # iterate over noise levels and perform: plot, TDA, local PCA
     plots = []
@@ -50,7 +51,7 @@ function validate_manifold(manifold::AbstractPointManifold)
 
         # do local PCA
         @info "doing local PCA"
-        D = zeros(20, 20)
+        D = zeros(20, 25)
         for (i, nsize) in enumerate(local_pca_nsize), (j, npoints) in enumerate(local_pca_npoints)
             m = generate_manifold_pointcloud(manifold; η=η, N=npoints) 
 
@@ -59,7 +60,7 @@ function validate_manifold(manifold::AbstractPointManifold)
                 intrinsic_d_nseeds=200,
             )
             d = estimate_intrinsic_dimensionality(m, params)
-            D[i, j] = mean(d) - manifold.d
+            D[i, j] = mean(d)
         end
 
         # plot results
@@ -69,24 +70,26 @@ function validate_manifold(manifold::AbstractPointManifold)
                 xlabel="N manifold points",
                 ylabel="neighborhood scale",
                 title = n==1 ? "Estimated d" : nothing,
-                clims=(-1.5, 1.5),
+                clims=(manifold.d-1.5, manifold.d+1.5),
                 levels = 3,
                 lc="black",
                 c=:bwr,
-                # colorbar=nothing,
                 colorbar_title="d error"
             )
         )
 
         # do TDA
         @info "Doing TDA"
+        M = generate_manifold_pointcloud(manifold; η=η, N=2000)
         params = AnalysisParameters(
-            tda_threshold           = 2.5,
+            tda_threshold           = 3,
             tda_downsample_factor   = 1,
-            tda_dim_max             = 2,
+            tda_dim_max             = manifold.d,
         )
         _, tda_plot = estimate_manifold_topology(M, params)
         push!(plots, tda_plot)
+
+        break
     end
 
     @info "plotting"
@@ -96,7 +99,7 @@ function validate_manifold(manifold::AbstractPointManifold)
             layout=(5, 3)
     )
     savefig(savepath(
-        "MANIFOLD_validation", string(typeof(manifold)), "png"
+        "MANIFOLD_validation", string(typeof(manifold)) * "(dim: $(manifold.d))", "png"
         )
     )
     return plots
@@ -107,16 +110,15 @@ end
 
 # ---------------------------------------------------------------------------- #
 mflds = (
-    Sphere_ℝᵈ(20),
-    Torus(),
-    Plane(),
-    Ring(),
-    Cylinder(),
-    Sphere()
+    ProjectedSphere(10),
+    # Sphere_ℝᵈ(10),
+    # Torus(),
+    # Plane(),
+    # Ring(),
+    # Cylinder(),
+    # Sphere()
 )
 for manifold in mflds
     validate_manifold(manifold)
 end
 
-
-# TODO add more high dim examples   

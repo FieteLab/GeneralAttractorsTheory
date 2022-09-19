@@ -40,7 +40,7 @@ end
     ϕ::Function      = (p0, p1) -> [
         sin(p0),
         cos(p0),
-        p1 
+        2p1 - 1 
     ]
 end
 
@@ -54,6 +54,18 @@ end
         cos(p),
         cos(p)
     ]
+end
+
+
+# --------------------------------- projected -------------------------------- #
+abstract type ProjectedPointManifold <: AbstractPointManifold end
+
+struct ProjectedSphere <: ProjectedPointManifold
+    d::Int
+    k::Int
+    mfld::AbstractPointManifold
+
+    ProjectedSphere(k) = new(2, k, Sphere())
 end
 
 
@@ -136,6 +148,17 @@ function generate_manifold_pointcloud(
     M .+= η .* rand(size(M)...) .- η/2 # the - is required to center the noise offset
 end
 
+"""
+Get a <4 dimensional manifold and project it onto a 
+k-dimensional space
+"""
+function generate_manifold_pointcloud(m::ProjectedPointManifold; N=1000, η=.1)::Matrix{Float64}
+    M = generate_manifold_pointcloud(m.mfld; N=N, η=η)
+    P = gram_schmidt(rand(m.k, 3))
+    return P * M
+end
+
+
 function generate_manifold_pointcloud(m::HigherDimensionalManifold; N=1000, η=.1)
     M = typeof(m)(m.k; N=N, η=η).pts
     @assert size(M, 2) == N size(M)
@@ -149,8 +172,22 @@ end
 function project_to_ℝ³(M::Matrix)
     size(M, 1) <= 3 && return M
 
-    pca = fit(PCA, M; maxoutdim=3)
+    pca = fit(PCA, M; maxoutdim=3, pratio=0.99999999)
     return predict(pca, M)
 
 end
 
+"""
+gram schmidth orthogonalization and normalization
+of a projection matrix
+"""
+function gram_schmidt(P::Matrix)::Matrix
+    basis = []
+    for v in eachrow(P)
+        w = isempty(basis) ? v : v .- sum(map(
+                                        b -> v ⋅ b, basis
+                                    )) 
+        push!(basis, w / norm(w))
+    end
+    return Matrix(hcat(basis...)')
+end
