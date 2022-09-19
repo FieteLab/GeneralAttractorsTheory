@@ -3,40 +3,51 @@
 #                                  SIMULATION                                  #
 # ---------------------------------------------------------------------------- #
 
+"""
+    @with_kw_noshow mutable struct Simulation
+        can::AbstractCAN
+        S::Matrix{Float64}             
+        W::Vector{SparseMatrixCSC}      
+        Ṡ::Matrix{Float64}
+        b₀::Float64 = 1.0      
+        η::Float64  = 0.1      
+        dt::Float64 = 0.5      
+        τ::Float64  = 10.0     
+    end
+
+Holds information necessary for running a simulation.
+
+## Arguments
+- `can`: CAN network instance
+- `S`: placeholder for the state (activation) of all neurons. Shape: n_neurons × 2d
+- `W`: holds all network connectivity info as a vector of 2d-many sparse matrices (n_neurons × n_neurons each)
+- `Ṡ`: place holder for dS/dt array.
+"""
 @with_kw_noshow mutable struct Simulation
     can::AbstractCAN
-    S::Matrix{Float64}      # n_neurons x 2d - state of all neurons
-    W::Array{Float64}       # n_neurons × n_neurons × 2d - all connection weights
-    Ṡ::Matrix{Float64}
+    S::SparseMatrixCSC               # n_neurons x 2d - state of all neurons
+    W::Vector{SparseMatrixCSC}       # all connection weights
+    Ṡ::SparseMatrixCSC
     b₀::Float64 = 1.0       # baseline input activity
     η::Float64  = 0.1       # noise scale
     dt::Float64 = 0.5       # simulation step - milliseconds
     τ::Float64  = 10.0      # activity time constant - milliseconds
 end
 
-Base.string(sim::Simulation) = """
-    Simulation
-    ----------
-    $(sim.can)
-
-    S: $(size(sim.S))
-    A: $(size(sim.A))
-    η: $(round(sim.η, digits=2))
-    dt: $(sim.dt)
-    τ: $(sim.τ)
-"""
-
+Base.string(sim::Simulation) = "Simulation of $(sim.can)"
 Base.print(io::IO, sim::Simulation) = print(io, string(sim))
 Base.show(io::IO, ::MIME"text/plain", sim::Simulation) = print(io, string(sim))
 
 function Simulation(can::AbstractCAN; kwargs...)
     # initialize activity matrices
     N = *(can.n...)
-    S = zeros(Float64, N, 2can.d)
-    Ṡ = zeros(Float64, N, 2can.d)
+    S = spzeros(Float32, N, 2can.d)
+    Ṡ = spzeros(Float32, N, 2can.d)
 
     # get all connection weights
-    W = cat(can.Ws..., dims=3)  # n×n×2d
+    # W = cat(can.Ws..., dims=3)  # n×n×2d
+    W = sparse.(map(x -> Float32.(x), can.Ws))
+    droptol!.(W, 0.001)
 
     return Simulation(can=can, S=S, Ṡ=Ṡ, W=W; kwargs...)
 end
@@ -48,22 +59,25 @@ end
 ∑ⱼ(x) = sum(x, dims=2) |> vec
 
 function step!(
-    simulation::Simulation, v::Vector{Float64}
+    simulation::Simulation, v::Vector{Float64},
 )   
     can         = simulation.can
     b₀          = simulation.b₀
     A, S, W     = simulation.can.A, simulation.S, simulation.W
     Ṡ           = simulation.Ṡ
 
-    η() = rand(size(S, 1)) * simulation.η
-
     # get effect of recurrent connectivity & external input
     d = 2simulation.can.d
-    B = b₀ .+ A*v  # inputs vector of size 2d
-
+    B = Float32.(b₀ .+ A*v)  # inputs vector of size 2d
+    η = rand(Float32, size(S, 1), d) .* simulation.η  # get noise input
+    S̄ = ∑ⱼ(S)  # get the sum of all current activations
     for i in 1:d
-        @views Ṡ[:, i] .= W[:, :, i] * ∑ⱼ(S) .+ B[i] .+ η()
+        Ṡ[:, i] .= W[i] * S̄ .+ B[i] .+ η[i]
     end
+
+    # remove bad entries
+    droptol!(simulation.S, 0.001)
+    droptol!(simulation.Ṡ, 0.001)
 
     # update activity
     simulation.S += (can.σ.(Ṡ) - S)/(simulation.τ)
@@ -76,15 +90,14 @@ end
 
 """ store simulation data """
 mutable struct History
-    S::Array                # activation at each timestep, n_neurons × 2d × T
-    Ŝ::Array                # for averaging
-    v::Array                # input vector at each timestep
-    v̂::Array                # for averaging
-    W::Array{Float64}       # n_neurons × n_neurons × 2d - all connection weights
-    average_over::Int       # average every N frames
-    discard::Int            # discard first N frames
-    metadata::Dict          # can info, sim params, timestamp...
-    entry_n::Int            # keep track of were we should be updating stuff
+    S::Array                        # activation at each timestep, n_neurons × 2d × T
+    Ŝ::Array                        # for averaging
+    v::Array                        # input vector at each timestep
+    v̂::Array                        # for averaging
+    average_over::Int               # average every N frames
+    discard::Int                    # discard first N frames
+    metadata::Dict                  # can info, sim params, timestamp...
+    entry_n::Int                    # keep track of were we should be updating stuff
 end
 
 
@@ -95,11 +108,15 @@ function History(simulation::Simulation, nframes::Int; average_over_ms::Int=10, 
     # see over how many frames we average
     average_over = (Int ∘ round)(average_over_ms / simulation.dt)
     keep_frames = (Int ∘ floor)((nframes-n_discard) / average_over)
+    keep_frames < 1 && error("Keep frames < 0, reduce discard or increase duration")
+
+    @info "Creating history arrays" size(simulation.S) size(simulation.can.A) keep_frames average_over
 
     S = Array{Float64}(undef, (size(simulation.S)..., keep_frames))
     Ŝ = Array{Float64}(undef, (size(simulation.S)..., average_over))
-    v = Array{Float64}(undef, (size(simulation.can.A, simulation.can.d), keep_frames))
-    v̂ = Array{Float64}(undef, (size(simulation.can.A, simulation.can.d), average_over))
+    v = Array{Float64}(undef, (size(simulation.can.A, 2), keep_frames))
+    v̂ = Array{Float64}(undef, (size(simulation.can.A, 2), average_over))
+    @info "Done" size(S) size(Ŝ) size(v) size(v̂)
     metadata = Dict{Symbol, Any}(
         :can=>simulation.can.name,
         :n=>simulation.can.n,
@@ -114,7 +131,7 @@ function History(simulation::Simulation, nframes::Int; average_over_ms::Int=10, 
     )
 
     @info "Simulation history saving: $(size(S)[end]) frames" "($(round((nframes-n_discard)*simulation.dt; digits=3)) ms tot , averaging every $average_over_ms ms)" "Discarding first $n_discard frames ($discard_first_ms ms)"
-    return History(S, Ŝ, v, v̂, simulation.W, average_over, n_discard,  metadata, 1)
+    return History(S, Ŝ, v, v̂, average_over, n_discard,  metadata, 1)
 end
 
 function add!(history::History, framen::Int, simulation::Simulation, v::Vector{Float64})
@@ -122,10 +139,11 @@ function add!(history::History, framen::Int, simulation::Simulation, v::Vector{F
     
     # make sure it fits in history
     framen > size(history.S, 3)*history.average_over+history.discard && begin
-        @info "skipping" size(history.S, 3) history.average_over framen k*history.average_over+history.discard
-        error()
-        return
-end
+            # @info "skipping" size(history.S, 3) history.average_over framen k*history.average_over+history.discard
+            # error()
+            @warn "Frame too large during add! to history" framen size(history.S)
+            return
+    end
 
     # add to "averaging buffer"
     k = size(history.Ŝ, 3)
@@ -192,18 +210,20 @@ function run_simulation(
             for i in 1:chunk.nframes
                 v = eltype(chunk.v) == Float64 ? chunk.v : chunk.v[i] 
                 step!(simulation, v)
-                # framen > 300 && break
+                # framen > 50 && break
 
                 # add data to history
                 add!(history, framen, simulation, v)
 
                 # add frame to animation
-                isnothing(frame_every_n) || begin
-                    i % frame_every_n == 0 && framen < length(time) && begin
-                        plot(simulation, time[framen], v)
-                        frame(anim)
-                    end
-                end
+                # isnothing(frame_every_n) || begin
+                #     i % frame_every_n == 0 && framen < length(time) && begin
+                #         plot(simulation, time[framen], v)
+                #         frame(anim)
+                #     end
+                # end
+                plot(simulation, time[framen], v)
+                frame(anim)
 
                 framen += 1
                 update!(job)
@@ -211,7 +231,10 @@ function run_simulation(
         end
     end
     
-    isnothing(frame_every_n) || gif(anim, savepath(savename, savename, "gif"), fps=20)
+    isnothing(frame_every_n) || begin
+        @info "saving animation"
+        gif(anim, savepath(savename, savename, "gif"), fps=20)
+    end
     save_simulation_history(history, savename, savename)
     return history
 end

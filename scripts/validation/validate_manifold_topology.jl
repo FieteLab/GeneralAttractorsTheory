@@ -111,11 +111,11 @@ end
 # ---------------------------------------------------------------------------- #
 mflds = (
     # ProjectedManifold(10, Sphere()),
-    ProjectedManifold(10, Plane()),
-    ProjectedManifold(10, Ring()),
-    ProjectedManifold(10, Torus()),
-    ProjectedManifold(10, Cylinder()),
-    Torus(),
+    # ProjectedManifold(10, Plane()),
+    # ProjectedManifold(10, Ring()),
+    # ProjectedManifold(10, Torus()),  # ! REDO wngiaerjbfieuwfblkanflksnfk
+    # ProjectedManifold(10, Cylinder()),
+    # Torus(),
     Plane(),
     Ring(),
     Cylinder(),

@@ -5,6 +5,7 @@ module Simulations
     using Term.Progress
     using Tullio
     using Statistics
+    using SparseArrays
 
     import GeneralAttractors: save_simulation_history, moving_average, savepath
     import ..Can: AbstractCAN

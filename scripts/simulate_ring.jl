@@ -11,3 +11,4 @@ chunks = map(
 ) |> collect
 
 run_simulation(simulation, chunks; frame_every_n=10)
+# TODO fix plotting for this

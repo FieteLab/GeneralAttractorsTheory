@@ -69,7 +69,7 @@ struct ProjectedManifold <: ProjectedPointManifold
     k::Int
     mfld::AbstractPointManifold
 
-    ProjectedManifold(k, mfld::AbstractPointManifold) = new(2, k, mfld)
+    ProjectedManifold(k, mfld::AbstractPointManifold) = new(mfld.d, k, mfld)
 end
 
 
