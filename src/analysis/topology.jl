@@ -197,13 +197,13 @@ module ManifoldAnalysis
         )
 
         # plot results
-        # resplot = plot(
-        #     plot(tda),
-        #     barcode(tda),
-        #     size=(1000, 800)
-        # )
-        # savefig(savepath(savename, "tda_results", "png"))
-        # save_model(tda, savename, "tda_barcode", :TDA)
+        plot(
+            plot(tda),
+            barcode(tda),
+            size=(1000, 800)
+        )
+        savefig(savepath(savename, "tda_results", "png"))
+        save_model(tda, savename, "tda_barcode", :TDA)
         return tda, plot(tda, size=(800, 800))
     end
 

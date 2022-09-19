@@ -5,6 +5,8 @@
 
 abstract type AbstractPointManifold end
 
+Base.string(m::AbstractPointManifold) = string(typeof(m))
+
 @with_kw struct Plane <: AbstractPointManifold
     d::Int           = 2
     size::Vector     = [1, 1]
@@ -60,17 +62,21 @@ end
 # --------------------------------- projected -------------------------------- #
 abstract type ProjectedPointManifold <: AbstractPointManifold end
 
-struct ProjectedSphere <: ProjectedPointManifold
+Base.string(m::ProjectedPointManifold) = "$(string(m.mfld)) embedded in ℝᵏ (k=$(m.k))"
+
+struct ProjectedManifold <: ProjectedPointManifold
     d::Int
     k::Int
     mfld::AbstractPointManifold
 
-    ProjectedSphere(k) = new(2, k, Sphere())
+    ProjectedManifold(k, mfld::AbstractPointManifold) = new(2, k, mfld)
 end
 
 
 # -------------------------------- higher dim -------------------------------- #
 abstract type HigherDimensionalManifold <: AbstractPointManifold end
+
+Base.string(m::HigherDimensionalManifold) = "$(string(typeof(m))) with d=$(m.d)"
 
 struct Sphere_ℝᵈ <: HigherDimensionalManifold
     d::Int

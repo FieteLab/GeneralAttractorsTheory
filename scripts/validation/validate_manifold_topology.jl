@@ -46,6 +46,7 @@ function validate_manifold(manifold::AbstractPointManifold)
             ylim=[-1.5, 1.5],
             zlim=[-1.5, 1.5],   
             title="Noise scale: $(round(η; digits=2))",
+            xlabel="PC1", ylabel="PC2", zlabel="PC3",
             camera=(30, 40), size=(200, 200)
         ))
 
@@ -88,8 +89,6 @@ function validate_manifold(manifold::AbstractPointManifold)
         )
         _, tda_plot = estimate_manifold_topology(M, params)
         push!(plots, tda_plot)
-
-        break
     end
 
     @info "plotting"
@@ -98,8 +97,9 @@ function validate_manifold(manifold::AbstractPointManifold)
             size=(1400, 1400), 
             layout=(5, 3)
     )
-    savefig(savepath(
-        "MANIFOLD_validation", string(typeof(manifold)) * "(dim: $(manifold.d))", "png"
+    savefig(
+        savepath(
+        "manifold_validation", string(manifold), "png"
         )
     )
     return plots
@@ -110,13 +110,16 @@ end
 
 # ---------------------------------------------------------------------------- #
 mflds = (
-    ProjectedSphere(10),
-    # Sphere_ℝᵈ(10),
-    # Torus(),
-    # Plane(),
-    # Ring(),
-    # Cylinder(),
-    # Sphere()
+    # ProjectedManifold(10, Sphere()),
+    ProjectedManifold(10, Plane()),
+    ProjectedManifold(10, Ring()),
+    ProjectedManifold(10, Torus()),
+    ProjectedManifold(10, Cylinder()),
+    Torus(),
+    Plane(),
+    Ring(),
+    Cylinder(),
+    Sphere()
 )
 for manifold in mflds
     validate_manifold(manifold)
