@@ -216,14 +216,12 @@ function run_simulation(
                 add!(history, framen, simulation, v)
 
                 # add frame to animation
-                # isnothing(frame_every_n) || begin
-                #     i % frame_every_n == 0 && framen < length(time) && begin
-                #         plot(simulation, time[framen], v)
-                #         frame(anim)
-                #     end
-                # end
-                plot(simulation, time[framen], v)
-                frame(anim)
+                isnothing(frame_every_n) || begin
+                    i % frame_every_n == 0 && framen < length(time) && begin
+                        plot(simulation, time[framen], v)
+                        frame(anim)
+                    end
+                end
 
                 framen += 1
                 update!(job)

@@ -7,6 +7,15 @@ import NearestNeighbors
 
 DATADIR = path(pwd()) / "data"
 
+""" 
+    Check if a file at a path exists
+"""
+function checkpath(fld::String, savename::String, extension="bson")::Bool
+    p = DATADIR / fld / "$savename.$extension"
+    exists(p)
+end
+
+
 function savepath(fld::String, savename::String, extension="bson")
     # get destination path
     base = DATADIR / fld 

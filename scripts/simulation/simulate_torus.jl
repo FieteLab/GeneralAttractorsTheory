@@ -24,7 +24,7 @@ end
  
 h = run_simulation(simulation, chunks;  
                 frame_every_n=nothing, 
-                discard_first_ms=1000, 
+                discard_first_ms=100, 
                 average_over_ms=20,
 )
  

@@ -18,6 +18,7 @@ using GeneralAttractors
 using GeneralAttractors.Analysis
 import GeneralAttractors: savepath
 import GeneralAttractors: bounding_box_size, bounding_box
+import GeneralAttractors.Analysis.ManifoldAnalysis: tda_on_pointcloud
 
 include("manifolds.jl")
 
@@ -81,13 +82,13 @@ function validate_manifold(manifold::AbstractPointManifold)
 
         # do TDA
         @info "Doing TDA"
-        M = generate_manifold_pointcloud(manifold; η=η, N=2000)
+        M = generate_manifold_pointcloud(manifold; η=η, N=6000)
         params = AnalysisParameters(
             tda_threshold           = 3,
             tda_downsample_factor   = 1,
             tda_dim_max             = manifold.d,
         )
-        _, tda_plot = estimate_manifold_topology(M, params)
+        _, tda_plot = tda_on_pointcloud(M, params)
         push!(plots, tda_plot)
     end
 
@@ -113,13 +114,13 @@ mflds = (
     # ProjectedManifold(10, Sphere()),
     # ProjectedManifold(10, Plane()),
     # ProjectedManifold(10, Ring()),
-    # ProjectedManifold(10, Torus()),  # ! REDO wngiaerjbfieuwfblkanflksnfk
+    ProjectedManifold(10, Torus()),
     # ProjectedManifold(10, Cylinder()),
     # Torus(),
-    Plane(),
-    Ring(),
-    Cylinder(),
-    Sphere()
+    # Plane(),
+    # Ring(),
+    # Cylinder(),
+    # Sphere(),
 )
 for manifold in mflds
     validate_manifold(manifold)

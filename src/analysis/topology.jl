@@ -1,7 +1,7 @@
 
 """
-Function to process (e.g. dimensionality reduction) a point
-cloud of data an analyze its topology. 
+Analysis of manifold topology and dimensionality
+from point cloud data (e.g. neural activity recordings)
 """
 module ManifoldAnalysis
     using ManifoldLearning
@@ -22,15 +22,19 @@ module ManifoldAnalysis
         save_model,
         load_model,
         savepath,
-        bounding_box_size
+        checkpath
+
     import GeneralAttractors.Simulations: History
     import GeneralAttractors.Analysis: AnalysisParameters
+
+    include("analysis_viz.jl")
 
     export pca_dimensionality_reduction, isomap_dimensionality_reduction, estimate_manifold_topology, estimate_intrinsic_dimensionality
 
     # ---------------------------------------------------------------------------- #
     #                                      PCA                                     #
     # ---------------------------------------------------------------------------- #
+    """ compute fraction of variance explained by each PC """
     fraction_variance_explained(M::PCA) = principalvars(M) ./ tvar(M) * 100
 
     """
@@ -81,7 +85,9 @@ module ManifoldAnalysis
     function pca_dimensionality_reduction(
             simulation_name::String, 
             params::AnalysisParameters=AnalysisParameters(),
-        )   
+        )::Nothing
+            (checkpath(simulation_name, "pca_space", "npz") && !params.debug) && return
+
             history = load_simulation_history(simulation_name, simulation_name)
 
             # flatten out S
@@ -111,6 +117,7 @@ module ManifoldAnalysis
             # save results to file
             save_model(pca_model, simulation_name, "pca_model", :PCA)
             save_data(S_pca_space, simulation_name, "pca_space")
+            nothing
     end
 
 
@@ -127,30 +134,32 @@ module ManifoldAnalysis
         underwent PCA dimensionality reduction
     """
     function isomap_dimensionality_reduction(
-        simulation_name::String, 
-        params::AnalysisParameters=AnalysisParameters(),
-    )   
-        # load
-        X = load_data(simulation_name, "pca_space")
+            simulation_name::String, 
+            params::AnalysisParameters=AnalysisParameters(),
+        )::Nothing
+            (checkpath(simulation_name, "isomap_space", "npz") && !params.debug) && return
 
-        # fit
-        @info "Performing ISOMAP" size(X) params.n_isomap_dimensions
-        iso = ManifoldLearning.fit(
-                Isomap,
-                X;
-                k=params.isomap_k,
-                maxoutdim=params.n_isomap_dimensions,
-            )
-        M = predict(iso, X)
-        @info "isomap fitting completed" size(M)
+            # load
+            X = load_data(simulation_name, "pca_space")
 
-        # make animation of Isomap embedding
-        animate_3d_scatter(M, simulation_name*"_iso_embedding"; alpha=.25, title=simulation_name)
+            # fit
+            @info "Performing ISOMAP" size(X) params.n_isomap_dimensions
+            iso = ManifoldLearning.fit(
+                    Isomap,
+                    X;
+                    k=params.isomap_k,
+                    maxoutdim=params.n_isomap_dimensions,
+                )
+            M = predict(iso, X)
+            @info "isomap fitting completed" size(M)
 
-        # save
-        save_model(iso, simulation_name, "isomap_model", :ISOMAP)
-        save_data(M, simulation_name, "isomap_space")
-        M
+            # make animation of Isomap embedding
+            animate_3d_scatter(M, simulation_name*"_iso_embedding"; alpha=.25, title=simulation_name)
+
+            # save
+            save_model(iso, simulation_name, "isomap_model", :ISOMAP)
+            save_data(M, simulation_name, "isomap_space")
+            nothing
     end
 
 
@@ -179,7 +188,10 @@ module ManifoldAnalysis
         tda_on_pointcloud(X, params, simulation_name)
     end
 
+    
     function tda_on_pointcloud(X::Matrix, params::AnalysisParameters, savename::String) #::Tuple{Vector{PersistenceDiagram}, Plot}
+        (checkpath(savename, "tda_results", "png") && !params.debug) && return
+
         # convert M in a vector of tuples for TDA
         n = (Int ∘ round)(size(X, 2)/params.tda_downsample_factor)
         X̄ = [
@@ -197,19 +209,27 @@ module ManifoldAnalysis
         )
 
         # plot results
-        plot(
+        plt = plot(
             plot(tda),
             barcode(tda),
             size=(1000, 800)
         )
         savefig(savepath(savename, "tda_results", "png"))
         save_model(tda, savename, "tda_barcode", :TDA)
-        return tda, plot(tda, size=(800, 800))
+        return tda, plt
     end
 
-    function estimate_manifold_topology(simulation_name::String, params::AnalysisParameters=AnalysisParameters())
-        # tda = tda_on_pointcloud(simulation_name, params)
-        error("Need to analyze the results of TDA on data")
+
+    """
+    Run TDA and analyze barcode to infer topology.
+
+    TODO: barcode analysis
+    """
+    function estimate_manifold_topology(
+                simulation_name::String,
+                params::AnalysisParameters=AnalysisParameters()
+            )
+        return tda_on_pointcloud(simulation_name, params)
     end
 
     function estimate_manifold_topology(
@@ -231,10 +251,8 @@ module ManifoldAnalysis
         verbose::Bool = true
     )::Vector{Int}
 
-    Fit PCA to local neighborhoods on the data manifold to estiamte
-    local dimensionality. 
-    The size of the neighborhood (fraction of datapoints included) and
-    the fraction of variance explained requied affectthe results. 
+    Fit PCA to local neighborhoods on the data manifold to estimate
+    intrinsic dimensionality. 
     """
     function estimate_intrinsic_dimensionality(
         simulation_name::String,
@@ -249,33 +267,30 @@ module ManifoldAnalysis
     
 
     function estimate_intrinsic_dimensionality(
-        M::Matrix,
-        params::AnalysisParameters=AnalysisParameters();
-    )
+            M::Matrix,
+            params::AnalysisParameters=AnalysisParameters();
+        )
 
-    # build nearest neighbor tree
-    nntree = KDTree(M; reorder=false, leafsize=5)
+        # build nearest neighbor tree
+        nntree = KDTree(M; reorder=false, leafsize=5)
 
-    # sample random points on the manifold
-    seeds_idxs = rand(1:size(M, 2), params.intrinsic_d_nseeds)
-    seeds = M[:, seeds_idxs]
+        # sample random points on the manifold
+        seeds_idxs = rand(1:size(M, 2), params.intrinsic_d_nseeds)
+        seeds = M[:, seeds_idxs]
 
-    # get neighborhoods
-    k = (Int ∘ round)(params.intrinsic_d_neighborhood_size)
-    Us, _ = knn(nntree, seeds, k) 
+        # get neighborhoods
+        k = (Int ∘ round)(params.intrinsic_d_neighborhood_size)
+        Us, _ = knn(nntree, seeds, k) 
 
-    # for each neighborhood fit PCA and get the number of PCs
-    D = []  # store "dimensionality" of each tangent vector space
-    for U in Us
-        @assert length(U) == k
-        pca_model = fit(PCA, M[:, U]; pratio=0.999999, maxoutdim=size(M, 2))
-        d = find_fraction_variance_explained_elbow(principalvars(pca_model))
-
-        # pca_model = fit(PCA, M[:, U]; pratio=0.8, maxoutdim=size(M, 2))
-        # d = length(principalvars(pca_model))
-        push!(D, d)
-    end
-    return D
+        # for each neighborhood fit PCA and get the number of PCs
+        D = []  # store "dimensionality" of each tangent vector space
+        for U in Us
+            @assert length(U) == k
+            pca_model = fit(PCA, M[:, U]; pratio=0.999999, maxoutdim=size(M, 2))
+            d = find_fraction_variance_explained_elbow(principalvars(pca_model))
+            push!(D, d)
+        end
+        return D
     end
 
     
