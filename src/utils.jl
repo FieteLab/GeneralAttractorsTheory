@@ -1,4 +1,16 @@
 """
+    lerp(i::Int, n::Int, x₀::Float64, x₁::Float64)::Float64
+
+Linear interpolation between two values (xᵢ) 
+given an index `i ∈ [1, n]`.
+"""
+function lerp(i::Int, n::Int, x₀, x₁)::Float64
+    p = (i-1)/(n-1)
+    x₀*(1-p)+x₁*p
+end
+
+
+"""
     moving_average(A::AbstractArray, m::Int)
 
 Moving average smoothing.

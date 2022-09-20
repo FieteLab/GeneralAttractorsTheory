@@ -8,13 +8,15 @@ function animate_3d_scatter(
             azimuth_fn::Function = (t)->50,
             nframes=100, fps=15, kwargs...
             )
-    @assert size(X, 1) == 3 "X size wrong: $(size(X))"
+    @assert size(X, 1) == 3 "X size wrong: $(size(X)) should have second dimension == 3"
 
+    # h = maximum(abs.(X))
     p = scatter(
         X[1, 1:downsample:end], X[2, 1:downsample:end], X[3, 1:downsample:end], 
         alpha=alpha, label=nothing, ms=ms,
-        color=:black,  msw=0.0,
-        ylim=[-1, 1], xlim=[-1, 1], zlim=[-1, 1]; kwargs...
+        color=:black,  msw=0.0
+        # ylim=[-h, h], xlim=[-h, h], zlim=[-h, h]
+        ; kwargs...
     )
     anim = Animation()
 

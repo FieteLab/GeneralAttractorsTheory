@@ -1,6 +1,6 @@
 using Plots
 using Measures
-using Distances: PeriodicEuclidean, evaluate, UnionMetric
+using Distances: PeriodicEuclidean, evaluate, UnionMetric, SphericalAngle
 import Base.Iterators: product as ×  # cartesian product
 
 
@@ -51,6 +51,7 @@ function plot_distance_2d(
     x::Vector,
     y::Vector;
     points=nothing,
+    xlabel="x", ylabel="y",
     kwargs...
     )
 
@@ -69,7 +70,7 @@ function plot_distance_2d(
             y,
             reshape(Δx, length(x), length(y))',
             aspect_ratio=:equal,
-            xlabel="x", ylabel="y",
+            xlabel=xlabel, ylabel=ylabel,
             linewidth=0.25,
             grid=false,
             )
@@ -81,6 +82,11 @@ function plot_distance_2d(
     display(plt)
 end
 
+"""
+    plot_distance_2d(d::PeriodicEuclidean; kwargs...)
+
+Plot metrics of type PeriodicEuclidean
+"""
 function plot_distance_2d(d::PeriodicEuclidean; kwargs...)
     upperbound(x, ) = isfinite(x) ? x : 1
     # get coordinates mesh
@@ -91,19 +97,6 @@ function plot_distance_2d(d::PeriodicEuclidean; kwargs...)
 end
 
 
-function plot_distance_2d(d::MobiusEuclidean; kwargs...)
-    x = 0:.075:2π |> collect
-    y = 0:.075:1 |> collect
-    X = (x × y) |> collect
-    X = [[x...] for x in vec(X)]
-
-    plot_distance_2d(d, x, y; points = [
-        [0, 0],
-        [3, 0],
-        [.2, .5],
-        [2π, 0]
-    ], kwargs...)
-end
 
 
 """
@@ -121,7 +114,45 @@ function plot_distance_function(d::PeriodicEuclidean; kwargs...)
     end
 end
 
-plot_distance_function(d::MobiusEuclidean; kwargs...) = plot_distance_2d(d; kwargs...)
+
+"""
+plot_distance_function(d::MobiusEuclidean; kwargs...)
+
+Plot distance for metric of type MobiusEuclidean
+"""
+function plot_distance_function(d::MobiusEuclidean; kwargs...) 
+    x = 0:.075:2π |> collect
+    y = 0:.075:1 |> collect
+    X = (x × y) |> collect
+    X = [[x...] for x in vec(X)]
+
+    plot_distance_2d(d, x, y; points = [
+        [0, 0],
+        [3, 0],
+        [.2, .5],
+        [2π, 0]
+    ], kwargs...)
+end
+
+"""
+plot_distance_function(d::SphericalAngle; kwargs...)
+
+Plot distance for metric of type SphericalAngle
+https://github.com/JuliaStats/Distances.jl/blob/master/src/haversine.jl
+
+For an embedding of the sphere see: https://stackoverflow.com/questions/10473852/convert-latitude-and-longitude-to-point-in-3d-space
+"""
+function plot_distance_function(d::SphericalAngle; kwargs...) 
+    long = range(-π+0.01, π-0.01, length=100) |> collect
+    lat  = range(-π/2+0.01, π/2-0.01, length=100) |> collect
+    X = (long × lat) |> collect
+    X = [[x...] for x in vec(X)]
+
+    points = [
+        [-π, 0], [2, π/2], [π-1, π/2-1], [π, -1],
+    ]
+    plot_distance_2d(d, long, lat; points = points, xlabel="longitude", ylabel="latitude", kwargs...)
+end
 
 # ------------------------------- connectivity ------------------------------- #
 """ Plot connectivity matrix. """
@@ -143,14 +174,15 @@ ylabel="neuron #", kwargs...) = heatmap(
     kwargs...
 )
 
-show_connectivity!(W::Matrix; label=nothing) = heatmap!(
+show_connectivity!(W::Matrix; label=nothing, kwargs...) = heatmap!(
     W, 
     xlabel="neuron #", 
     ylabel="neuron #", 
     aspect_ratio=:equal,
     colorbar=nothing,    
     label=label,
-    alpha=.33
+    alpha=.33;
+    kwargs...
 )
 
 """ 
@@ -180,9 +212,9 @@ show_connectivity!(W::Vector; label=nothing) = plot!(
 
 show connectivity for a single neuron in a 2D lattice 
 """
-function show_connectivity(W::Matrix, n::NTuple{N,Int}, i::Int) where N
+function show_connectivity(W::Matrix, n::NTuple{N,Int}, i::Int; kwargs...) where N
     weights = reshape(W[i, :], n...)
-    show_connectivity(weights)
+    show_connectivity(weights; kwargs...)
 end
 
 """
@@ -190,31 +222,32 @@ end
 
 Show connectivity for a can's neuron given its index
 """
-function show_connectivity(can::CAN, i::Int)
-    if length(can.n) == 1
-        p = plot()
+function show_connectivity(can::CAN, i::Int; kwargs...)
+    if can.d == 1
+        p = plot(; kwargs...)
         for (n, W) in enumerate(can.Ws)
             weights = reshape(W[i, :], can.n...)
             show_connectivity!(weights; label=nothing)
         end
         x = can.I[i]
         vline!([x[1]], label="Neuron $i", lw=4, color=:black)
-    else
+    elseif can.d==2
         p = plot()
         offsets = [[0, 0], [1, 0], [0, 1], [1, 1]]
         for (n, W) in enumerate(can.Ws)
             # plot connectivity map
-            w = reshape(W[:, i], can.n...)
+            w = reshape(W[:, i], can.n...)'
 
             Δx, Δy = can.n[2] * offsets[n][1], can.n[1] * offsets[n][2]
-            x = collect(1:can.n[2]) .+ Δx
-            y = collect(1:can.n[1]) .+ Δy
+            x = collect(1:can.n[1]) .+ Δx
+            y = collect(1:can.n[2]) .+ Δy
             heatmap!(x, y, w, 
                 colorbar=nothing, 
                 xaxis=false, 
                 yaxis=false, 
                 aspect_ratio=:equal,
-                xticks=[], yticks=[]
+                xticks=[], yticks=[];
+                kwargs...
             )
 
         end
@@ -228,12 +261,14 @@ function show_connectivity(can::CAN, i::Int)
             # Δ = reverse(can.n .* offsets[n])
             Δ = can.n .* offsets[n]
             scatter!(
-                reverse(map(z->[z], x .+ Δ))..., 
+                # reverse(map(z->[z], x .+ Δ))..., 
+                map(z->[z], x .+ Δ)..., 
                 color=:green,
                 label= nothing,
                 ms=8)
         end
-
+    else
+        error("Not implemented for d>2")
     end
     p
 end

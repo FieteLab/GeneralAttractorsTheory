@@ -154,7 +154,7 @@ module ManifoldAnalysis
             @info "isomap fitting completed" size(M)
 
             # make animation of Isomap embedding
-            animate_3d_scatter(M, simulation_name*"_iso_embedding"; alpha=.25, title=simulation_name)
+            animate_3d_scatter(M, simulation_name, "isomap_projection"; alpha=.25, title=simulation_name)
 
             # save
             save_model(iso, simulation_name, "isomap_model", :ISOMAP)
@@ -270,7 +270,8 @@ module ManifoldAnalysis
             M::Matrix,
             params::AnalysisParameters=AnalysisParameters();
         )
-
+        @info "Estimating intrinsic dimensionality" size(M) params.intrinsic_d_nseeds params.intrinsic_d_neighborhood_size
+        
         # build nearest neighbor tree
         nntree = KDTree(M; reorder=false, leafsize=5)
 
