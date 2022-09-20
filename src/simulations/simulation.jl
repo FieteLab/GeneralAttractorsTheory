@@ -41,12 +41,12 @@ Base.show(io::IO, ::MIME"text/plain", sim::Simulation) = print(io, string(sim))
 function Simulation(can::AbstractCAN; kwargs...)
     # initialize activity matrices
     N = *(can.n...)
-    S = spzeros(Float32, N, 2can.d)
-    Ṡ = spzeros(Float32, N, 2can.d)
+    S = spzeros(Float64, N, 2can.d)
+    Ṡ = spzeros(Float64, N, 2can.d)
 
     # get all connection weights
     # W = cat(can.Ws..., dims=3)  # n×n×2d
-    W = sparse.(map(x -> Float32.(x), can.Ws))
+    W = sparse.(map(x -> Float64.(x), can.Ws))
     droptol!.(W, 0.001)
 
     return Simulation(can=can, S=S, Ṡ=Ṡ, W=W; kwargs...)
@@ -68,11 +68,18 @@ function step!(
 
     # get effect of recurrent connectivity & external input
     d = 2simulation.can.d
-    B = Float32.(b₀ .+ A*v)  # inputs vector of size 2d
-    η = rand(Float32, size(S, 1), d) .* simulation.η  # get noise input
+    B = b₀ .+ A*v  # inputs vector of size 2d
     S̄ = ∑ⱼ(S)  # get the sum of all current activations
-    for i in 1:d
-        Ṡ[:, i] .= W[i] * S̄ .+ B[i] .+ η[i]
+
+    if simulation.η > 0
+        η = rand(Float64, size(S, 1), d) .* simulation.η  # get noise input
+        for i in 1:d
+            Ṡ[:, i] .= W[i] * S̄ .+ B[i] .+ η[i]
+        end
+    else
+        for i in 1:d
+            Ṡ[:, i] .= W[i] * S̄ .+ B[i]
+        end
     end
 
     # remove bad entries
@@ -139,9 +146,8 @@ function add!(history::History, framen::Int, simulation::Simulation, v::Vector{F
     
     # make sure it fits in history
     framen > size(history.S, 3)*history.average_over+history.discard && begin
-            # @info "skipping" size(history.S, 3) history.average_over framen k*history.average_over+history.discard
-            # error()
-            @warn "Frame too large during add! to history" framen size(history.S)
+            # max_d = size(history.S, 3)*history.average_over+history.discard
+            # @warn "Frame too large during add! to history" framen size(history.S) max_d
             return
     end
 

@@ -40,12 +40,18 @@ function RandomChunk(simulation; duration::Int=500, smoothing_window::Int=40, μ
 
 
     smoothing_window = (Int ∘ floor)(smoothing_window / simulation.dt)
-    θ = 2π .* clamp.(
-        moving_average(
-            rand(Float64, nframes), 10
-            ), 
-        -1, 1
-    ) .+ 2π .* sin.((1:nframes) ./ (1000 / simulation.dt))
+
+    # create a kinda-random angle vector by summing multiple sine waves and some noise
+    η = moving_average(
+                rand(Float64, nframes), 25
+                )
+    θ = sin.((1:nframes) ./ (100 / simulation.dt)) .- 
+                sin.((1:nframes) ./ (75 / simulation.dt)) .+ 
+                sin.((1:nframes) ./ (125 / simulation.dt)) .+
+                sin.((1:nframes) ./ (512 / simulation.dt)) .+
+                sin.((1:nframes) ./ (50 / simulation.dt)) .+
+                η
+    
 
     μ = μ₀ .+ (moving_average(
         rand(Float64, nframes), smoothing_window
@@ -82,7 +88,13 @@ function Plots.plot(chunk::RandomChunk; kwargs...)
             )
             plot!(time, y, label=nothing; kwargs...)
         end
-        plot(p1, p2)
+
+        θ = acos.(clamp.(
+            map(
+            x->x[1], chunk.v
+        ),-1, 1))
+        p3 = plot(θ, label="θ")
+        plot(p1, p2, p3)
     end
     display(plt)
 end

@@ -1,6 +1,6 @@
-using Plots
-using Distances
-import Base.Iterators: product as ×  # cartesian product
 using GeneralAttractors
-using GeneralAttractors.Kernels
+using Plots
 
+import GeneralAttractors.Simulations: RandomChunk
+
+RandomChunk(simulation; duration=10000, μ₀=1.0, σ=3) |> plot

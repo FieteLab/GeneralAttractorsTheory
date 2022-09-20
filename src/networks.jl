@@ -63,5 +63,5 @@ function ξ_s(i::Int, j::Int)::Vector
     ]
 end
 d_s = SphericalAngle()
-k_s = DiffOfExpKernel(; λ = 1.5)
-sphere_attractor = CAN("sphere", n, ξ_s, d_s, k_s;  offset_size=0.0, α=.1)
+k_s = DiffOfExpKernel(; λ = 0.75)
+CAN("sphere", n, ξ_s, d_s, k_s;  offset_size=0.1, α=.1)

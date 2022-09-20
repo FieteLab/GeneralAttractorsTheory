@@ -98,7 +98,7 @@ module ManifoldAnalysis
             nPC = if !isnothing(params.max_nPC)
                     params.max_nPC
             else
-                (Int ∘ round)(max(N/100, 50))
+                25
             end
 
             # reduce dimensionality with PCA

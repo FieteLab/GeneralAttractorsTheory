@@ -12,15 +12,16 @@ the topology of the activity manifold.
 
 sim = "torus_sim"
 params = AnalysisParameters(
-    intrinsic_d_neighborhood_size=50,
+    intrinsic_d_nseeds=1000,
+    intrinsic_d_neighborhood_size=25,
     debug=true,   # avoid re-running analysis steps
 )
 @info "Running manifold analysis for simulation '$sim'"
 tprintln(params)
 
 # ------------------------- dimensionality reduction ------------------------- #
-# pca_dimensionality_reduction(sim, params)
-isomap_dimensionality_reduction(sim, params)
+pca_dimensionality_reduction(sim, params)
+# isomap_dimensionality_reduction(sim, params)
 
 
 # ------------------------- intrinsic dimensionality ------------------------- #
