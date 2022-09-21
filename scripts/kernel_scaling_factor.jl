@@ -8,6 +8,7 @@ using GLMakie
 GLMakie.activate!()
 GLMakie.inline!(false)
 
+# TODO use GeneralAttractors.ManifoldUtils for visualization and embedding
 
 
 mfld = :sphere
