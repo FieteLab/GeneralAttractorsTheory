@@ -7,6 +7,7 @@ module GeneralAttractors
     include("kernels.jl")
     include("can.jl")
     
+    include("manifolds.jl")
 
     export CAN, Kernel
     export show_connectivity, plot_distance_function
@@ -26,6 +27,8 @@ module GeneralAttractors
     export Simulation, ConstantChunk, RandomChunk, run_simulation
 
     import .Analysis
+
+    import .ManifoldUtils
     
     include("networks.jl")
 

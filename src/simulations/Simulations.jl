@@ -3,7 +3,6 @@ module Simulations
     using Parameters: @with_kw_noshow
     using Plots
     using Term.Progress
-    using Tullio
     using Statistics
     using SparseArrays
 
