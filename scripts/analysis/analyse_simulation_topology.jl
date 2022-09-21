@@ -10,6 +10,8 @@ Load data from a CAN simulation and analyze
 the topology of the activity manifold.
 """
 
+# TODO add animation from saved data to visually inspect stuff
+
 sim = "torus_sim"
 params = AnalysisParameters(
     intrinsic_d_nseeds=1000,
