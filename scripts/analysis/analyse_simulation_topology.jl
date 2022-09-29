@@ -16,14 +16,14 @@ sim = "torus_sim"
 params = AnalysisParameters(
     intrinsic_d_nseeds=1000,
     intrinsic_d_neighborhood_size=25,
-    debug=true,   # avoid re-running analysis steps
+    debug=false,   # avoid re-running analysis steps
 )
 @info "Running manifold analysis for simulation '$sim'"
 tprintln(params)
 
 # ------------------------- dimensionality reduction ------------------------- #
 pca_dimensionality_reduction(sim, params)
-# isomap_dimensionality_reduction(sim, params)
+isomap_dimensionality_reduction(sim, params)
 
 
 # ------------------------- intrinsic dimensionality ------------------------- #
@@ -32,4 +32,4 @@ d = estimate_intrinsic_dimensionality(sim, params)
 print(Panel("Intrinsic dimensionality: $μ ± $σ", title="Local PCA", style="green"))
 
 # ------------------------------------ TDA ----------------------------------- #
-# estimate_manifold_topology(sim, params)
+estimate_manifold_topology(sim, params)

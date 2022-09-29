@@ -4,7 +4,7 @@ Collection of code useful to visualize manifolds
 module ManifoldUtils
     using GLMakie
     using Parameters
-
+    import AbstractPlotting
     using Colors
     
 
@@ -31,6 +31,8 @@ module ManifoldUtils
         X = [p[1] for p in pts]
         Y = [p[2] for p in pts]
         Z = [p[3] for p in pts]
+
+        @info "cacca" pts pts[1] X Y Z
         return X, Y, Z
     end
 
@@ -123,11 +125,13 @@ module ManifoldUtils
             else
                 error("Unrecognized colorby value $colorby")
             end
+        else
+            colorby=:W
         end
 
         # plot
         fig = Figure(resolution=(1200, 1200), viewmode = :fitzoom)
-        ax = LScene(fig[1, 1], show_axis=true, )
+        ax = LScene(fig[1, 1], scenekw = (; limits=Rect3f(Vec3f(-1, -1, -1),Vec3f(2, 2, 2))))
 
         pltobj = surface!(
             ax,
@@ -140,26 +144,35 @@ module ManifoldUtils
         wireframe!(ax, X, Y, Z; transparency=transparency, shading=false, color=:black, linewidth=0.5)
 
         # colorbar
-        zoom!(ax.scene, cameracontrols(ax.scene), 1.4)
-        Colorbar(fig[1, 2], pltobj, height=Relative(0.5),
-            label = string(colorby), ticklabelsize = 18,
-            ticklabelcolor=:white, tickcolor=:white,
-            labelcolor=:white, labelsize=20,
-        )
-        colsize!(fig.layout, 1, Aspect(1, 0.8))
-        colsize!(fig.layout, 2, Aspect(1, 0.1))
+        
+
+        try
+            Colorbar(fig[1, 2], pltobj, height=Relative(0.5),
+                label = string(colorby), ticklabelsize = 18,
+                ticklabelcolor=:white, tickcolor=:white,
+                labelcolor=:white, labelsize=20,
+            )
+            colsize!(fig.layout, 1, Aspect(1, 0.8))
+            colsize!(fig.layout, 2, Aspect(1, 0.1))
+        catch
+            nothing
+        end
 
 
         # style
         axis = ax.scene[OldAxis] # you can change more colors here!
         axis[:ticks][:textcolor] = :grey64
-        axis[:ticks][:textsize] = 12
+        axis[:ticks][:textsize] = 7
         axis[:frame][:linecolor] = :white
         axis[:frame][:axiscolor] = :white
         axis[:frame][:linewidth] = 0.5
         axis[:names][:textcolor] = :white
-        axis[:names][:textsize] = 22
+        axis[:names][:textsize] = 10
+        zoom!(ax.scene, cameracontrols(ax.scene), 1.4)
 
+        # camera
+        cam = Makie.cameracontrols(scene)
+        cam.projectiontype[] = AbstractPlotting.Orthographic
 
         set_theme!(backgroundcolor=colorant"#23272E")
         display(fig)
