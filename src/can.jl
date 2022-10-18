@@ -52,7 +52,7 @@ module Can
             σ::Union{Symbol, Function}=:relu,
             offset_size::Number=1.0,                        # magnitude of weights offset (distance)
             offsets::Union{Nothing, Matrix} = nothing,      # offset directions, rows Aᵢ of A
-            α::Float64=1.0,                                   # scales A matrix
+            α::Float64=1.0,                                 # scales A matrix
         ) where N
 
         d = length(n)
