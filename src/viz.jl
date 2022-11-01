@@ -218,55 +218,43 @@ function show_connectivity(W::Matrix, n::NTuple{N,Int}, i::Int; kwargs...) where
 end
 
 """
-    show_connectivity(can::CAN, i::Int)
+    show_connectivity(G::CAN, i::Int)
 
-Show connectivity for a can's neuron given its index
+Show connectivity for a G's neuron given its index
 """
-function show_connectivity(can::CAN, i::Int; kwargs...)
-    if can.d == 1
+function show_connectivity(G::IntegratorNetwork, i::Int; kwargs...)
+    if G.d == 1
         p = plot(; kwargs...)
-        for (n, W) in enumerate(can.Ws)
-            weights = reshape(W[i, :], can.n...)
-            show_connectivity!(weights; label=nothing)
-        end
-        x = can.I[i]
+        weights = G.W[i, :]
+        plot!(weights, lw=2, color="grey"; label=nothing)
+        x = G.I[i]
         vline!([x[1]], label="Neuron $i", lw=4, color=:black)
-    elseif can.d==2
+    elseif G.d==2
         p = plot()
-        offsets = [[0, 0], [1, 0], [0, 1], [1, 1]]
-        for (n, W) in enumerate(can.Ws)
-            # plot connectivity map
-            w = reshape(W[:, i], can.n...)'
+        # plot connectivity map
+        w = reshape(G.W[:, i], G.n...)' |> collect
 
-            Δx, Δy = can.n[2] * offsets[n][1], can.n[1] * offsets[n][2]
-            x = collect(1:can.n[1]) .+ Δx
-            y = collect(1:can.n[2]) .+ Δy
-            heatmap!(x, y, w, 
-                colorbar=nothing, 
-                xaxis=false, 
-                yaxis=false, 
-                aspect_ratio=:equal,
-                xticks=[], yticks=[];
-                kwargs...
-            )
+        heatmap!(w, 
+            colorbar=nothing, 
+            xaxis=false, 
+            yaxis=false, 
+            aspect_ratio=:equal,
+            xticks=[], yticks=[];
+            kwargs...
+        )
 
-        end
+        
         # separate heatmaps
-        vline!([can.n[2]], lw=4, color=:white, label=nothing)
-        hline!([can.n[1]], lw=4, color=:white, label=nothing)
+        vline!([G.n[2]], lw=4, color=:white, label=nothing)
+        hline!([G.n[1]], lw=4, color=:white, label=nothing)
 
-        # mark the neruon's location
-        for n in 1:length(can.Ws)    
-            x = can.I[i]
-            # Δ = reverse(can.n .* offsets[n])
-            Δ = can.n .* offsets[n]
-            scatter!(
-                # reverse(map(z->[z], x .+ Δ))..., 
-                map(z->[z], x .+ Δ)..., 
-                color=:green,
-                label= nothing,
-                ms=8)
-        end
+        # mark the neuron's location
+        x = G.I[i]
+        scatter!(
+            map(z->[z], x)..., 
+            color=:green,
+            label= nothing,
+            ms=8)
     else
         error("Not implemented for d>2")
     end
@@ -280,8 +268,8 @@ Show the connectivity for a can, the kernel and a
 few randomly selected neurons.
 """
 function show_connectivity(can::CAN; kwargs...)
-    idxs = [1, rand(1:*(can.n...), 4)...]
-    p = plot(can.kernel; title="Connectivity kernel")
-    ps = map(i -> show_connectivity(can, i), idxs)
+    idxs = [1, rand(1:*(can.G.n...), 4)...]
+    p = plot(can.G.kernel; title="Connectivity kernel")
+    ps = map(i -> show_connectivity(can.G, i), idxs)
     plot(p, ps...;  size=(800, 600), kwargs...) |> display
 end

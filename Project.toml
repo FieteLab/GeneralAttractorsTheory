@@ -4,7 +4,6 @@ authors = ["Federico Claudi", "Sarthak Chandran"]
 version = "0.1.0"
 
 [deps]
-AbstractPlotting = "537997a7-5e4e-5d89-9595-2241ea00577e"
 BSON = "fbb218c0-5317-5bc6-957e-2ee96dd4b1f0"
 BenchmarkTools = "6e4b80f9-dd63-53aa-95a3-0cdb28fa8baf"
 CairoMakie = "13f3f980-e62b-5c42-98c6-ff1f3baf88f0"
@@ -32,6 +31,7 @@ SparseArrays = "2f01184e-e22b-5df5-ae63-d93ebab69eaf"
 StaticArrays = "90137ffa-7385-5640-81b9-e52037218182"
 Statistics = "10745b16-79ce-11e8-11f9-7d13ad32a3b2"
 Term = "22787eb5-b846-44ae-b979-8e399b8463ab"
+ToeplitzMatrices = "c751599d-da0a-543b-9d20-d0a503d91d24"
 UnicodePlots = "b8865327-cd53-5732-bb35-84acbb429228"
 
 [compat]

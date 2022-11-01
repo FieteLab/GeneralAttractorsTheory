@@ -1,3 +1,15 @@
+import ToeplitzMatrices: Circulant
+import SparseArrays: SparseMatrixCSC, sparse
+
+# ------------------------------ linear algebra ------------------------------ #
+""" transpose function """
+function ᵀ end
+
+ᵀ(M::Matrix)::Matrix = M' |> collect
+ᵀ(M::SparseMatrixCSC)::SparseMatrixCSC = M' |> collect |> sparse
+ᵀ(M::Circulant)::Circulant = M' |> Circulant
+
+
 # ----------------------------------- misc ----------------------------------- #
 """
     lerp(i::Int, n::Int, x₀::Float64, x₁::Float64)::Float64

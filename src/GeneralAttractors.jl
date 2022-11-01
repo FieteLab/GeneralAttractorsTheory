@@ -11,7 +11,7 @@ module GeneralAttractors
 
     export CAN, Kernel
     export show_connectivity, plot_distance_function
-    # export ring_attractor, torus_attractor, mobius_attractor, sphere_attractor
+    export ring_attractor, torus_attractor, mobius_attractor, sphere_attractor
     export MobiusEuclidean
     export load_simulation_history, save_data, load_data, save_model, load_model
 

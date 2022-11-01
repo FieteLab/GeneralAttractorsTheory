@@ -4,7 +4,6 @@ Collection of code useful to visualize manifolds
 module ManifoldUtils
     using GLMakie
     using Parameters
-    import AbstractPlotting
     using Colors
     
 
@@ -131,7 +130,9 @@ module ManifoldUtils
 
         # plot
         fig = Figure(resolution=(1200, 1200), viewmode = :fitzoom)
-        ax = LScene(fig[1, 1], scenekw = (; limits=Rect3f(Vec3f(-1, -1, -1),Vec3f(2, 2, 2))))
+        ax = LScene(fig[1, 1], 
+            # scenekw = (; limits=Rect3f(Vec3f0(-1, -1, -1),Vec3f0(2, 2, 2)))
+        )
 
         pltobj = surface!(
             ax,
@@ -171,8 +172,8 @@ module ManifoldUtils
         zoom!(ax.scene, cameracontrols(ax.scene), 1.4)
 
         # camera
-        cam = Makie.cameracontrols(scene)
-        cam.projectiontype[] = AbstractPlotting.Orthographic
+        # cam = Makie.cameracontrols(scene)
+        # cam.projectiontype[] = Makie.Orthographic
 
         set_theme!(backgroundcolor=colorant"#23272E")
         display(fig)

@@ -1,9 +1,12 @@
 module Networks
     import Distances: Metric, pairwise
-   
-    
+    import ToeplitzMatrices: Circulant
+    import IterTools: product as ×
+    using SparseArrays
+
     export AbstractNetwork, IntegratorNetwork, VelocityNetwork, CAN
 
+    import GeneralAttractors: ᵀ
     using ..Kernels: AbstractKernel
 
 
@@ -30,7 +33,7 @@ module Networks
         d::Int                             # number of dimensions
         I::Vector{Tuple}                   # index (i,j...) of each neuron in the lattice
         X::Matrix                          # N × n_neurons matrix with coordinates of each neuron in lattice
-        W::Vector{Array}                   # connectivity matrix (n × n)
+        W::SparseMatrixCSC                 # connectivity matrix (n × n)
         kernel::AbstractKernel             # connectivity kernel
         σ::Function                        # activation function
         τ::Float64                         # network time constant
@@ -64,26 +67,24 @@ module Networks
         - τ:            network time constant (milliseconds)
     """
     function IntegratorNetwork(
-            n::NTuple{N,Int},
+            n::NTuple{d,Int},
             ξ::Function,
             metric::Metric,
             kernel::AbstractKernel;
             σ::Union{Symbol, Function}=:relu,
             τ::Float64  = 10.0 
-        ) where N
+        ) where d
 
         # ---------------------------------- checks ---------------------------------- #
-        d = length(n)
-
         # check that ξ has the right form
         nargs = first(methods(ξ)).nargs - 1
-        @assert N == nargs  "ξ should accept $(N) arguments, accepts: $(nargs)"
+        @assert d == nargs  "ξ should accept $(d) arguments, accepts: $(nargs)"
     
-        rtype = Base.return_types(ξ, NTuple{N, Int})[1]
+        rtype = Base.return_types(ξ, NTuple{d, Int})[1]
         @assert rtype <: AbstractVector "ξ should return a Vector with neuron coordinates, not $rtype"
     
         # get the index of every neuron in the lattice | Array of size `n`
-        lattice_idxs::AbstractArray{NTuple{N, Int}} = ×(map(_n -> 1:_n, n)...) |> collect |> vec
+        lattice_idxs::AbstractArray{NTuple{d, Int}} = ×(map(_n -> 1:_n, n)...) |> collect |> vec
         @debug "Got lattice" typeof(lattice_idxs) size(lattice_idxs)
     
         # --------------------------------- construc --------------------------------- #
@@ -96,18 +97,22 @@ module Networks
         # construct connectivity matrices (first get distance then pass through kernel)
         # get pairwise offset connectivity
         D = pairwise(metric, X, X)
-        W = kernel.k.(D )
+        W = kernel.k.(D) |> sparse
     
         # get connectivity function
         σ = σ isa Symbol ? activations[σ] : σ
         
-        @debug "ready" n lattice_idxs eltype(lattice_idxs) X eltype(X) typeof(Ws) eltype(Ws)
+        @debug "ready" n lattice_idxs eltype(lattice_idxs) X eltype(X) typeof(W) eltype(W) size(W)
         return IntegratorNetwork(n, d, lattice_idxs, X, W, kernel, σ, τ)
     end
 
     # ---------------------------------------------------------------------------- #
     #                             VELOCITY NETWORK (H)                             #
     # ---------------------------------------------------------------------------- #
+
+    @enum ShiftOrientation left=1 right=0
+
+
     """
         A velocity input network of a CAN.
 
@@ -123,16 +128,34 @@ module Networks
         For each i-th dimension there's a positive and a negative shift network. 
     """
     struct VelocityNetwork <: AbstractNetwork
-        m::Int          # number of neurons
-        i::Int          # index of dimension (for multi-dimensional CAN's)
-        sign::Int       # 1 if it's a positive shift network or 0 otherwise.
+        m::Int                              # number of neurons
+        i::Int                              # index of dimension (for multi-dimensional CAN's)
+        orientation::ShiftOrientation       # 1 if it's a positive shift network or 0 otherwise.
 
-        A::Matrix       # n × m (m = # neurons in H, m = tot # neurons in G). H → G projections
-        P::Matrix       # n × m. Projection matrix. P = Bᵀ
-        S::Matrix       # m × m. Shift operator matrix on the state of H.
-        B::Matrix       # m × n. G → H projection
+        A::SparseMatrixCSC       # n × m (m = # neurons in H, m = tot # neurons in G). H → G projections
+        P::SparseMatrixCSC       # n × m. Projection matrix. P = Bᵀ
+        S::SparseMatrixCSC       # m × m. Shift operator matrix on the state of H.
+        B::SparseMatrixCSC       # m × n. G → H projection
 
         τ::Float64      # network time constant
+    end
+
+    Base.string(hnet::VelocityNetwork) = "VelocityNetwork H. Dimension $(hnet.i), sign: $(hnet.orientation)"
+
+
+    """
+    Construct a (left/right) shift operator matrix S of size m × m.
+    `sign ∈ [0, 1]` is used to denote left vs right shifts.
+    """
+    function ShiftOperator(m::Int, orientation::ShiftOrientation)::Circulant
+        h = zeros(m)
+        h[2] = 1
+        S = Circulant(h) 
+        return if Int(orientation) == 1
+            S       # default operator gets a right shift
+        else
+            S |> ᵀ  # transpose operator to get left shift
+        end
     end
 
     """
@@ -141,19 +164,25 @@ module Networks
     Network constructor. 
     Construct an H^±ᵢ network from a G net.    
     """
-    function VelocityNetwork(G::IntegratorNetwork, i::Int, sign::Int, τ::Float64)
+    function VelocityNetwork(G::IntegratorNetwork, i::Int, orientation::ShiftOrientation, τ::Float64)
         m = G.n[i]                # neurons in H net
         n = reduce(*, G.n)        # tot neurons in G net
 
         # construct B matrix
-        B =
+        B = zeros(m, n)  # to fill in with Kronecher δ(θ̂, θᵢ)
+        θ̂ = G.X[i, :]
+        δ(θ̂, θᵢ) = θ̂ == θᵢ
+        for j in 1:m, k in 1:n
+            δ(θ̂[j], G.X[i, k]) && (B[j, k] = 1)
+        end
+        B = sparse(B)
 
         # construct A matrix
-        P = B' |> collect
-        S = 
+        P = B |> ᵀ
+        S = ShiftOperator(m, orientation) |> sparse
         A = P*S
 
-        return VelocityNetwork(m, i, sign, A, P, S, B, τ)
+        return VelocityNetwork(m, i, orientation, A, P, S, B, τ)
     end
     
     
@@ -177,17 +206,57 @@ module Networks
 
     Base.string(can::CAN) = "CAN $(can.name) | n. neurons: $(can.G.n)"
 
+
+    """
+        function CAN(
+            name::String,
+            n::NTuple{d,Int},
+            ξ::Function,
+            metric::Metric,
+            kernel::AbstractKernel;
+            σ::Union{Symbol, Function}=:relu,
+            τ_G = 10.0, 
+            τ_H = 10.0
+        ) where d
+
+    Construct a d-dimensional continous attractor network. 
+    Construct a `G` (integrator) network with recurrent connectivity
+    depending on a distance metric (on the neuron lattice) and a 
+    connectivity strength kernel and velocity input networks `Hs`
+    which 1-d shifted dynamics inputs. 
+
+    ## Arguments
+    - name:     network name
+    - n:        number of neurons along each dimension
+    - ξ:        neuron lattice coordinates function
+    - metric:   distance metric
+    - kernel:   connectivity strength kernel in G network
+    - σ:        non-linearity for G network dynamics
+    - τ_G/H:    time constant for networks.
+    """
     function CAN(
         name::String,
-        n::NTuple{N,Int},
+        n::NTuple{d,Int},
         ξ::Function,
         metric::Metric,
         kernel::AbstractKernel;
         σ::Union{Symbol, Function}=:relu,
         τ_G = 10.0, 
-    )
+        τ_H = 10.0
+    ) where d
 
+        # construct integrator network
         G = IntegratorNetwork(n, ξ, metric, kernel; σ=σ, τ=τ_G)
+
+        # construct velocity input networks
+        Hs::Vector{VelocityNetwork} = []
+        for i in 1:d, orientation in (left, right)
+            push!(Hs, VelocityNetwork(G, i, orientation, τ_H))
+        end
+
+        return CAN(
+            name, G, Hs
+        )
     end
 
 end
