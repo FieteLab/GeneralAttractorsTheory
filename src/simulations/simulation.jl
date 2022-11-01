@@ -6,32 +6,41 @@
 """
     @with_kw_noshow mutable struct Simulation
         can::AbstractCAN
-        S::Matrix{Float64}             
-        W::Vector{SparseMatrixCSC}      
-        Ṡ::Matrix{Float64}
-        b₀::Float64 = 1.0      
-        η::Float64  = 0.1      
-        dt::Float64 = 0.5      
-        τ::Float64  = 10.0     
-    end
+
+        A::Vector{SparseMatrixCSC}   # input weights of all Hᵢ onto G
+        H::Matrix            # state of all Hᵢ vectors (columns are hᵢ^±)
+        Ḣ::Matrix            # dH/dt
+
+        B::Vector{SparseMatrixCSC}   # input weights of G onto all Hᵢ
+
+        W::SparseMatrixCSC   # G recurrent connectivity
+        g::Vector            # state vector of G network | size: n
+        ġ::Vector            # dg/dt | size: n
+
+        b₀::Float64 = 1.0       # baseline input activity
+        η::Float64 = 0.1        # noise scale
+        dt::Float64 = 0.5       # simulation step - milliseconds
+    end 
 
 Holds information necessary for running a simulation.
-
-## Arguments
-- `can`: CAN network instance
-- `S`: placeholder for the state (activation) of all neurons. Shape: n_neurons × 2d
-- `W`: holds all network connectivity info as a vector of 2d-many sparse matrices (n_neurons × n_neurons each)
-- `Ṡ`: place holder for dS/dt array.
+Stores states and weights matrices in a compact form to speedup computation
 """
 @with_kw_noshow mutable struct Simulation
     can::AbstractCAN
-    S::SparseMatrixCSC               # n_neurons x 2d - state of all neurons
-    W::Vector{SparseMatrixCSC}       # all connection weights
-    Ṡ::SparseMatrixCSC
-    b₀::Float64 = 1.0       # baseline input activity
-    η::Float64 = 0.1       # noise scale
-    dt::Float64 = 0.5       # simulation step - milliseconds
-    τ::Float64 = 10.0      # activity time constant - milliseconds
+
+    A::Vector{SparseMatrixCSC}   # input weights of all Hᵢ onto G | element size: n × m, length: 2d
+    H::Matrix                    # state of all Hᵢ vectors (columns are hᵢ^±) | size: m × 2d
+    Ḣ::Matrix                    # dH/dt | size: m × 2d
+
+    B::Vector{SparseMatrixCSC}   # input weights of G onto all Hᵢ | element size: m × n, length: 2d
+
+    W::SparseMatrixCSC           # G recurrent connectivity
+    g::Vector                    # state vector of G network | size: n
+    ġ::Vector                    # dg/dt | size: n
+
+    b₀::Float64 = 1.0            # baseline input activity
+    η::Float64 = 0.1             # noise scale
+    dt::Float64 = 0.5            # simulation step - milliseconds
 end
 
 Base.string(sim::Simulation) = "Simulation of $(sim.can)"
@@ -39,53 +48,69 @@ Base.print(io::IO, sim::Simulation) = print(io, string(sim))
 Base.show(io::IO, ::MIME"text/plain", sim::Simulation) = print(io, string(sim))
 
 function Simulation(can::AbstractCAN; kwargs...)
-    # initialize activity matrices
-    N = *(can.n...)
-    S = spzeros(Float64, N, 2can.d)
-    Ṡ = spzeros(Float64, N, 2can.d)
+    n, d = can.n, can.d
+    m = can.Hs[1].m
 
-    # get all connection weights
-    # W = cat(can.Ws..., dims=3)  # n×n×2d
-    W = sparse.(map(x -> Float64.(x), can.Ws))
-    droptol!.(W, 0.001)
+    # initialize activity vectors of G network
+    g = spzeros(Float64, n)
+    ġ = spzeros(Float64, n)
 
-    return Simulation(can = can, S = S, Ṡ = Ṡ, W = W; kwargs...)
+    # initialize activity of H networks
+    H = spzeros(Float64, m, 2d)
+    Ḣ = spzeros(Float64, m, 2d)
+
+    # initialize Hs → G connectivity
+    A = map(x -> x.A, can.Hs) |> collect  # is sparse because each H.A is sparse
+    droptol!.(A, 0.001)   
+
+    # initialize G → Hi connectivity
+    B = map(x -> x.B, can.Hs) |> collect  # is sparse because each H.A is sparse
+    droptol!.(B, 0.001)   
+
+    # get G → G recurrent connectivity
+    W = can.G.W
+    droptol!(W, 0.001)
+
+    return Simulation(can = can, A=A, B=B, H=H, Ḣ=Ḣ, g=g, ġ=ġ, W=W; kwargs...)
 end
 
 
 # ---------------------------------------------------------------------------- #
 #                                     STEP                                     #
 # ---------------------------------------------------------------------------- #
-∑ⱼ(x) = sum(x, dims = 2) |> vec
 
 function step!(simulation::Simulation, v::Vector{Float64})
     can = simulation.can
     b₀ = simulation.b₀
-    A, S, W = simulation.can.A, simulation.S, simulation.W
-    Ṡ = simulation.Ṡ
+    A, W, B = simulation.A, simulation.W, simulation.B
+    g, ġ = simulation.g, simulation.ġ
+    H, Ḣ = simulation.H, simulation.Ḣ
+    τ_G, τ_H = can.G.τ, can.Hs[1].τ
 
-    # get effect of recurrent connectivity & external input
-    d = 2simulation.can.d
-    B = b₀ .+ A * v  # inputs vector of size 2d
-    S̄ = ∑ⱼ(S)  # get the sum of all current activations
+    # TODO add noise and baseline stimuli back in
 
-    if simulation.η > 0
-        η = rand(Float64, size(S, 1), d) .* simulation.η  # get noise input
-        for i = 1:d
-            Ṡ[:, i] .= W[i] * S̄ .+ B[i] .+ η[i]
-        end
-    else
-        for i = 1:d
-            Ṡ[:, i] .= W[i] * S̄ .+ B[i]
-        end
+    # ------------------------------ get activation ------------------------------ #
+    # initialize G network activation
+    ġ = W*g 
+    
+    # iterate over Hs networks
+    for i in 1:2can.d
+        # update G net
+        ġ .+= A[i] * H[:, i]
+
+        # update Hᵢ net
+        Ḣ[:, i] = B[i]*g .+ v[(Int ∘ ceil)(i/2)]
     end
 
     # remove bad entries
-    droptol!(simulation.S, 0.001)
-    droptol!(simulation.Ṡ, 0.001)
+    # droptol!(simulation.g, 0.001)
+    # droptol!(simulation.ġ, 0.001)
+    # droptol!(simulation.H, 0.001)
+    # droptol!(simulation.Ḣ, 0.001)
 
-    # update activity
-    simulation.S += (can.σ.(Ṡ) - S) / (simulation.τ)
+    # ------------------------------- get activity ------------------------------- #
+    simulation.g += (can.G.σ.(ġ) - g) / τ_G
+    simulation.H += (Ḣ - H) / τ_H
 end
 
 
@@ -208,8 +233,8 @@ function run_simulation(
     anim = Animation()
 
     # get history to track data
-    tot_frames = sum(getfield.(chunks, :nframes))
-    history = History(simulation, tot_frames; kwargs...)
+    # tot_frames = sum(getfield.(chunks, :nframes))
+    # history = History(simulation, tot_frames; kwargs...)
 
     # do simulation steps and visualize
     pbar = ProgressBar()
@@ -222,7 +247,7 @@ function run_simulation(
                 # framen > 50 && break
 
                 # add data to history
-                add!(history, framen, simulation, v)
+                # add!(history, framen, simulation, v)
 
                 # add frame to animation
                 isnothing(frame_every_n) || begin
@@ -244,6 +269,6 @@ function run_simulation(
         @info "saving animation"
         gif(anim, savepath(savename, savename, "gif"), fps = 20)
     end
-    save_simulation_history(history, savename, savename)
-    return history
+    # save_simulation_history(history, savename, savename)
+    # return history
 end

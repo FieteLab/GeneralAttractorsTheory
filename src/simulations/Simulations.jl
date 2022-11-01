@@ -7,7 +7,7 @@ using Statistics
 using SparseArrays
 
 import GeneralAttractors: save_simulation_history, moving_average, savepath
-import ..Can: AbstractCAN
+import ..Networks: AbstractCAN
 
 export Simulation, ConstantChunk, run_simulation, RandomChunk
 

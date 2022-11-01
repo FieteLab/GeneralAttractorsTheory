@@ -7,7 +7,7 @@
 # ---------------------------------------------------------------------------- #
 #                                 RING ATTRACTOR                               #
 # ---------------------------------------------------------------------------- #
-@info "creating ring attractor"
+@info "     ... ring attractor"
 # neurons position and distance function
 n = (256,)  # number of neurons in the ring
 ξ_r(i::Int)::Vector = [lerp(i, n[1], 0.0, 2π)]  # neurons coordinates function
@@ -19,7 +19,7 @@ ring_attractor = CAN("ring", n, ξ_r, d_r, MexicanHatKernel())
 # ---------------------------------------------------------------------------- #
 #                                TORUS ATTRACTOR                               #
 # ---------------------------------------------------------------------------- #
-@info "creating torus attractor"
+@info "     ... torus attractor"
 # neurons position and distance function
 n = (64, 64)
 function ξ_t(i::Int, j::Int)::Vector  # neurons coordinates function
@@ -37,7 +37,7 @@ torus_attractor = CAN("torus", n, ξ_t, d_t, k_t)
 # ---------------------------------------------------------------------------- #
 #                               MOBIUS ATTRACTOR                               #
 # ---------------------------------------------------------------------------- #
-@info "creating mobius attractor"
+@info "     ... mobius attractor"
 n = (64, 64)
 ξ_m(i::Int, j::Int)::Vector = [lerp(i, n[1], 0.0, 2π), lerp(j, n[2], 0.0, 2π)]  # ∈ [0, 2π] × [0, 2π]
 
@@ -52,7 +52,7 @@ mobius_attractor = CAN("mobius", n, ξ_m, d_m, k_m)
 # ---------------------------------------------------------------------------- #
 #                                    SPHERE                                    #
 # ---------------------------------------------------------------------------- #
-@info "Creating sphere attractor"
+@info "     ... sphere attractor"
 n = (64, 64)
 function ξ_s(i::Int, j::Int)::Vector
     [lerp(i, n[1], -π, π), lerp(j, n[2], -π / 2, π / 2)]

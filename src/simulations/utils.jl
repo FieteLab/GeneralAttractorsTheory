@@ -3,25 +3,16 @@
 # ---------------------------------------------------------------------------- #
 
 function simulation_frame_1dcan(simulation::Simulation, timems, v::Vector; kwargs...)
-    @info "ONE DIM CAN SIM PLOT"
     can = simulation.can
     plt = plot(;
         title = "elapsed: $(round(timems)) ms",
         clims = (0.0, 0.6),
-        ylim = [0, 5],
+        # ylim = [0, 5],
         # aspect_ratio=:equal, 
         grid = false,
     )
 
-    heatmap!(simulation.S')
-    # hline!([1.5], lw=5, color=:white, label=nothing)
-
-    # x0 = size(simulation.S, 1)/2
-    # v̂ = v ./ v[1]
-    # plot!(
-    #     [x0, x0+v̂[1]*x0/4], [3, 3], lw=10, color=:black, label=nothing
-    # )
-    # scatter!([x0], [3], ms=10, color=:black, label=nothing)
+    plot!(simulation.g)
 
     plt
 end

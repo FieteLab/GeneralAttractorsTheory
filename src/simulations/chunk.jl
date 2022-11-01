@@ -15,8 +15,7 @@ end
 function ConstantChunk(v::Vector, simulation; duration::Int = 500)
     nframes = (Int ∘ floor)(duration / simulation.dt)
 
-    A = simulation.can.A
-    @assert length(v) == size(A, 2) "Chunk vector length $(length(v)) incompatible with A's size $(size(A))"
+    @assert length(v) == simulation.can.d "Chunk vector length $(length(v)) incompatible with A's size $(simulation.can.d)"
     return ConstantChunk(duration, nframes, v, simulation.dt)
 end
 

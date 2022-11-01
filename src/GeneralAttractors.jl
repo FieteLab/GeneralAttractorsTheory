@@ -20,11 +20,11 @@ using .Networks: CAN, IntegratorNetwork, VelocityNetwork
 
 include("metrics.jl")
 include("viz.jl")
-# include("simulations/Simulations.jl")
+include("simulations/Simulations.jl")
 # include("analysis/Analysis.jl")
 
-# using .Simulations
-# export Simulation, ConstantChunk, RandomChunk, run_simulation
+using .Simulations
+export Simulation, ConstantChunk, RandomChunk, run_simulation
 
 # import .Analysis
 

@@ -176,8 +176,9 @@ function VelocityNetwork(
 
     # construct B matrix
     B = zeros(m, n)  # to fill in with Kronecher δ(θ̂, θᵢ)
+    δ(θ̂, θᵢ) = θ̂ == θᵢ # Kronecher delta function
+
     θ̂ = G.X[i, :]
-    δ(θ̂, θᵢ) = θ̂ == θᵢ
     for j = 1:m, k = 1:n
         δ(θ̂[j], G.X[i, k]) && (B[j, k] = 1)
     end
@@ -206,6 +207,8 @@ abstract type AbstractCAN <: AbstractNetwork end
 """
 mutable struct CAN <: AbstractCAN
     name::String
+    d::Int                          # number of dimensions
+    n::Int                          # tot number of neurons
     G::IntegratorNetwork
     Hs::Vector{VelocityNetwork}
 end
@@ -260,7 +263,7 @@ function CAN(
         push!(Hs, VelocityNetwork(G, i, orientation, τ_H))
     end
 
-    return CAN(name, G, Hs)
+    return CAN(name, G.d, *(G.n...), G, Hs)
 end
 
 end
