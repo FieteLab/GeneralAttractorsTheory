@@ -5,32 +5,32 @@ module GeneralAttractors
     include("utils.jl")
 
     include("kernels.jl")
-    include("can.jl")
+    include("networks.jl")
     
     include("manifolds.jl")
 
     export CAN, Kernel
     export show_connectivity, plot_distance_function
-    export ring_attractor, torus_attractor, mobius_attractor, sphere_attractor
+    # export ring_attractor, torus_attractor, mobius_attractor, sphere_attractor
     export MobiusEuclidean
     export load_simulation_history, save_data, load_data, save_model, load_model
 
-    using .Kernels: AbstractKernel, Kernel, MexicanHatKernel, DiffOfExpKernel
-    using .Can: CAN
+    using .Kernels
+    using .Networks: CAN, IntegratorNetwork, VelocityNetwork
 
     include("metrics.jl")
     include("viz.jl")
-    include("simulations/Simulations.jl")
-    include("analysis/Analysis.jl")
+    # include("simulations/Simulations.jl")
+    # include("analysis/Analysis.jl")
 
-    using .Simulations
-    export Simulation, ConstantChunk, RandomChunk, run_simulation
+    # using .Simulations
+    # export Simulation, ConstantChunk, RandomChunk, run_simulation
 
-    import .Analysis
+    # import .Analysis
 
-    import .ManifoldUtils
+    # import .ManifoldUtils
     
-    include("networks.jl")
+    include("_networks.jl")
 
 end
  

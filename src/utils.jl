@@ -1,3 +1,4 @@
+# ----------------------------------- misc ----------------------------------- #
 """
     lerp(i::Int, n::Int, x₀::Float64, x₁::Float64)::Float64
 
@@ -10,6 +11,7 @@ function lerp(i::Int, n::Int, x₀, x₁)::Float64
 end
 
 
+# --------------------------------- smoothing -------------------------------- #
 """
     moving_average(A::AbstractArray, m::Int)
 
@@ -32,6 +34,8 @@ function moving_average(A::AbstractArray, m::Int)
 end
 
 
+
+# ----------------------------------- sizes ---------------------------------- #
 """
     bounding_box(m::Matrix)::NamedTuple
 
