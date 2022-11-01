@@ -29,9 +29,9 @@ Holds information necessary for running a simulation.
     W::Vector{SparseMatrixCSC}       # all connection weights
     Ṡ::SparseMatrixCSC
     b₀::Float64 = 1.0       # baseline input activity
-    η::Float64  = 0.1       # noise scale
+    η::Float64 = 0.1       # noise scale
     dt::Float64 = 0.5       # simulation step - milliseconds
-    τ::Float64  = 10.0      # activity time constant - milliseconds
+    τ::Float64 = 10.0      # activity time constant - milliseconds
 end
 
 Base.string(sim::Simulation) = "Simulation of $(sim.can)"
@@ -49,35 +49,33 @@ function Simulation(can::AbstractCAN; kwargs...)
     W = sparse.(map(x -> Float64.(x), can.Ws))
     droptol!.(W, 0.001)
 
-    return Simulation(can=can, S=S, Ṡ=Ṡ, W=W; kwargs...)
+    return Simulation(can = can, S = S, Ṡ = Ṡ, W = W; kwargs...)
 end
 
 
 # ---------------------------------------------------------------------------- #
 #                                     STEP                                     #
 # ---------------------------------------------------------------------------- #
-∑ⱼ(x) = sum(x, dims=2) |> vec
+∑ⱼ(x) = sum(x, dims = 2) |> vec
 
-function step!(
-    simulation::Simulation, v::Vector{Float64},
-)   
-    can         = simulation.can
-    b₀          = simulation.b₀
-    A, S, W     = simulation.can.A, simulation.S, simulation.W
-    Ṡ           = simulation.Ṡ
+function step!(simulation::Simulation, v::Vector{Float64})
+    can = simulation.can
+    b₀ = simulation.b₀
+    A, S, W = simulation.can.A, simulation.S, simulation.W
+    Ṡ = simulation.Ṡ
 
     # get effect of recurrent connectivity & external input
     d = 2simulation.can.d
-    B = b₀ .+ A*v  # inputs vector of size 2d
+    B = b₀ .+ A * v  # inputs vector of size 2d
     S̄ = ∑ⱼ(S)  # get the sum of all current activations
 
     if simulation.η > 0
         η = rand(Float64, size(S, 1), d) .* simulation.η  # get noise input
-        for i in 1:d
+        for i = 1:d
             Ṡ[:, i] .= W[i] * S̄ .+ B[i] .+ η[i]
         end
     else
-        for i in 1:d
+        for i = 1:d
             Ṡ[:, i] .= W[i] * S̄ .+ B[i]
         end
     end
@@ -87,7 +85,7 @@ function step!(
     droptol!(simulation.Ṡ, 0.001)
 
     # update activity
-    simulation.S += (can.σ.(Ṡ) - S)/(simulation.τ)
+    simulation.S += (can.σ.(Ṡ) - S) / (simulation.τ)
 end
 
 
@@ -108,13 +106,18 @@ mutable struct History
 end
 
 
-function History(simulation::Simulation, nframes::Int; average_over_ms::Int=10, discard_first_ms=250)
+function History(
+    simulation::Simulation,
+    nframes::Int;
+    average_over_ms::Int = 10,
+    discard_first_ms = 250,
+)
     # see how many frames are we skipping at start
-    n_discard  = (Int ∘ round)(discard_first_ms / simulation.dt)
+    n_discard = (Int ∘ round)(discard_first_ms / simulation.dt)
 
     # see over how many frames we average
     average_over = (Int ∘ round)(average_over_ms / simulation.dt)
-    keep_frames = (Int ∘ floor)((nframes-n_discard) / average_over)
+    keep_frames = (Int ∘ floor)((nframes - n_discard) / average_over)
     keep_frames < 1 && error("Keep frames < 0, reduce discard or increase duration")
 
     @info "Creating history arrays" size(simulation.S) size(simulation.can.A) keep_frames average_over
@@ -124,50 +127,50 @@ function History(simulation::Simulation, nframes::Int; average_over_ms::Int=10, 
     v = Array{Float64}(undef, (size(simulation.can.A, 2), keep_frames))
     v̂ = Array{Float64}(undef, (size(simulation.can.A, 2), average_over))
     @info "Done" size(S) size(Ŝ) size(v) size(v̂)
-    metadata = Dict{Symbol, Any}(
-        :can=>simulation.can.name,
-        :n=>simulation.can.n,
-        :kernel=>(string ∘ typeof)(simulation.can.kernel),
-        :σ=>simulation.can.σ,
-        :A=>simulation.can.A,
-        :b₀=>simulation.b₀,
-        :η=>simulation.η,
-        :dt=>simulation.dt,
-        :τ=>simulation.τ,
-        :average_over_ms=>average_over_ms,
+    metadata = Dict{Symbol,Any}(
+        :can => simulation.can.name,
+        :n => simulation.can.n,
+        :kernel => (string ∘ typeof)(simulation.can.kernel),
+        :σ => simulation.can.σ,
+        :A => simulation.can.A,
+        :b₀ => simulation.b₀,
+        :η => simulation.η,
+        :dt => simulation.dt,
+        :τ => simulation.τ,
+        :average_over_ms => average_over_ms,
     )
 
     @info "Simulation history saving: $(size(S)[end]) frames" "($(round((nframes-n_discard)*simulation.dt; digits=3)) ms tot , averaging every $average_over_ms ms)" "Discarding first $n_discard frames ($discard_first_ms ms)"
-    return History(S, Ŝ, v, v̂, average_over, n_discard,  metadata, 1)
+    return History(S, Ŝ, v, v̂, average_over, n_discard, metadata, 1)
 end
 
 function add!(history::History, framen::Int, simulation::Simulation, v::Vector{Float64})
     framen < history.discard && return  # skip first N frames
-    
+
     # make sure it fits in history
-    framen > size(history.S, 3)*history.average_over+history.discard && begin
-            # max_d = size(history.S, 3)*history.average_over+history.discard
-            # @warn "Frame too large during add! to history" framen size(history.S) max_d
-            return
+    framen > size(history.S, 3) * history.average_over + history.discard && begin
+        # max_d = size(history.S, 3)*history.average_over+history.discard
+        # @warn "Frame too large during add! to history" framen size(history.S) max_d
+        return
     end
 
     # add to "averaging buffer"
     k = size(history.Ŝ, 3)
     Ŝ, v̂ = history.Ŝ, history.v̂
-    
+
     F = mod(framen, k)
     Ŝ[:, :, F+1] = simulation.S
     v̂[:, F+1] = v
 
     # update main registry
-    if F == 0 || framen==1
+    if F == 0 || framen == 1
         history.entry_n > size(history.S, 3) && begin
             @warn "Can't append to history, ran out of space"
             return
         end
-        history.S[:, :, history.entry_n] = mean(Ŝ; dims=3)
-        history.v[:, history.entry_n] = mean(v̂; dims=2)
-        history.entry_n +=1
+        history.S[:, :, history.entry_n] = mean(Ŝ; dims = 3)
+        history.v[:, history.entry_n] = mean(v̂; dims = 2)
+        history.entry_n += 1
     end
 end
 
@@ -190,14 +193,14 @@ Base.show(io::IO, ::MIME"text/plain", sim::History) = print(io, string(sim))
 # ---------------------------------------------------------------------------- #
 
 function run_simulation(
-        simulation::Simulation, 
-        chunks::Vector;
-        savename::String=simulation.can.name*"_sim",
-        frame_every_n::Union{Nothing, Int} = 20,   # how frequently to save an animation frame
-        kwargs...
-    )
+    simulation::Simulation,
+    chunks::Vector;
+    savename::String = simulation.can.name * "_sim",
+    frame_every_n::Union{Nothing,Int} = 20,   # how frequently to save an animation frame
+    kwargs...,
+)
     @assert eltype(chunks) <: AbstractChunk
-        
+
     # setup animation
     T = sum(getfield.(chunks, :duration))
     time = 1:simulation.dt:T |> collect
@@ -211,10 +214,10 @@ function run_simulation(
     # do simulation steps and visualize
     pbar = ProgressBar()
     Progress.with(pbar) do
-        job = addjob!(pbar, description="Simulation",  N=length(time)+1)
+        job = addjob!(pbar, description = "Simulation", N = length(time) + 1)
         for chunk in chunks
-            for i in 1:chunk.nframes
-                v = eltype(chunk.v) == Float64 ? chunk.v : chunk.v[i] 
+            for i = 1:chunk.nframes
+                v = eltype(chunk.v) == Float64 ? chunk.v : chunk.v[i]
                 step!(simulation, v)
                 # framen > 50 && break
 
@@ -223,10 +226,12 @@ function run_simulation(
 
                 # add frame to animation
                 isnothing(frame_every_n) || begin
-                    i % frame_every_n == 0 && framen < length(time) && begin
-                        plot(simulation, time[framen], v)
-                        frame(anim)
-                    end
+                    i % frame_every_n == 0 &&
+                        framen < length(time) &&
+                        begin
+                            plot(simulation, time[framen], v)
+                            frame(anim)
+                        end
                 end
 
                 framen += 1
@@ -234,12 +239,11 @@ function run_simulation(
             end
         end
     end
-    
+
     isnothing(frame_every_n) || begin
         @info "saving animation"
-        gif(anim, savepath(savename, savename, "gif"), fps=20)
+        gif(anim, savepath(savename, savename, "gif"), fps = 20)
     end
     save_simulation_history(history, savename, savename)
     return history
 end
-

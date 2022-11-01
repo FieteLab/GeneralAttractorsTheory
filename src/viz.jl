@@ -6,33 +6,34 @@ import Base.Iterators: product as ×  # cartesian product
 
 # ---------------------------------- kernel ---------------------------------- #
 function Plots.plot(K::AbstractKernel; kwargs...)
-    x = -100:.001:100 |> collect
+    x = -100:0.001:100 |> collect
     y = K.(x)
     x̂ = x[argmin(y)]
     Plots.plot(
-        x, 
+        x,
         y,
-        xlabel="distance Δx",
-        ylabel="w",
-        lw=2,
-        label=nothing,
-        color="black"; kwargs...,
-        xlim=[-4abs(x̂), 4abs(x̂)],
-        )
+        xlabel = "distance Δx",
+        ylabel = "w",
+        lw = 2,
+        label = nothing,
+        color = "black";
+        kwargs...,
+        xlim = [-4abs(x̂), 4abs(x̂)],
+    )
 end
 
 
 
 # ---------------------------- distance functions ---------------------------- #
 function plot_distance_1d(d::PeriodicEuclidean; kwargs...)
-    x = 0:.1:d.periods[1] |> collect
+    x = 0:0.1:d.periods[1] |> collect
 
-    p = plot(; xlabel="x", ylabel="distance", kwargs...)
+    p = plot(; xlabel = "x", ylabel = "distance", kwargs...)
     colors = [:black, :red, :green, :blue]
     for (i, point) in enumerate(rand(x, 4))
         y = [evaluate(d, point, xx) for xx in x]
-        plot!(x, y, lw=3, color=colors[i], label=nothing)
-        vline!([point], color=colors[i], label=nothing)
+        plot!(x, y, lw = 3, color = colors[i], label = nothing)
+        vline!([point], color = colors[i], label = nothing)
     end
     display(p)
 end
@@ -47,13 +48,14 @@ Plot a 2D distance metric `d` given the set of
 points coordinates `x,y
 """
 function plot_distance_2d(
-    d, 
+    d,
     x::Vector,
     y::Vector;
-    points=nothing,
-    xlabel="x", ylabel="y",
-    kwargs...
-    )
+    points = nothing,
+    xlabel = "x",
+    ylabel = "y",
+    kwargs...,
+)
 
     # create lattice of points
     X = (x × y) |> collect
@@ -65,20 +67,21 @@ function plot_distance_2d(
     for p in points
         Δx = [evaluate(d, p, x) for x in X]
 
-        _plot=contourf(
-            x, 
+        _plot = contourf(
+            x,
             y,
             reshape(Δx, length(x), length(y))',
-            aspect_ratio=:equal,
-            xlabel=xlabel, ylabel=ylabel,
-            linewidth=0.25,
-            grid=false,
-            )
-        scatter!([p[1]], [p[2]], color=:green, label=nothing, ms=10, alpha=1)
+            aspect_ratio = :equal,
+            xlabel = xlabel,
+            ylabel = ylabel,
+            linewidth = 0.25,
+            grid = false,
+        )
+        scatter!([p[1]], [p[2]], color = :green, label = nothing, ms = 10, alpha = 1)
         push!(pts, _plot)
     end
 
-    plt = plot(pts..., size=(600, 600); kwargs...)
+    plt = plot(pts..., size = (600, 600); kwargs...)
     display(plt)
 end
 
@@ -88,10 +91,10 @@ end
 Plot metrics of type PeriodicEuclidean
 """
 function plot_distance_2d(d::PeriodicEuclidean; kwargs...)
-    upperbound(x, ) = isfinite(x) ? x : 1
+    upperbound(x) = isfinite(x) ? x : 1
     # get coordinates mesh
-    x = range(0, upperbound(d.periods[1]), length=100) |> collect
-    y = range(0, upperbound(d.periods[2]), length=100) |> collect
+    x = range(0, upperbound(d.periods[1]), length = 100) |> collect
+    y = range(0, upperbound(d.periods[2]), length = 100) |> collect
 
     plot_distance_2d(d, x, y; kwargs...)
 end
@@ -120,18 +123,13 @@ plot_distance_function(d::MobiusEuclidean; kwargs...)
 
 Plot distance for metric of type MobiusEuclidean
 """
-function plot_distance_function(d::MobiusEuclidean; kwargs...) 
-    x = 0:.075:2π |> collect
-    y = 0:.075:1 |> collect
+function plot_distance_function(d::MobiusEuclidean; kwargs...)
+    x = 0:0.075:2π |> collect
+    y = 0:0.075:1 |> collect
     X = (x × y) |> collect
     X = [[x...] for x in vec(X)]
 
-    plot_distance_2d(d, x, y; points = [
-        [0, 0],
-        [3, 0],
-        [.2, .5],
-        [2π, 0]
-    ], kwargs...)
+    plot_distance_2d(d, x, y; points = [[0, 0], [3, 0], [0.2, 0.5], [2π, 0]], kwargs...)
 end
 
 """
@@ -142,16 +140,22 @@ https://github.com/JuliaStats/Distances.jl/blob/master/src/haversine.jl
 
 For an embedding of the sphere see: https://stackoverflow.com/questions/10473852/convert-latitude-and-longitude-to-point-in-3d-space
 """
-function plot_distance_function(d::SphericalAngle; kwargs...) 
-    long = range(-π+0.01, π-0.01, length=100) |> collect
-    lat  = range(-π/2+0.01, π/2-0.01, length=100) |> collect
+function plot_distance_function(d::SphericalAngle; kwargs...)
+    long = range(-π + 0.01, π - 0.01, length = 100) |> collect
+    lat = range(-π / 2 + 0.01, π / 2 - 0.01, length = 100) |> collect
     X = (long × lat) |> collect
     X = [[x...] for x in vec(X)]
 
-    points = [
-        [-π, 0], [2, π/2], [π-1, π/2-1], [π, -1],
-    ]
-    plot_distance_2d(d, long, lat; points = points, xlabel="longitude", ylabel="latitude", kwargs...)
+    points = [[-π, 0], [2, π / 2], [π - 1, π / 2 - 1], [π, -1]]
+    plot_distance_2d(
+        d,
+        long,
+        lat;
+        points = points,
+        xlabel = "longitude",
+        ylabel = "latitude",
+        kwargs...,
+    )
 end
 
 # ------------------------------- connectivity ------------------------------- #
@@ -163,47 +167,42 @@ function show_connectivity end
 
 Plot an entire connectivity matrix as a heatmap
 """
-show_connectivity(W::Matrix; label=nothing, xlabel="neuron #", 
-ylabel="neuron #", kwargs...) = heatmap(
-    W, 
-    xlabel=xlabel, 
-    ylabel=ylabel, 
-    aspect_ratio=:equal,
-    colorbar=nothing,    
-    label=label;
-    kwargs...
+show_connectivity(
+    W::Matrix;
+    label = nothing,
+    xlabel = "neuron #",
+    ylabel = "neuron #",
+    kwargs...,
+) = heatmap(
+    W,
+    xlabel = xlabel,
+    ylabel = ylabel,
+    aspect_ratio = :equal,
+    colorbar = nothing,
+    label = label;
+    kwargs...,
 )
 
-show_connectivity!(W::Matrix; label=nothing, kwargs...) = heatmap!(
-    W, 
-    xlabel="neuron #", 
-    ylabel="neuron #", 
-    aspect_ratio=:equal,
-    colorbar=nothing,    
-    label=label,
-    alpha=.33;
-    kwargs...
+show_connectivity!(W::Matrix; label = nothing, kwargs...) = heatmap!(
+    W,
+    xlabel = "neuron #",
+    ylabel = "neuron #",
+    aspect_ratio = :equal,
+    colorbar = nothing,
+    label = label,
+    alpha = 0.33;
+    kwargs...,
 )
 
 """ 
     show_connectivity(W::Vector) 
 Plot 1D connectivity matrix as a vector
 """
-show_connectivity(W::Vector; label=nothing) = plot(
-    W, 
-    lw = 3,
-    xlabel="neuron #", 
-    ylabel="weights", 
-    label=label
-)
+show_connectivity(W::Vector; label = nothing) =
+    plot(W, lw = 3, xlabel = "neuron #", ylabel = "weights", label = label)
 
-show_connectivity!(W::Vector; label=nothing) = plot!(
-    W, 
-    lw = 3, 
-    xlabel="neuron #", 
-    ylabel="weights", 
-    label=label
-)
+show_connectivity!(W::Vector; label = nothing) =
+    plot!(W, lw = 3, xlabel = "neuron #", ylabel = "weights", label = label)
 
 
 
@@ -212,7 +211,7 @@ show_connectivity!(W::Vector; label=nothing) = plot!(
 
 show connectivity for a single neuron in a 2D lattice 
 """
-function show_connectivity(W::Matrix, n::NTuple{N,Int}, i::Int; kwargs...) where N
+function show_connectivity(W::Matrix, n::NTuple{N,Int}, i::Int; kwargs...) where {N}
     weights = reshape(W[i, :], n...)
     show_connectivity(weights; kwargs...)
 end
@@ -226,35 +225,33 @@ function show_connectivity(G::IntegratorNetwork, i::Int; kwargs...)
     if G.d == 1
         p = plot(; kwargs...)
         weights = G.W[i, :]
-        plot!(weights, lw=2, color="grey"; label=nothing)
+        plot!(weights, lw = 2, color = "grey"; label = nothing)
         x = G.I[i]
-        vline!([x[1]], label="Neuron $i", lw=4, color=:black)
-    elseif G.d==2
+        vline!([x[1]], label = "Neuron $i", lw = 4, color = :black)
+    elseif G.d == 2
         p = plot()
         # plot connectivity map
         w = reshape(G.W[:, i], G.n...)' |> collect
 
-        heatmap!(w, 
-            colorbar=nothing, 
-            xaxis=false, 
-            yaxis=false, 
-            aspect_ratio=:equal,
-            xticks=[], yticks=[];
-            kwargs...
+        heatmap!(
+            w,
+            colorbar = nothing,
+            xaxis = false,
+            yaxis = false,
+            aspect_ratio = :equal,
+            xticks = [],
+            yticks = [];
+            kwargs...,
         )
 
-        
+
         # separate heatmaps
-        vline!([G.n[2]], lw=4, color=:white, label=nothing)
-        hline!([G.n[1]], lw=4, color=:white, label=nothing)
+        vline!([G.n[2]], lw = 4, color = :white, label = nothing)
+        hline!([G.n[1]], lw = 4, color = :white, label = nothing)
 
         # mark the neuron's location
         x = G.I[i]
-        scatter!(
-            map(z->[z], x)..., 
-            color=:green,
-            label= nothing,
-            ms=8)
+        scatter!(map(z -> [z], x)..., color = :green, label = nothing, ms = 8)
     else
         error("Not implemented for d>2")
     end
@@ -269,7 +266,7 @@ few randomly selected neurons.
 """
 function show_connectivity(can::CAN; kwargs...)
     idxs = [1, rand(1:*(can.G.n...), 4)...]
-    p = plot(can.G.kernel; title="Connectivity kernel")
+    p = plot(can.G.kernel; title = "Connectivity kernel")
     ps = map(i -> show_connectivity(can.G, i), idxs)
-    plot(p, ps...;  size=(800, 600), kwargs...) |> display
+    plot(p, ps...; size = (800, 600), kwargs...) |> display
 end

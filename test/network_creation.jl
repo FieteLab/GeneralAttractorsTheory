@@ -6,10 +6,10 @@ import GeneralAttractors.Networks: ShiftOperator
     S = ShiftOperator(m, 1)
     Sᵀ = ShiftOperator(m, 0)
 
-    right = S*v
-    left = Sᵀ*v
+    right = S * v
+    left = Sᵀ * v
 
-    for i in 5:10
+    for i = 5:10
         @test right[i] == v[i-1]
         @test left[i] == v[i+1]
     end

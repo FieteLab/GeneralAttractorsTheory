@@ -18,8 +18,8 @@ Linear interpolation between two values (xᵢ)
 given an index `i ∈ [1, n]`.
 """
 function lerp(i::Int, n::Int, x₀, x₁)::Float64
-    p = (i-1)/(n-1)
-    x₀*(1-p)+x₁*p
+    p = (i - 1) / (n - 1)
+    x₀ * (1 - p) + x₁ * p
 end
 
 
@@ -33,14 +33,14 @@ function moving_average(A::AbstractArray, m::Int)
     out = similar(A)
     R = CartesianIndices(A)
     Ifirst, Ilast = first(R), last(R)
-    I1 = m÷2 * oneunit(Ifirst)
+    I1 = m ÷ 2 * oneunit(Ifirst)
     for I in R
         n, s = 0, zero(eltype(out))
-        for J in max(Ifirst, I-I1):min(Ilast, I+I1)
+        for J = max(Ifirst, I - I1):min(Ilast, I + I1)
             s += A[J]
             n += 1
         end
-        out[I] = s/n
+        out[I] = s / n
     end
     return out
 end
@@ -55,10 +55,7 @@ Min and Max along each dimension (row) of a matrix with points cloud data.
 Rows are dimensions, columns are points.
 """
 function bounding_box(m::Matrix)::NamedTuple
-    (;
-        min=minimum.(eachrow(m)),
-        max=maximum.(eachrow(m))
-    )
+    (; min = minimum.(eachrow(m)), max = maximum.(eachrow(m)))
 end
 
 """
@@ -66,7 +63,7 @@ end
 
 Magnitude of the diagonal of the bounding box of a points cloud
 """
-function bounding_box_size(m::Matrix)::Float64 
+function bounding_box_size(m::Matrix)::Float64
     bb = bounding_box(m)
-    norm(bb.max-bb.min)
+    norm(bb.max - bb.min)
 end
