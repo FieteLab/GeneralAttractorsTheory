@@ -91,7 +91,6 @@ function IntegratorNetwork(
     X::Matrix = hcat(ξ̂.(lattice_idxs)...)
     @debug "X" size(X) typeof(X) eltype(X)
 
-
     # construct connectivity matrices (first get distance then pass through kernel)
     # get pairwise offset connectivity
     D = pairwise(metric, X, X)
@@ -110,7 +109,7 @@ end
 #                             VELOCITY NETWORK (H)                             #
 # ---------------------------------------------------------------------------- #
 
-@enum ShiftOrientation left = 1 right = 0
+@enum ShiftOrientation left = 1 right = -1
 
 
 """
@@ -137,6 +136,9 @@ struct VelocityNetwork <: AbstractNetwork
     S::SparseMatrixCSC       # m × m. Shift operator matrix on the state of H.
     B::SparseMatrixCSC       # m × n. G → H projection
 
+    ϕ::Function              # ϕᵢ(v⃗) returns v[i] if sign(v[1]) is the same as the network's orientation
+
+    λ::Float64               # velocity input scaling factor.
     τ::Float64      # network time constant
 end
 
@@ -169,6 +171,7 @@ function VelocityNetwork(
     G::IntegratorNetwork,
     i::Int,
     orientation::ShiftOrientation,
+    λ::Float64,
     τ::Float64,
 )
     m = G.n[i]                # neurons in H net
@@ -178,9 +181,9 @@ function VelocityNetwork(
     B = zeros(m, n)  # to fill in with Kronecher δ(θ̂, θᵢ)
     δ(θ̂, θᵢ) = θ̂ == θᵢ # Kronecher delta function
 
-    θ̂ = G.X[i, :]
-    for j = 1:m, k = 1:n
-        δ(θ̂[j], G.X[i, k]) && (B[j, k] = 1)
+    θ̂ = 1:G.n[i] |> collect
+    for j in 1:m, k in 1:n
+        θ̂[j] == G.I[k][i] && (B[j, k] = 1)
     end
     B = sparse(B)
 
@@ -189,7 +192,10 @@ function VelocityNetwork(
     S = ShiftOperator(m, orientation) |> sparse
     A = P * S
 
-    return VelocityNetwork(m, i, orientation, A, P, S, B, τ)
+    # define ϕ
+    ϕ(v::Vector)::Float64 = sign(v[i]) == Int(orientation) ? λ * abs(v[i]) : 0.0
+
+    return VelocityNetwork(m, i, orientation, A, P, S, B, ϕ, λ, τ)
 end
 
 
@@ -224,8 +230,9 @@ Base.string(can::CAN) = "CAN $(can.name) | n. neurons: $(can.G.n)"
         metric::Metric,
         kernel::AbstractKernel;
         σ::Union{Symbol, Function}=:relu,
-        τ_G = 10.0, 
-        τ_H = 10.0
+        τ_G
+        τ_H
+        λ
     ) where d
 
 Construct a d-dimensional continous attractor network. 
@@ -241,7 +248,8 @@ which 1-d shifted dynamics inputs.
 - metric:   distance metric
 - kernel:   connectivity strength kernel in G network
 - σ:        non-linearity for G network dynamics
-- τ_G/H:    time constant for networks.
+- τ_G/H:    time constant for networks
+- λ:        scaling factor for v⃗ input onto Hᵢ
 """
 function CAN(
     name::String,
@@ -252,6 +260,7 @@ function CAN(
     σ::Union{Symbol,Function} = :relu,
     τ_G = 10.0,
     τ_H = 10.0,
+    λ   = 0.1,
 ) where {d}
 
     # construct integrator network
@@ -260,7 +269,7 @@ function CAN(
     # construct velocity input networks
     Hs::Vector{VelocityNetwork} = []
     for i = 1:d, orientation in (left, right)
-        push!(Hs, VelocityNetwork(G, i, orientation, τ_H))
+        push!(Hs, VelocityNetwork(G, i, orientation, λ, τ_H))
     end
 
     return CAN(name, G.d, *(G.n...), G, Hs)

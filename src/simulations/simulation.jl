@@ -87,24 +87,25 @@ function step!(simulation::Simulation, v::Vector{Float64})
     H, Ḣ = simulation.H, simulation.Ḣ
     τ_G, τ_H = can.G.τ, can.Hs[1].τ
 
-    # TODO add noise and baseline stimuli back in
+    # ------------------------------ get activation ------------------------------ #  
+    # initialize G net activation (including noise)
+    if simulation.η > 0
+        η = rand(Float64, length(g)) .* simulation.η  
+        ġ .= W*g + η .+ b₀
+    else
+        ġ .= W*g + η
+    end
 
-    # ------------------------------ get activation ------------------------------ #
-    # initialize G network activation
-    ġ = W*g 
-    
-    # iterate over Hs networks
+    # update H nets and G net activation
     for i in 1:2can.d
         # update G net
-        ġ .+= A[i] * H[:, i]
+        # ġ .+= 1/50can.d * A[i] * H[:, i]
 
         # update Hᵢ net
-        Ḣ[:, i] = B[i]*g .+ v[(Int ∘ ceil)(i/2)]
+        Ḣ[:, i] = B[i]*g .+ can.Hs[i].ϕ(v)
     end
 
     # remove bad entries
-    # droptol!(simulation.g, 0.001)
-    # droptol!(simulation.ġ, 0.001)
     # droptol!(simulation.H, 0.001)
     # droptol!(simulation.Ḣ, 0.001)
 
@@ -267,7 +268,7 @@ function run_simulation(
 
     isnothing(frame_every_n) || begin
         @info "saving animation"
-        gif(anim, savepath(savename, savename, "gif"), fps = 20)
+        gif(anim, savepath(savename, savename, "gif"), fps = 10)
     end
     # save_simulation_history(history, savename, savename)
     # return history

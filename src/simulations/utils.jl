@@ -3,64 +3,50 @@
 # ---------------------------------------------------------------------------- #
 
 function simulation_frame_1dcan(simulation::Simulation, timems, v::Vector; kwargs...)
-    can = simulation.can
     plt = plot(;
         title = "elapsed: $(round(timems)) ms",
-        clims = (0.0, 0.6),
-        # ylim = [0, 5],
-        # aspect_ratio=:equal, 
         grid = false,
     )
 
-    plot!(simulation.g)
-
+    plot!(simulation.g, label="g")
+    plot!(simulation.H[:, 1], label="h - pos")
+    plot!(simulation.H[:, 2], label="h - neg")
     plt
 end
 
 
 function simulation_frame_2dcan(simulation::Simulation, timems, v::Vector; kwargs...)
-    can = simulation.can
-    plt = plot(;
+    main_plot = plot(;
         title = "elapsed: $(round(timems)) ms",
         clims = (0.0, 1.0),
-        aspect_ratio = :equal,
+        colorbar=nothing,
+        # aspect_ratio = :equal,
         grid = false,
-        size = simulation.can.n .* 10,
     )
 
-    h = maximum(simulation.can.X) / 2.5
-    v̂ = v ./ norm(v) .* h
-    for i = 1:can.d*2
-        S = simulation.S[:, i]
+    G = simulation.can.G
+    contourf!(reshape(simulation.g, G.n)', levels = 3)
 
-        # get offset position for plotting
-        offset = can.A[i, :] ./ maximum(can.A) .* vec(maximum(simulation.can.X; dims = 2))
 
-        # plot activity heatmap
-        x = offset[1] .+ range(0, maximum(simulation.can.X[1, :]), length = can.n[1])
-        y = offset[2] .+ range(0, maximum(simulation.can.X[2, :]), length = can.n[2])
-        contourf!(x, y, reshape(S, can.n)', levels = 3)
+    m = 1:size(simulation.H, 1)
+    ymax = maximum(simulation.H) + 2
 
-        # plot input vector direction 
-        x0, y0 = maximum(simulation.can.X; dims = 2) ./ 2.1
+    x_shifts = plot(grid=false, title="H₁", ylim=[0, ymax])
+    plot!(m, simulation.H[:, 1], lw=2, color=:red, label="x-pos")
+    plot!(m, simulation.H[:, 2], lw=2, color=:black, label="x-neg")
 
-        plot!([x0, x0 + v̂[1]], [y0, y0 + v̂[2]], lw = 6, color = :green, label = nothing)
-        scatter!([x0], [y0], ms = 8, color = :green, label = nothing)
+    y_shifts = plot(grid=false, title="H₂", xlim=[0, ymax])
+    m = 1:size(simulation.H, 1)
+    plot!(simulation.H[:, 3], m, lw=2, color=:red, label="y-pos")
+    plot!(simulation.H[:, 4], m, lw=2, color=:black, label="y-neg")
 
-        # # add text with Aᵢ
-        # Ai = string(round.(ai; digits=3))
-        # vi = ai ⋅ v
+    polar_plot = plot(
+        [0, v[1]], [0, v[2]], lw=5, color=:black, label=nothing,
+        xlim=(-1.1, 1.1), ylim=(-1.1, 1.1), aspect_ratio=:equal
+    )
+    scatter!([0],  [0], ms=8, color=:black, label=nothing)
 
-        # annotate!(
-        #     [offset[1]+5, x0], 
-        #     [offset[2]+20, y0+20],      
-        #     [
-        #         text(" I: $i\nAi: $Ai\nAv: $(round(vi; digits=4))", :white, :left, 8),
-        #         text("v⃗: $(round.(v; digits=2))", :black, :center, 8),
-        #     ]
-        # )
-    end
-    plt
+    plot(polar_plot, x_shifts, y_shifts, main_plot; layout = grid(2, 2, heights=[0.3, 0.7], widths=[0.3, 0.7]))
 end
 
 
