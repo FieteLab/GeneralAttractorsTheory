@@ -154,7 +154,7 @@ function ShiftOperator(m::Int, orientation::ShiftOrientation)::Circulant
     h = zeros(m)
     h[2] = 1
     S = Circulant(h)
-    return if Int(orientation) == 1
+    return if orientation == left
         S       # default operator gets a right shift
     else
         S |> ᵀ  # transpose operator to get left shift
@@ -193,7 +193,8 @@ function VelocityNetwork(
     A = P * S
 
     # define ϕ
-    ϕ(v::Vector)::Float64 = sign(v[i]) == Int(orientation) ? λ * abs(v[i]) : 0.0
+    # ϕ(v::Vector)::Float64 = sign(v[i]) == Int(orientation) ? λ * abs(v[i]) : 0.0
+    ϕ(v::Vector)::Float64 = sign(v[i]) == Int(orientation) ? λ * abs(v[i]) : -10.0
 
     return VelocityNetwork(m, i, orientation, A, P, S, B, ϕ, λ, τ)
 end

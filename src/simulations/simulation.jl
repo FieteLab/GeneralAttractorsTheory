@@ -71,7 +71,7 @@ function Simulation(can::AbstractCAN; kwargs...)
     W = can.G.W
     droptol!(W, 0.001)
 
-    return Simulation(can = can, A=A, B=B, H=H, Ḣ=Ḣ, g=g, ġ=ġ, W=W; kwargs...)
+    return Simulation(can=can, A=A, B=B, H=H, Ḣ=Ḣ, g=g, ġ=ġ, W=W; kwargs...)
 end
 
 
@@ -93,25 +93,28 @@ function step!(simulation::Simulation, v::Vector{Float64})
         η = rand(Float64, length(g)) .* simulation.η  
         ġ .= W*g + η .+ b₀
     else
-        ġ .= W*g + η
+        ġ .= W*g .+ b₀
     end
 
     # update H nets and G net activation
     for i in 1:2can.d
         # update G net
-        # ġ .+= 1/50can.d * A[i] * H[:, i]
+        α = 1/10
+        ġ .-= α * A[i] * H[:, i]
 
         # update Hᵢ net
-        Ḣ[:, i] = B[i]*g .+ can.Hs[i].ϕ(v)
+        β = 1/100
+        # Ḣ[:, i] = β * B[i]*g .+ can.Hs[i].ϕ(v)
+        Ḣ[:, i] = β * B[i]*g .* can.Hs[i].ϕ(v)
     end
 
     # remove bad entries
-    # droptol!(simulation.H, 0.001)
-    # droptol!(simulation.Ḣ, 0.001)
+    droptol!(sparse(simulation.H), 0.001)
+    droptol!(sparse(simulation.Ḣ), 0.001)
 
     # ------------------------------- get activity ------------------------------- #
     simulation.g += (can.G.σ.(ġ) - g) / τ_G
-    simulation.H += (Ḣ - H) / τ_H
+    simulation.H += (can.G.σ.(Ḣ) - H) / τ_H
 end
 
 
