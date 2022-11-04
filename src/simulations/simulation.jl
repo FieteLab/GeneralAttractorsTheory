@@ -99,13 +99,12 @@ function step!(simulation::Simulation, v::Vector{Float64})
     # update H nets and G net activation
     for i in 1:2can.d
         # update G net
-        α = 1/10
-        ġ .-= α * A[i] * H[:, i]
+        α = 1/1
+        ġ .+= α * A[i] * H[:, i]
 
         # update Hᵢ net
         β = 1/1
-        # Ḣ[:, i] = β * B[i]*g .+ can.Hs[i].ϕ(v)
-        Ḣ[:, i] = β * B[i]*g .* can.Hs[i].ϕ(v)
+        Ḣ[:, i] = β * g .* can.Hs[i].ϕ(v)
     end
 
     # remove bad entries
@@ -226,6 +225,7 @@ function run_simulation(
     chunks::Vector;
     savename::String = simulation.can.name * "_sim",
     frame_every_n::Union{Nothing,Int} = 20,   # how frequently to save an animation frame
+    fps=20,
     kwargs...,
 )
     @assert eltype(chunks) <: AbstractChunk
@@ -248,7 +248,6 @@ function run_simulation(
             for i = 1:chunk.nframes
                 v = eltype(chunk.v) == Float64 ? chunk.v : chunk.v[i]
                 step!(simulation, v)
-                # framen > 50 && break
 
                 # add data to history
                 # add!(history, framen, simulation, v)
@@ -271,7 +270,7 @@ function run_simulation(
 
     isnothing(frame_every_n) || begin
         @info "saving animation"
-        gif(anim, savepath(savename, savename, "gif"), fps = 20)
+        gif(anim, savepath(savename, savename, "gif"), fps = fps)
     end
     # save_simulation_history(history, savename, savename)
     # return history

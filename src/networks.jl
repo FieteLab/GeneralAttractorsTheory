@@ -3,6 +3,7 @@ import Distances: Metric, pairwise
 import ToeplitzMatrices: Circulant
 import IterTools: product as ×
 using SparseArrays
+import LinearAlgebra
 
 export AbstractNetwork, IntegratorNetwork, VelocityNetwork, CAN
 
@@ -150,10 +151,10 @@ Base.string(hnet::VelocityNetwork) =
 Construct a (left/right) shift operator matrix S of size m × m.
 `sign ∈ [0, 1]` is used to denote left vs right shifts.
 """
-function ShiftOperator(m::Int, orientation::ShiftOrientation)::Circulant
+function ShiftOperator(m::Int, orientation::ShiftOrientation, exponent::Int)::Circulant
     h = zeros(m)
     h[2] = 1
-    S = Circulant(h)
+    S = Circulant(h)^exponent
     return if orientation == left
         S       # default operator gets a right shift
     else
@@ -174,29 +175,18 @@ function VelocityNetwork(
     λ::Float64,
     τ::Float64,
 )
-    m = G.n[i]                # neurons in H net
-    n = reduce(*, G.n)        # tot neurons in G net
+    n = reduce(*, G.n)  # tot neurons in G net
 
-    # construct B matrix
-    B = zeros(m, n)  # to fill in with Kronecher δ(θ̂, θᵢ)
-    δ(θ̂, θᵢ) = θ̂ == θᵢ # Kronecher delta function
+    exponent = i == 1 ? 1 : G.n[1]
+    S = ShiftOperator(n, orientation, exponent) |> sparse
+    A = S
 
-    θ̂ = 1:G.n[i] |> collect
-    for j in 1:m, k in 1:n
-        θ̂[j] == G.I[k][i] && (B[j, k] = 1)
-    end
-    B = sparse(B)
-
-    # construct A matrix
-    P = B |> ᵀ
-    S = ShiftOperator(m, orientation) |> sparse
-    A = P * S
+    B = P = LinearAlgebra.I(n)
 
     # define ϕ
-    # ϕ(v::Vector)::Float64 = sign(v[i]) == Int(orientation) ? λ * abs(v[i]) : 0.0
-    ϕ(v::Vector)::Float64 = sign(v[i]) == Int(orientation) ? λ * abs(v[i]) : -10.0
+    ϕ(v::Vector)::Float64 = sign(v[i]) == Int(orientation) ? λ * abs(v[i]) : 0.0
 
-    return VelocityNetwork(m, i, orientation, A, P, S, B, ϕ, λ, τ)
+    return VelocityNetwork(n, i, orientation, A, P, S, B, ϕ, λ, τ)
 end
 
 

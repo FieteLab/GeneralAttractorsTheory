@@ -6,16 +6,16 @@ import GeneralAttractors: lerp
 using GeneralAttractors.Kernels
 
 
-# n = (64, 64)
-# function ξ_t(i::Int, j::Int)::Vector  # neurons coordinates function
-#     n̂_i, n̂_j = Int(n[1] / 2), Int(n[2] / 2)
-#     [lerp(i, n[1], -n̂_i, n̂_i), lerp(j, n[2], -n̂_j, n̂_j)]   # ∈ [-n/2, n/2] × [-n/2, n/2]
-# end
-# d_t = PeriodicEuclidean([n...])  # distance function over a torus manifold
-# k_t = DiffOfExpKernel(; λ = 13.0)
+n = (64, 64)
+function ξ_t(i::Int, j::Int)::Vector  # neurons coordinates function
+    n̂_i, n̂_j = Int(n[1] / 2), Int(n[2] / 2)
+    [lerp(i, n[1], -n̂_i, n̂_i), lerp(j, n[2], -n̂_j, n̂_j)]   # ∈ [-n/2, n/2] × [-n/2, n/2]
+end
+d_t = PeriodicEuclidean([n...])  # distance function over a torus manifold
+k_t = DiffOfExpKernel(; λ = 13.0)
 
-# # construct network
-# T = CAN("torus", n, ξ_t, d_t, k_t; λ=1.0, σ=:relu)
+# construct network
+T = CAN("torus", n, ξ_t, d_t, k_t; λ=1.0, σ=:relu)
 
 
 @info "starting simulation"
@@ -42,9 +42,10 @@ if MODE == :CONSTANT
     ]
 else
     chunks = [
-        ConstantChunk([0, 0], simulation; duration=2000),
-        # ConstantChunk([3, 0], simulation; duration=600),
-        # ConstantChunk([0, 3], simulation; duration=600),
+        ConstantChunk([0, 0], simulation; duration=250),
+        ConstantChunk([0.5, 0], simulation; duration=400),
+        ConstantChunk([0, 0.5], simulation; duration=400),
+        ConstantChunk([0.5sin(π/4), 0.5cos(π/4)], simulation; duration=400),
         # RandomChunk(simulation; duration = 500, μ₀ = 10.5, σ = 1)
         ]
 end

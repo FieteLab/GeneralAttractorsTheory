@@ -28,31 +28,40 @@ function simulation_frame_2dcan(simulation::Simulation, timems, v::Vector; vmin=
     g = reshape(simulation.g, G.n)'
     contourf!(g, levels = 3)
     
-    m = 1:size(simulation.H, 1)
-    plot!(vec(sum(g; dims=1)), lw=2, color="red", label="x")
-    plot!(vec(sum(g; dims=2)),lw=2, color="green", label="y")
+    # m = 1:size(simulation.H, 1)
+    # plot!(vec(sum(g; dims=1)), lw=2, color="red", label="x")
+    # plot!(vec(sum(g; dims=2)),lw=2, color="green", label="y")
 
-    m = 1:size(simulation.H, 1)
-    ymax = maximum(simulation.H) + 1
-    ymin = minimum(simulation.H) - 0.5
+    # H networks
+    cmax = maximum(simulation.H) + 0.1
+    x_shifts = contourf(
+        reshape(simulation.H[:, 1], G.n)', 
+        colorbar=nothing,
+        aspect_ratio = :equal,
+        grid = false,
+        clims=(0, cmax),
+        levels=3,
+    )
+    y_shifts = contourf(
+        reshape(simulation.H[:, 3], G.n)', 
+        colorbar=nothing,
+        aspect_ratio = :equal,
+        grid = false,
+        clims=(0, cmax),
+        levels=3,
+    )
 
-    x_shifts = plot(grid=false, title="H₁", ylim=[ymin, ymax])
-    plot!(m, simulation.H[:, 1], lw=2, color=:red, label="x-pos")
-    plot!(m, simulation.H[:, 2], lw=2, color=:black, label="x-neg")
-
-    y_shifts = plot(grid=false, title="H₂", xlim=[ymin, ymax])
-    m = 1:size(simulation.H, 1)
-    plot!(simulation.H[:, 3], m, lw=2, color=:red, label="y-pos")
-    plot!(simulation.H[:, 4], m, lw=2, color=:black, label="y-neg")
-
+    # velocity vector input
     polar_plot = plot(
         [0, v[1]], [0, v[2]], lw=5, color=:black, label=nothing,
         xlim=(-1.1, 1.1), ylim=(-1.1, 1.1), aspect_ratio=:equal
     )
     scatter!([0],  [0], ms=8, color=:black, label=nothing)
 
-    plot(polar_plot, x_shifts, y_shifts, main_plot; 
-        layout = grid(2, 2, heights=[0.3, 0.7], widths=[0.3, 0.7]),
+    plot(
+        polar_plot, x_shifts, y_shifts, main_plot; 
+        # layout = grid(2, 2, heights=[0.3, 0.7], widths=[0.3, 0.7]),
+        layout = grid(2, 2),
         size=(800, 800),
     )
 end
