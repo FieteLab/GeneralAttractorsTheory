@@ -103,7 +103,7 @@ function step!(simulation::Simulation, v::Vector{Float64})
         ġ .-= α * A[i] * H[:, i]
 
         # update Hᵢ net
-        β = 1/100
+        β = 1/1
         # Ḣ[:, i] = β * B[i]*g .+ can.Hs[i].ϕ(v)
         Ḣ[:, i] = β * B[i]*g .* can.Hs[i].ϕ(v)
     end
@@ -271,7 +271,7 @@ function run_simulation(
 
     isnothing(frame_every_n) || begin
         @info "saving animation"
-        gif(anim, savepath(savename, savename, "gif"), fps = 10)
+        gif(anim, savepath(savename, savename, "gif"), fps = 20)
     end
     # save_simulation_history(history, savename, savename)
     # return history

@@ -11,16 +11,22 @@ n = (256,)  # number of neurons in the ring
 d_r = PeriodicEuclidean([2π])  # distance function
 
 # construct network
-attr = CAN("ring", n, ξ_r, d_r, MexicanHatKernel(α=.05); λ=0.1/4)
+attr = CAN("ring", n, ξ_r, d_r, MexicanHatKernel(α = 0.01, σ = .1); λ=1.5)
 
 
-simulation = Simulation(attr; η = 0.1, b₀ = 1.0)
+simulation = Simulation(attr; η = 0.0, b₀ = 1.0)
 
 
-chunks =
-    map(
-        θ -> ConstantChunk([Float64(θ)], simulation; duration = 250), 
-        [1]
-    ) |> collect
+# chunks =
+#     map(
+#         θ -> ConstantChunk([Float64(θ)], simulation; duration = 250), 
+#         [1]
+#     ) |> collect
 
-run_simulation(simulation, chunks; frame_every_n = 10)
+chunks = [
+    ConstantChunk([0.0], simulation; duration = 500),
+    ConstantChunk([3.5], simulation; duration = 750),
+    ConstantChunk([-0.5], simulation; duration = 750),
+]
+
+run_simulation(simulation, chunks; frame_every_n = 20)
