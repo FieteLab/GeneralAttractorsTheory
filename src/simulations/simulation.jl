@@ -49,7 +49,7 @@ function Simulation(can::AbstractCAN, trajectory::Trajectory; kwargs...)
     W = sparse.(map(x -> Float64.(x), can.Ws))
     droptol!.(W, 0.001)
 
-    return Simulation(can = can, trajectory=trajectory, S = S, Ṡ = Ṡ, W = W; kwargs...)
+    return Simulation(can = can, trajectory = trajectory, S = S, Ṡ = Ṡ, W = W; kwargs...)
 end
 
 

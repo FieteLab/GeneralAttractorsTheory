@@ -27,21 +27,16 @@ The trajectory is computed by assuming that an agent moves
 with a certain velocity (randomly drawn from gaussian) and a 
 given angular velocity (randomy drawn) reflecting a change in orientation
 """
-function Trajectory(M::Manifoldℝ²; T::Int=250, μ=0.1, θ=0.5)
+function Trajectory(M::Manifoldℝ²; T::Int = 250, μ = 0.1, θ = 0.5)
 
     v = rand(T) .* μ
     θ = cumsum((rand(T) .- 0.5) .* θ)  # orientation
 
     vx = v .* cos.(θ)
-    vy = v .* sin.(θ) 
+    vy = v .* sin.(θ)
 
     x = cumsum(vx)
     y = cumsum(vy)
 
     return Trajectory(M, hcat(x, y), hcat(vx, vy))
 end
-
-
-
-
-

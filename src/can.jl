@@ -10,7 +10,7 @@ import LinearAlgebra: ⋅, I
 export AbstractCAN, CAN
 
 using ..Kernels: AbstractKernel
-using..Manifolds: AbstractManifold
+using ..Manifolds: AbstractManifold
 
 # ---------------------------------------------------------------------------- #
 #                              DIFFERENTIAL FORMS                              #

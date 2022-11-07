@@ -6,7 +6,7 @@ using GeneralAttractors.Simulations
 
 
 
-trajectory = Trajectory(torus_attractor; T=250, μ=0.1, θ=0.5)
+trajectory = Trajectory(torus_attractor; T = 250, μ = 0.1, θ = 0.5)
 
 simulation = Simulation(torus_attractor, trajectory; η = 0.0)
 

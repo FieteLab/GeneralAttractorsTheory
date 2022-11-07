@@ -8,19 +8,31 @@ function Plots.plot(traj::Trajectory)
     d != 2 && error("not implemented")
 
     plot(
-        traj.X[:, 1], traj.X[:, 2], lw=3, color=:black, title="M: $(traj.M)", 
-            label="trajectory", grid=false, aspect_ratio=:equal
+        traj.X[:, 1],
+        traj.X[:, 2],
+        lw = 3,
+        color = :black,
+        title = "M: $(traj.M)",
+        label = "trajectory",
+        grid = false,
+        aspect_ratio = :equal,
     )
 end
 
 
-function Plots.plot(traj::Trajectory,. i::Int)
+function Plots.plot(traj::Trajectory, i::Int)
     d = size(traj.X, 2)
     d != 2 && error("not implemented")
 
     plot(
-        traj.X[1:i, 1], traj.X[1:i, 2], lw=3, color=:black, title="M: $(traj.M)", 
-            label="trajectory", grid=false, aspect_ratio=:equal
+        traj.X[1:i, 1],
+        traj.X[1:i, 2],
+        lw = 3,
+        color = :black,
+        title = "M: $(traj.M)",
+        label = "trajectory",
+        grid = false,
+        aspect_ratio = :equal,
     )
 end
 
@@ -108,7 +120,7 @@ function Plots.plot(simulation::Simulation, timems, framen, v::Vector; kwargs...
     traj = Plots.plot(traj, framen)
 
 
-    plot(traj, pop_activity, size=(1000, 800))
+    plot(traj, pop_activity, size = (1000, 800))
 end
 
 
