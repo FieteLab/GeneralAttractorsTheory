@@ -15,7 +15,7 @@ module GeneralAttractors
     export MobiusEuclidean
     export load_simulation_history, save_data, load_data, save_model, load_model
 
-    using .Kernels: AbstractKernel, Kernel, MexicanHatKernel, DiffOfExpKernel
+    using .Kernels: AbstractKernel, Kernel, MexicanHatKernel, DiffOfExpKernel, LocalGlobalKernel
     using .Can: CAN
 
     include("metrics.jl")

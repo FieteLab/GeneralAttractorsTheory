@@ -4,7 +4,6 @@ Collection of code useful to visualize manifolds
 module ManifoldUtils
     using GLMakie
     using Parameters
-    import AbstractPlotting
     using Colors
     
 
@@ -171,8 +170,8 @@ module ManifoldUtils
         zoom!(ax.scene, cameracontrols(ax.scene), 1.4)
 
         # camera
-        cam = Makie.cameracontrols(scene)
-        cam.projectiontype[] = AbstractPlotting.Orthographic
+        # cam = Makie.cameracontrols(scene)
+        # cam.projectiontype[] = AbstractPlotting.Orthographic
 
         set_theme!(backgroundcolor=colorant"#23272E")
         display(fig)

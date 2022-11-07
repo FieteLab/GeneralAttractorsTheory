@@ -1,6 +1,6 @@
 module Kernels
 
-    export AbstractKernel, Kernel, MexicanHatKernel, DiffOfExpKernel
+    export AbstractKernel, Kernel, MexicanHatKernel, DiffOfExpKernel, LocalGlobalKernel
 
     """
         A `Kernel` represents a function used to compute the connectivity strength
@@ -108,4 +108,35 @@ module Kernels
             new(a, λ, β, γ, k)
         end
     end
+
+
+
+
+    # ------------------------------- local/global ------------------------------- #
+    """
+        struct LocalGlobalKernel <: AbstractKernel
+            α::Float64   # strength of local excitation
+            σ::Float64   # width of local excitation
+            β::Float64   # strength of global inhibition
+            k:: Function
+
+    Kernel with local excitation and global inhibition. 
+    """
+    struct LocalGlobalKernel <: AbstractKernel
+        α::Float64   # strength of local excitation
+        σ::Float64   # width of local excitation
+        β::Float64   # strength of global inhibition
+        k:: Function
+
+        function LocalGlobalKernel(; 
+            α=1.0,
+            σ=1.0,
+            β=0.25,
+            )
+
+            k(x) = α * exp(-x^2/2σ) -  β
+            new(α, σ, β, k)
+        end
+    end
+
 end

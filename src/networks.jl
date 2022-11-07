@@ -28,10 +28,11 @@ end
 d_t = PeriodicEuclidean([n...])  # distance function over a torus manifold
 # connectivity kernel
 
-k_t = DiffOfExpKernel(; λ = 13.0)
+# k_t = DiffOfExpKernel(; λ = 13.0)  # ? used for hexagonal grid pattern
+k_t = LocalGlobalKernel(α=0.04, σ=20.0, β=0.025)  # ? used for single bump pattern
 
 # construct network
-torus_attractor = CAN("torus", n, ξ_t, d_t, k_t; offset_size=1, α=0.10315)
+torus_attractor = CAN("torus", n, ξ_t, d_t, k_t; offset_size=1, α=0.5)  # ? if using DiffOfExpKernel, change to α=0.10315
 
 # ---------------------------------------------------------------------------- #
 #                               MOBIUS ATTRACTOR                               #
