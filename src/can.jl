@@ -24,6 +24,32 @@ abstract type AbstractCAN end
 # ---------------------------------------------------------------------------- #
 #                                      CAN                                     #
 # ---------------------------------------------------------------------------- #
+"""
+    mutable struct CAN <: AbstractCAN
+        name::String
+        n::NTuple{N,Int} where {N}           # number of neurons in each dimension
+        d::Int                             # number of dimensions
+        I::Vector{Tuple}                   # index (i,j...) of each neuron in the lattice
+        X::Matrix                          # N × n_neurons matrix with coordinates of each neuron in lattice
+        Ws::Vector{Array}                  # connectivity matrices with lateral offsets | length N
+        kernel::AbstractKernel             # connectivity kernel
+        σ::Function                        # activation function
+        A::Matrix{Float64}                 # K×D map projecting v∈Φ to manifold dimensions
+    end
+
+A Continous Attractor Network. 
+
+Each CAN is a d-dimensional integrator network with nᵢ neurons in each dimension. Neurons are indexed
+and are assigned coordinates in the neural lattice (`X`) given a coordinate function `ξ` that acts on 
+the neurons' indices. 
+Each CAN is comprised of 2d "copies" of a neural population, each with its connectivity matrix Wᵢ. 
+The `Ws` are computed based on offset pairwise neuron coordinates. For each copy the offeset is in a direction
+specified by `offsets` vectors (generally ± each basis direction) and scaled by an `offset_size` magnitude. 
+The velocity inputs onto each copy are scaled by α * the offset direction. α is the same across all directions
+and used only to scale the magnitude of the velocity inputs. 
+
+Thus, the connectivity matrix's shape depends on the offset directions and the offset magnitude. 
+"""
 mutable struct CAN <: AbstractCAN
     name::String
     n::NTuple{N,Int} where {N}           # number of neurons in each dimension
@@ -40,6 +66,21 @@ Base.string(can::CAN) = "CAN (dim=$(length(can.n))) - n neurons: $(can.n)"
 Base.print(io::IO, can::CAN) = print(io, string(can))
 Base.show(io::IO, ::MIME"text/plain", can::CAN) = print(io, string(can))
 
+"""
+    function CAN(
+        name::String,
+        n::NTuple{N,Int},
+        ξ::Function,
+        metric::Metric,
+        kernel::AbstractKernel;
+        σ::Union{Symbol,Function} = :relu,
+        offset_size::Number = 1.0,                        # magnitude of weights offset (distance)
+        offsets::Union{Nothing,Matrix} = nothing,         # offset directions, rows Aᵢ of A
+        α::Float64 = 1.0,                                 # scales A matrix
+    ) where {N}
+
+Construct a d-dimensional network. 
+"""
 function CAN(
     name::String,
     n::NTuple{N,Int},
@@ -48,7 +89,7 @@ function CAN(
     kernel::AbstractKernel;
     σ::Union{Symbol,Function} = :relu,
     offset_size::Number = 1.0,                        # magnitude of weights offset (distance)
-    offsets::Union{Nothing,Matrix} = nothing,      # offset directions, rows Aᵢ of A
+    offsets::Union{Nothing,Matrix} = nothing,         # offset directions, rows Aᵢ of A
     α::Float64 = 1.0,                                 # scales A matrix
 ) where {N}
 
@@ -87,7 +128,8 @@ function CAN(
     σ = σ isa Symbol ? activations[σ] : σ
 
     @debug "ready" n lattice_idxs eltype(lattice_idxs) X eltype(X) typeof(Ws) eltype(Ws)
-    return CAN(name, n, d, lattice_idxs, X, Ws, kernel, σ, α .* Matrix(hcat(offsets...)'))
+    A =  α .* Matrix(hcat(offsets...)')
+    return CAN(name, n, d, lattice_idxs, X, Ws, kernel, σ, A)
 end
 
 """
@@ -108,15 +150,22 @@ function Aᵢ(A::Matrix, i::Int)::Vector
 end
 
 
+"""
+    get_offsets(offsets::Union{Nothing,Matrix}, d::Int, n::Tuple)::vector
 
+Construct a matrix representing the offsets in the connectivity matrix. 
+The same offsets are used to construct the matrix `A` scaling velocity
+inputs onto each population copu. 
+"""
 function get_offsets(offsets::Union{Nothing,Matrix}, d::Int, n::Tuple)::Vector
+    # initialize as an identiy matrix if note is provided
     isnothing(offsets) && (offsets = Matrix(1.0I, d, d))
     D, K = size(offsets)
     @assert D == d "Offsets matrix `A` should have $(d) rows, not $D"
 
     v₀ = ones(K)
 
-
+    """ basis vector for the i-th copy """
     basevec(i, x, d) = begin
         î = (Int ∘ ceil)(i / 2)
         bv = zeros(d)
