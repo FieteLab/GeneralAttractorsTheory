@@ -8,10 +8,12 @@ using SparseArrays
 
 import GeneralAttractors: save_simulation_history, moving_average, savepath
 import ..Can: AbstractCAN
+import ..Manifolds: AbstractManifold, Manifoldℝ²
 
-export Simulation, ConstantChunk, run_simulation, RandomChunk
+export Simulation, run_simulation
+export Trajectory
 
-include("chunk.jl")
+include("trajectory.jl")
 include("simulation.jl")
 include("utils.jl")
 end

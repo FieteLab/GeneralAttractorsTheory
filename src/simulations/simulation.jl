@@ -25,6 +25,7 @@ Holds information necessary for running a simulation.
 """
 @with_kw_noshow mutable struct Simulation
     can::AbstractCAN
+    trajectory::Trajectory
     S::SparseMatrixCSC               # n_neurons x 2d - state of all neurons
     W::Vector{SparseMatrixCSC}       # all connection weights
     Ṡ::SparseMatrixCSC
@@ -38,18 +39,17 @@ Base.string(sim::Simulation) = "Simulation of $(sim.can)"
 Base.print(io::IO, sim::Simulation) = print(io, string(sim))
 Base.show(io::IO, ::MIME"text/plain", sim::Simulation) = print(io, string(sim))
 
-function Simulation(can::AbstractCAN; kwargs...)
+function Simulation(can::AbstractCAN, trajectory::Trajectory; kwargs...)
     # initialize activity matrices
     N = *(can.n...)
     S = spzeros(Float64, N, 2can.d)
     Ṡ = spzeros(Float64, N, 2can.d)
 
     # get all connection weights
-    # W = cat(can.Ws..., dims=3)  # n×n×2d
     W = sparse.(map(x -> Float64.(x), can.Ws))
     droptol!.(W, 0.001)
 
-    return Simulation(can = can, S = S, Ṡ = Ṡ, W = W; kwargs...)
+    return Simulation(can = can, trajectory=trajectory, S = S, Ṡ = Ṡ, W = W; kwargs...)
 end
 
 
@@ -134,7 +134,7 @@ function run_simulation(
                     i % frame_every_n == 0 &&
                         framen < length(time) &&
                         begin
-                            plot(simulation, time[framen], v)
+                            plot(simulation, time[framen], framen, v)
                             frame(anim)
                         end
                 end

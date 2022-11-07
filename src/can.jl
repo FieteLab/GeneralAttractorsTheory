@@ -10,31 +10,77 @@ import LinearAlgebra: ⋅, I
 export AbstractCAN, CAN
 
 using ..Kernels: AbstractKernel
+using..Manifolds: AbstractManifold
 
+# ---------------------------------------------------------------------------- #
+#                              DIFFERENTIAL FORMS                              #
+# ---------------------------------------------------------------------------- #
+"""
+Differential forms are used to provide spatially varyi-ing inputs onto a network. 
+"""
+
+"""
+
+Diferential one forms in d dimensions are defined by:
+    ω = [f_1(x), f_2(x), ..., f_d(x)]
+with x being the coordinates of a point on the manifold.
+We want our one-forms to be aligned to basis one forms 
+    dx_i = [0, ..., 1, ..., 0]
+so we have 
+    ω_i = [0, ..., f_i(x), ..., 0]
+
+such that each one form is defined by `f` and `i`. 
+"""
+struct OneForm
+    i::Int
+    f::Function
+end
+
+"""
+    (ω::OneForm)(x::Vector)
+
+Evaluate a one form at a point `x`.
+"""
+function (ω::OneForm)(x::Vector)::Vector
+    o = zeros(length(x))
+    o[ω.i] = ω.f(x[ω.i])
+    return o
+end
+
+"""
+    (ω::OneForm)(x::Vector, v::Vector)::number
+
+Evaluate ωₚ(v).
+"""
+function (ω::OneForm)(x::Vector, v::Vector)::Number
+    return v ⋅ ω(x)
+end
+
+# ---------------------------------------------------------------------------- #
+#                                      CAN                                     #
+# ---------------------------------------------------------------------------- #
 
 # --------------------------- activation functions --------------------------- #
 relu(x) = max(0, x)
 
 activations::Dict{Symbol,Function} = Dict(:relu => relu, :tanh => tanh)
 
-# --------------------------------- abstract --------------------------------- #
+
 abstract type AbstractCAN end
 
 
-# ---------------------------------------------------------------------------- #
-#                                      CAN                                     #
-# ---------------------------------------------------------------------------- #
 """
     mutable struct CAN <: AbstractCAN
         name::String
-        n::NTuple{N,Int} where {N}           # number of neurons in each dimension
+        M::AbstractManifold                # variable manifold
+        n::NTuple{N,Int} where {N}         # number of neurons in each dimension
         d::Int                             # number of dimensions
         I::Vector{Tuple}                   # index (i,j...) of each neuron in the lattice
         X::Matrix                          # N × n_neurons matrix with coordinates of each neuron in lattice
         Ws::Vector{Array}                  # connectivity matrices with lateral offsets | length N
         kernel::AbstractKernel             # connectivity kernel
         σ::Function                        # activation function
-        A::Matrix{Float64}                 # K×D map projecting v∈Φ to manifold dimensions
+        Ω::Vector{OneForm}                 # vector of `OneForm`s representing input measuring forms
     end
 
 A Continous Attractor Network. 
@@ -45,21 +91,20 @@ the neurons' indices.
 Each CAN is comprised of 2d "copies" of a neural population, each with its connectivity matrix Wᵢ. 
 The `Ws` are computed based on offset pairwise neuron coordinates. For each copy the offeset is in a direction
 specified by `offsets` vectors (generally ± each basis direction) and scaled by an `offset_size` magnitude. 
-The velocity inputs onto each copy are scaled by α * the offset direction. α is the same across all directions
-and used only to scale the magnitude of the velocity inputs. 
-
-Thus, the connectivity matrix's shape depends on the offset directions and the offset magnitude. 
+The velocity inputs onto each copy are scaled by ωᵢ(v) with `ωᵢ` being a `OneForm` aligned to the i-th
+offset direction but (potentially) varying in magnitude over the variable manifold. 
 """
 mutable struct CAN <: AbstractCAN
     name::String
-    n::NTuple{N,Int} where {N}           # number of neurons in each dimension
+    M::AbstractManifold                # variable manifold
+    n::NTuple{N,Int} where {N}         # number of neurons in each dimension
     d::Int                             # number of dimensions
     I::Vector{Tuple}                   # index (i,j...) of each neuron in the lattice
     X::Matrix                          # N × n_neurons matrix with coordinates of each neuron in lattice
     Ws::Vector{Array}                  # connectivity matrices with lateral offsets | length N
     kernel::AbstractKernel             # connectivity kernel
     σ::Function                        # activation function
-    A::Matrix{Float64}                 # K×D map projecting v∈Φ to manifold dimensions
+    Ω::Vector{OneForm}                 # vector of `OneForm`s representing input measuring forms
 end
 
 Base.string(can::CAN) = "CAN (dim=$(length(can.n))) - n neurons: $(can.n)"
@@ -74,7 +119,6 @@ Base.show(io::IO, ::MIME"text/plain", can::CAN) = print(io, string(can))
         metric::Metric,
         kernel::AbstractKernel;
         σ::Union{Symbol,Function} = :relu,
-        offset_size::Number = 1.0,                        # magnitude of weights offset (distance)
         offsets::Union{Nothing,Matrix} = nothing,         # offset directions, rows Aᵢ of A
         α::Float64 = 1.0,                                 # scales A matrix
     ) where {N}
@@ -83,14 +127,13 @@ Construct a d-dimensional network.
 """
 function CAN(
     name::String,
+    M::AbstractManifold,
     n::NTuple{N,Int},
     ξ::Function,
     metric::Metric,
     kernel::AbstractKernel;
     σ::Union{Symbol,Function} = :relu,
-    offset_size::Number = 1.0,                        # magnitude of weights offset (distance)
     offsets::Union{Nothing,Matrix} = nothing,         # offset directions, rows Aᵢ of A
-    α::Float64 = 1.0,                                 # scales A matrix
 ) where {N}
 
     d = length(n)
@@ -118,7 +161,7 @@ function CAN(
     Ws::Vector{Matrix} = []
     for θ in offsets
         # get pairwise offset connectivity
-        D = pairwise(metric, X .- offset_size .* θ, X)
+        D = pairwise(metric, X .- θ, X)
 
         # get connectivity matrix with kernel
         push!(Ws, kernel.k.(D))
@@ -127,9 +170,14 @@ function CAN(
     # get connectivity function
     σ = σ isa Symbol ? activations[σ] : σ
 
+
+    # construct one-forms
+    Ω = OneForm[]
+
+    # TODO construct Ω
+
     @debug "ready" n lattice_idxs eltype(lattice_idxs) X eltype(X) typeof(Ws) eltype(Ws)
-    A =  α .* Matrix(hcat(offsets...)')
-    return CAN(name, n, d, lattice_idxs, X, Ws, kernel, σ, A)
+    return CAN(name, M, n, d, lattice_idxs, X, Ws, kernel, σ, Ω)
 end
 
 """

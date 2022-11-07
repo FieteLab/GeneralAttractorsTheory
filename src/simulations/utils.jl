@@ -2,6 +2,28 @@
 #                                      viz                                     #
 # ---------------------------------------------------------------------------- #
 
+
+function Plots.plot(traj::Trajectory)
+    d = size(traj.X, 2)
+    d != 2 && error("not implemented")
+
+    plot(
+        traj.X[:, 1], traj.X[:, 2], lw=3, color=:black, title="M: $(traj.M)", 
+            label="trajectory", grid=false, aspect_ratio=:equal
+    )
+end
+
+
+function Plots.plot(traj::Trajectory,. i::Int)
+    d = size(traj.X, 2)
+    d != 2 && error("not implemented")
+
+    plot(
+        traj.X[1:i, 1], traj.X[1:i, 2], lw=3, color=:black, title="M: $(traj.M)", 
+            label="trajectory", grid=false, aspect_ratio=:equal
+    )
+end
+
 function simulation_frame_1dcan(simulation::Simulation, timems, v::Vector; kwargs...)
     @info "ONE DIM CAN SIM PLOT"
     can = simulation.can
@@ -74,14 +96,20 @@ end
 
 
 
-Plots.plot(simulation::Simulation, timems, v::Vector; kwargs...) =
+function Plots.plot(simulation::Simulation, timems, framen, v::Vector; kwargs...)
     if simulation.can.d == 1
-        simulation_frame_1dcan(simulation, timems, v; kwargs...)
+        pop_activity = simulation_frame_1dcan(simulation, timems, v; kwargs...)
     elseif simulation.can.d == 2
-        simulation_frame_2dcan(simulation, timems, v; kwargs...)
+        pop_activity = simulation_frame_2dcan(simulation, timems, v; kwargs...)
     else
         error("Simulation plot for d>2 not implemented")
     end
+
+    traj = Plots.plot(traj, framen)
+
+
+    plot(traj, pop_activity, size=(1000, 800))
+end
 
 
 # ---------------------------------------------------------------------------- #
