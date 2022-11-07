@@ -21,19 +21,23 @@ Trajectory(can::AbstractCAN, args...; kwargs...) = Trajectory(can.M, args...; kw
 """
     ComputeTrajectory(; T::Int=250, μ=0.1, θ=0.5)
 
-a random walk of duration T over the manifold
+a random walk of duration T-many steps over the manifold
 ℝ² with average velocity μ and average angular velocity θ.
 The trajectory is computed by assuming that an agent moves 
 with a certain velocity (randomly drawn from gaussian) and a 
 given angular velocity (randomy drawn) reflecting a change in orientation
 """
-function Trajectory(M::Manifoldℝ²; T::Int = 250, μ = 0.1, θ = 0.5)
-
+function Trajectory(M::Manifoldℝ²; T::Int = 250, μ = 0.1, θ = 0.5, θ₀=nothing)
     v = rand(T) .* μ
-    θ = cumsum((rand(T) .- 0.5) .* θ)  # orientation
 
-    vx = v .* cos.(θ)
-    vy = v .* sin.(θ)
+    θ₀ = isnothing(θ₀) ? rand(0:.2:2π) : θ₀
+
+
+    θ̇ = moving_average(rand(T), 11) .- 0.5
+    θ̇ = cumsum(θ̇ .* θ) .+ θ₀ # orientation
+
+    vx = v .* cos.(θ̇)
+    vy = v .* sin.(θ̇)
 
     x = cumsum(vx)
     y = cumsum(vy)

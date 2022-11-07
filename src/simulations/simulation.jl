@@ -58,15 +58,26 @@ end
 # ---------------------------------------------------------------------------- #
 ∑ⱼ(x) = sum(x, dims = 2) |> vec
 
-function step!(simulation::Simulation, v::Vector{Float64})
+"""
+    step!(simulation::Simulation, x::Vector, v::Vector) 
+
+Step the simulation dynamics given that the "particle" is at `x`
+and moving with velocity vector `x`.
+"""
+function step!(simulation::Simulation, x::Vector, v::Vector)
     can = simulation.can
     b₀ = simulation.b₀
-    A, S, W = simulation.can.A, simulation.S, simulation.W
+    S, W = simulation.S, simulation.W
     Ṡ = simulation.Ṡ
 
     # get effect of recurrent connectivity & external input
     d = 2simulation.can.d
-    B = b₀ .+ A * v  # inputs vector of size 2d
+    B = b₀ .+ vec(
+        map(
+            i -> can.Ω[i](x, v)/norm(can.Ω[i](x)),
+            1:d
+        )
+    )  # inputs vector of size 2d
     S̄ = ∑ⱼ(S)  # get the sum of all current activations
 
     if simulation.η > 0
@@ -98,57 +109,53 @@ end
 include("history.jl")
 
 function run_simulation(
-    simulation::Simulation,
-    chunks::Vector;
+    simulation::Simulation;
     savename::String = simulation.can.name * "_sim",
     frame_every_n::Union{Nothing,Int} = 20,   # how frequently to save an animation frame
+    fps=20,
     kwargs...,
 )
-    @assert eltype(chunks) <: AbstractChunk
 
     # setup animation
-    T = sum(getfield.(chunks, :duration))
+    N = size(simulation.trajectory.X, 1)
+    T = (N+1) * simulation.dt
     time = 1:simulation.dt:T |> collect
     framen = 1
     anim = Animation()
 
     # get history to track data
-    tot_frames = sum(getfield.(chunks, :nframes))
-    history = History(simulation, tot_frames; kwargs...)
+    # history = History(simulation, N; kwargs...)
 
     # do simulation steps and visualize
     pbar = ProgressBar()
     Progress.with(pbar) do
-        job = addjob!(pbar, description = "Simulation", N = length(time) + 1)
-        for chunk in chunks
-            for i = 1:chunk.nframes
-                v = eltype(chunk.v) == Float64 ? chunk.v : chunk.v[i]
-                step!(simulation, v)
-                # framen > 50 && break
+        job = addjob!(pbar, description = "Simulation", N = N)
+        for i = 1:N
+            x = simulation.trajectory.X[i, :]
+            v = simulation.trajectory.V[i, :]
+            step!(simulation, x, v)
+            # framen > 50 && break
 
-                # add data to history
-                add!(history, framen, simulation, v)
+            # add data to history
+            # add!(history, framen, simulation, v)
 
-                # add frame to animation
-                isnothing(frame_every_n) || begin
-                    i % frame_every_n == 0 &&
-                        framen < length(time) &&
-                        begin
-                            plot(simulation, time[framen], framen, v)
-                            frame(anim)
-                        end
-                end
-
-                framen += 1
-                update!(job)
+            # add frame to animation
+            isnothing(frame_every_n) || begin
+                (i % frame_every_n == 0 || i == 1) &&
+                    begin
+                        plot(simulation, time[framen], framen, v)
+                        frame(anim)
+                    end
             end
+
+            framen += 1
+            update!(job)
         end
     end
 
     isnothing(frame_every_n) || begin
-        @info "saving animation"
-        gif(anim, savepath(savename, savename, "gif"), fps = 20)
+        gif(anim, savepath(savename, savename, "gif"), fps = fps)
     end
-    save_simulation_history(history, savename, savename)
-    return history
+    # save_simulation_history(history, savename, savename)
+    # return history
 end

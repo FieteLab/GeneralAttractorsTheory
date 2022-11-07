@@ -36,6 +36,11 @@ struct OneForm
     f::Function
 end
 
+Base.string(ω::OneForm) = "OneForm($(ω.i), $(ω.f))"
+Base.print(io::IO, ω::OneForm) = print(io, string(ω))
+Base.show(io::IO, ::MIME"text/plain", ω::OneForm) = print(io, string(ω))
+
+
 """
     (ω::OneForm)(x::Vector)
 
@@ -81,6 +86,7 @@ abstract type AbstractCAN end
         kernel::AbstractKernel             # connectivity kernel
         σ::Function                        # activation function
         Ω::Vector{OneForm}                 # vector of `OneForm`s representing input measuring forms
+        offsets::Vector                    # vector of offset directions
     end
 
 A Continous Attractor Network. 
@@ -105,6 +111,7 @@ mutable struct CAN <: AbstractCAN
     kernel::AbstractKernel             # connectivity kernel
     σ::Function                        # activation function
     Ω::Vector{OneForm}                 # vector of `OneForm`s representing input measuring forms
+    offsets::Vector
 end
 
 Base.string(can::CAN) = "CAN (dim=$(length(can.n))) - n neurons: $(can.n)"
@@ -133,7 +140,8 @@ function CAN(
     metric::Metric,
     kernel::AbstractKernel;
     σ::Union{Symbol,Function} = :relu,
-    offsets::Union{Nothing,Matrix} = nothing,         # offset directions, rows Aᵢ of A
+    Ω::Union{Nothing, Vector{OneForm}} = nothing,      # one forms for input velocity
+    offsets::Union{Nothing,Matrix} = nothing,           # offset directions, rows Aᵢ of A
 ) where {N}
 
     d = length(n)
@@ -172,14 +180,47 @@ function CAN(
 
 
     # construct one-forms
-    Ω = OneForm[]
-
-    # TODO construct Ω
+    Ω = get_one_forms(Ω, offsets)
 
     @debug "ready" n lattice_idxs eltype(lattice_idxs) X eltype(X) typeof(Ws) eltype(Ws)
-    return CAN(name, M, n, d, lattice_idxs, X, Ws, kernel, σ, Ω)
+    return CAN(name, M, n, d, lattice_idxs, X, Ws, kernel, σ, Ω, offsets)
 end
 
+
+# ---------------------------------------------------------------------------- #
+#                                   ONE FORMS                                  #
+# ---------------------------------------------------------------------------- #
+
+"""
+    get_one_forms(Nothing, offsets::Vector)::Vector{OneForm}
+
+Construct default One Forms (dxᵢ)
+"""
+function get_one_forms(::Nothing, offsets::Vector)::Vector{OneForm}
+    Ω = OneForm[]
+    for (i, v) in enumerate(offsets)
+        î = (Int ∘ ceil)(i / 2)
+        ω = OneForm(î, x -> v[î])   
+        push!(
+            Ω, 
+            ω
+        )
+    end
+    Ω
+end
+
+"""
+validate given one forms. 
+"""
+function get_one_forms(Ω::Vector{OneForm}, offsets)::Vector{OneForm}
+    @assert length(Ω) == length(offsets)
+    return Ω
+end
+
+
+# ---------------------------------------------------------------------------- #
+#                                    offsets                                   #
+# ---------------------------------------------------------------------------- #
 """
     Aᵢ(A::Matrix, i::Int)
 
