@@ -32,22 +32,17 @@ end
 
 MobiusEuclidean() = MobiusEuclidean(1.0)
 
-MobiusEuclidean(x₀::Float64) = MobiusEuclidean(
-        x₀,
-        PeriodicEuclidean([2π]),
-        PeriodicEuclidean([2π, Inf])
-    )
+MobiusEuclidean(x₀::Float64) =
+    MobiusEuclidean(x₀, PeriodicEuclidean([2π]), PeriodicEuclidean([2π, Inf]))
 
 
 function (dist::MobiusEuclidean)(x, y)
     @inbounds begin
         Δx = abs(x[1] - y[1])
-        th = dist.periodic1D.periods[1]/2
+        th = dist.periodic1D.periods[1] / 2
 
         if Δx > th
-            return dist.periodic(
-                x, [y[1], dist.x₀-y[2]]
-            )
+            return dist.periodic(x, [y[1], dist.x₀ - y[2]])
         else
             return dist.periodic(x, y)
         end
@@ -56,4 +51,3 @@ end
 
 # Distances.result_type(::MobiusEuclidean, ::Float64, ::Float64) = Float64
 Distances.eval_op(::MobiusEuclidean, ::Float64, ::Float64) = 1.0
-

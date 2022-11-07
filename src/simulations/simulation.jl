@@ -29,9 +29,9 @@ Holds information necessary for running a simulation.
     W::Vector{SparseMatrixCSC}       # all connection weights
     Ṡ::SparseMatrixCSC
     b₀::Float64 = 1.0       # baseline input activity
-    η::Float64  = 0.1       # noise scale
+    η::Float64 = 0.1       # noise scale
     dt::Float64 = 0.5       # simulation step - milliseconds
-    τ::Float64  = 10.0      # activity time constant - milliseconds
+    τ::Float64 = 10.0      # activity time constant - milliseconds
 end
 
 Base.string(sim::Simulation) = "Simulation of $(sim.can)"
@@ -49,35 +49,33 @@ function Simulation(can::AbstractCAN; kwargs...)
     W = sparse.(map(x -> Float64.(x), can.Ws))
     droptol!.(W, 0.001)
 
-    return Simulation(can=can, S=S, Ṡ=Ṡ, W=W; kwargs...)
+    return Simulation(can = can, S = S, Ṡ = Ṡ, W = W; kwargs...)
 end
 
 
 # ---------------------------------------------------------------------------- #
 #                                     STEP                                     #
 # ---------------------------------------------------------------------------- #
-∑ⱼ(x) = sum(x, dims=2) |> vec
+∑ⱼ(x) = sum(x, dims = 2) |> vec
 
-function step!(
-    simulation::Simulation, v::Vector{Float64},
-)   
-    can         = simulation.can
-    b₀          = simulation.b₀
-    A, S, W     = simulation.can.A, simulation.S, simulation.W
-    Ṡ           = simulation.Ṡ
+function step!(simulation::Simulation, v::Vector{Float64})
+    can = simulation.can
+    b₀ = simulation.b₀
+    A, S, W = simulation.can.A, simulation.S, simulation.W
+    Ṡ = simulation.Ṡ
 
     # get effect of recurrent connectivity & external input
     d = 2simulation.can.d
-    B = b₀ .+ A*v  # inputs vector of size 2d
+    B = b₀ .+ A * v  # inputs vector of size 2d
     S̄ = ∑ⱼ(S)  # get the sum of all current activations
 
     if simulation.η > 0
         η = rand(Float64, size(S, 1), d) .* simulation.η  # get noise input
-        for i in 1:d
+        for i = 1:d
             Ṡ[:, i] .= W[i] * S̄ .+ B[i] .+ η[i]
         end
     else
-        for i in 1:d
+        for i = 1:d
             Ṡ[:, i] .= W[i] * S̄ .+ B[i]
         end
     end
@@ -87,7 +85,7 @@ function step!(
     droptol!(simulation.Ṡ, 0.001)
 
     # update activity
-    simulation.S += (can.σ.(Ṡ) - S)/(simulation.τ)
+    simulation.S += (can.σ.(Ṡ) - S) / (simulation.τ)
 end
 
 
@@ -100,14 +98,14 @@ end
 include("history.jl")
 
 function run_simulation(
-        simulation::Simulation, 
-        chunks::Vector;
-        savename::String=simulation.can.name*"_sim",
-        frame_every_n::Union{Nothing, Int} = 20,   # how frequently to save an animation frame
-        kwargs...
-    )
+    simulation::Simulation,
+    chunks::Vector;
+    savename::String = simulation.can.name * "_sim",
+    frame_every_n::Union{Nothing,Int} = 20,   # how frequently to save an animation frame
+    kwargs...,
+)
     @assert eltype(chunks) <: AbstractChunk
-        
+
     # setup animation
     T = sum(getfield.(chunks, :duration))
     time = 1:simulation.dt:T |> collect
@@ -121,10 +119,10 @@ function run_simulation(
     # do simulation steps and visualize
     pbar = ProgressBar()
     Progress.with(pbar) do
-        job = addjob!(pbar, description="Simulation",  N=length(time)+1)
+        job = addjob!(pbar, description = "Simulation", N = length(time) + 1)
         for chunk in chunks
-            for i in 1:chunk.nframes
-                v = eltype(chunk.v) == Float64 ? chunk.v : chunk.v[i] 
+            for i = 1:chunk.nframes
+                v = eltype(chunk.v) == Float64 ? chunk.v : chunk.v[i]
                 step!(simulation, v)
                 # framen > 50 && break
 
@@ -133,10 +131,12 @@ function run_simulation(
 
                 # add frame to animation
                 isnothing(frame_every_n) || begin
-                    i % frame_every_n == 0 && framen < length(time) && begin
-                        plot(simulation, time[framen], v)
-                        frame(anim)
-                    end
+                    i % frame_every_n == 0 &&
+                        framen < length(time) &&
+                        begin
+                            plot(simulation, time[framen], v)
+                            frame(anim)
+                        end
                 end
 
                 framen += 1
@@ -144,12 +144,11 @@ function run_simulation(
             end
         end
     end
-    
+
     isnothing(frame_every_n) || begin
         @info "saving animation"
-        gif(anim, savepath(savename, savename, "gif"), fps=20)
+        gif(anim, savepath(savename, savename, "gif"), fps = 20)
     end
     save_simulation_history(history, savename, savename)
     return history
 end
-

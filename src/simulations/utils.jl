@@ -6,11 +6,11 @@ function simulation_frame_1dcan(simulation::Simulation, timems, v::Vector; kwarg
     @info "ONE DIM CAN SIM PLOT"
     can = simulation.can
     plt = plot(;
-        title="elapsed: $(round(timems)) ms", 
-        clims=(0.0, 0.6),
-        ylim=[0, 5],
+        title = "elapsed: $(round(timems)) ms",
+        clims = (0.0, 0.6),
+        ylim = [0, 5],
         # aspect_ratio=:equal, 
-        grid=false,
+        grid = false,
     )
 
     heatmap!(simulation.S')
@@ -30,33 +30,31 @@ end
 function simulation_frame_2dcan(simulation::Simulation, timems, v::Vector; kwargs...)
     can = simulation.can
     plt = plot(;
-        title="elapsed: $(round(timems)) ms", 
-        clims=(0.0, 1.0),
-        aspect_ratio=:equal, 
-        grid=false,
-        size=simulation.can.n .* 10
+        title = "elapsed: $(round(timems)) ms",
+        clims = (0.0, 1.0),
+        aspect_ratio = :equal,
+        grid = false,
+        size = simulation.can.n .* 10,
     )
 
-    h = maximum(simulation.can.X)/2.5
+    h = maximum(simulation.can.X) / 2.5
     v̂ = v ./ norm(v) .* h
-    for i in 1:can.d * 2
+    for i = 1:can.d*2
         S = simulation.S[:, i]
-        
+
         # get offset position for plotting
-        offset = can.A[i, :] ./ maximum(can.A) .* vec(maximum(simulation.can.X; dims=2))
-        
+        offset = can.A[i, :] ./ maximum(can.A) .* vec(maximum(simulation.can.X; dims = 2))
+
         # plot activity heatmap
-        x = offset[1] .+ range(0, maximum(simulation.can.X[1, :]), length=can.n[1])
-        y = offset[2] .+ range(0, maximum(simulation.can.X[2, :]), length=can.n[2])
-        contourf!(
-            x, y, reshape(S, can.n)', levels=3
-        )
+        x = offset[1] .+ range(0, maximum(simulation.can.X[1, :]), length = can.n[1])
+        y = offset[2] .+ range(0, maximum(simulation.can.X[2, :]), length = can.n[2])
+        contourf!(x, y, reshape(S, can.n)', levels = 3)
 
         # plot input vector direction 
-        x0, y0 = maximum(simulation.can.X; dims=2)./2.1
-        
-        plot!([x0, x0+v̂[1]], [y0, y0+v̂[2]], lw=6, color=:green, label=nothing)
-        scatter!([x0], [y0], ms=8, color=:green, label=nothing)
+        x0, y0 = maximum(simulation.can.X; dims = 2) ./ 2.1
+
+        plot!([x0, x0 + v̂[1]], [y0, y0 + v̂[2]], lw = 6, color = :green, label = nothing)
+        scatter!([x0], [y0], ms = 8, color = :green, label = nothing)
 
         # # add text with Aᵢ
         # Ai = string(round.(ai; digits=3))
@@ -76,13 +74,14 @@ end
 
 
 
-Plots.plot(simulation::Simulation, timems, v::Vector; kwargs...) = if simulation.can.d == 1
-            simulation_frame_1dcan(simulation, timems, v; kwargs...)
-        elseif simulation.can.d == 2
-            simulation_frame_2dcan(simulation, timems, v; kwargs...)
-        else
-            error("Simulation plot for d>2 not implemented")
-        end
+Plots.plot(simulation::Simulation, timems, v::Vector; kwargs...) =
+    if simulation.can.d == 1
+        simulation_frame_1dcan(simulation, timems, v; kwargs...)
+    elseif simulation.can.d == 2
+        simulation_frame_2dcan(simulation, timems, v; kwargs...)
+    else
+        error("Simulation plot for d>2 not implemented")
+    end
 
 
 # ---------------------------------------------------------------------------- #
@@ -92,4 +91,3 @@ reset(simulation::Simulation) = begin
     simulation.Ṡ .*= 0.0
 end
 reset(Ṡ::Vector) = Ṡ * 0.0
-
