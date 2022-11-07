@@ -39,7 +39,16 @@ abstract type AbstractCAN end
 
 A Continous Attractor Network. 
 
+Each CAN is a d-dimensional integrator network with nᵢ neurons in each dimension. Neurons are indexed
+and are assigned coordinates in the neural lattice (`X`) given a coordinate function `ξ` that acts on 
+the neurons' indices. 
+Each CAN is comprised of 2d "copies" of a neural population, each with its connectivity matrix Wᵢ. 
+The `Ws` are computed based on offset pairwise neuron coordinates. For each copy the offeset is in a direction
+specified by `offsets` vectors (generally ± each basis direction) and scaled by an `offset_size` magnitude. 
+The velocity inputs onto each copy are scaled by α * the offset direction. α is the same across all directions
+and used only to scale the magnitude of the velocity inputs. 
 
+Thus, the connectivity matrix's shape depends on the offset directions and the offset magnitude. 
 """
 mutable struct CAN <: AbstractCAN
     name::String
