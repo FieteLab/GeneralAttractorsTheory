@@ -87,6 +87,7 @@ end
 
 
 function Plots.plot(simulation::Simulation, timems, framen, v::Vector, x::Vector; kwargs...)
+    # plot populatiuon actvitiy
     if simulation.can.d == 1
         pop_activity = simulation_frame_1dcan(simulation, timems, v; kwargs...)
     elseif simulation.can.d == 2
@@ -106,7 +107,21 @@ function Plots.plot(simulation::Simulation, timems, framen, v::Vector, x::Vector
     # show_oneforms!(traj, simulation.can.Ω[1], simulation.can.C, xmin, xmax; alpha=0.5, dx=30, scale=8)
     # show_oneforms!(traj, simulation.can.Ω[3], simulation.can.C, xmin, xmax; alpha=0.5, color=:red, dx=30, scale=8)
 
-    plot(traj, pop_activity, size = (1000, 800))
+    # plot inputs
+    # B_measured = map(
+    #         ωᵢ -> ωᵢ(x, v),
+    #         simulation.can.Ω
+    #     )
+
+    B_actual = map(
+            ωᵢ -> ωᵢ(x, v)/norm(ωᵢ(x)),
+            simulation.can.Ω
+        )
+    d = length(B_actual)
+    inpts = bar(1:d, B_actual, color=:black, label="real input")
+    # bar!(1:d, B_measured, color=:red, alpha=0.5, label="measured input")
+
+    plot(traj, pop_activity, inpts, plot(), size = (1000, 800))
 end
 
 

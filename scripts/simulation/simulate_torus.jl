@@ -28,10 +28,10 @@ k_t = DiffOfExpKernel(; λ = 13.0)
 
 # one forms
 Ω = OneForm[
-    OneForm(1, x->2sin(x/n[1])+0.25),
-    OneForm(1, x->2sin(x/n[1])-0.25),
-    OneForm(2, x->2sin(x/n[2])+0.25),
-    OneForm(2, x->2sin(x/n[2])-0.25),
+    OneForm(1, x -> 2sin(x/n[1])+0.25),
+    OneForm(1, x -> -(2sin(x/n[1])+0.25)),
+    OneForm(2, x -> 2sin(x/n[2])+0.25),
+    OneForm(2, x -> -(2sin(x/n[2])+0.25)),
 ]
 
 # make network

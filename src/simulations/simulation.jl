@@ -74,8 +74,8 @@ function step!(simulation::Simulation, x::Vector, v::Vector)
     d = 2simulation.can.d
     B = b₀ .+ vec(
         map(
-            i -> can.Ω[i](x, v)/norm(can.Ω[i](x)),
-            1:d
+            ωᵢ -> ωᵢ(x, v)/norm(ωᵢ(x)),
+            simulation.can.Ω
         )
     )  # inputs vector of size 2d
     S̄ = ∑ⱼ(S)  # get the sum of all current activations

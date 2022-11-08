@@ -25,15 +25,20 @@ k_t = DiffOfExpKernel(; λ = 13.0)
 
 
 Ω = OneForm[
-    OneForm(1, x->2sin(x/n[1])+0.25),
-    OneForm(1, x->2sin(x/n[1])-0.25),
-    OneForm(2, x->2sin(x/n[2])+0.25),
-    OneForm(2, x->2sin(x/n[2])-0.25),
+    OneForm(1, x -> 2sin(x/n[1])+0.25),
+    OneForm(1, x -> -(2sin(x/n[1])+0.25)),
+    OneForm(2, x -> 2sin(x/n[2])+0.25),
+    OneForm(2, x -> -(2sin(x/n[2])+0.25)),
 ]
 
 
 tor = CAN("torus", cover, n, ξ_t, d_t, k_t; Ω=Ω) 
 
 
-p = show_oneforms(tor.Ω[3], tor.C, [-100, -100], [100, 100]; dx=10, scale=2) 
-# show_oneforms!(p, tor.Ω[1], tor.C, [-100, -100], [100, 100]; dx=10, scale=2, color=:red)
+p = show_oneforms(tor.Ω[2], tor.C, [-100, -100], [100, 100]; dx=10, scale=2) 
+show_oneforms!(p, tor.Ω[1], tor.C, [-100, -100], [100, 100]; dx=10, scale=2, color=:red)
+show_oneforms!(p, tor.Ω[3], tor.C, [-100, -100], [100, 100]; dx=10, scale=2, color=:green)
+
+
+# TODO get well defined behavior for ρ such that one-forms act correctly
+# TODO test: implement decoding
