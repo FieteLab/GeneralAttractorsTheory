@@ -4,7 +4,7 @@ Collection of code useful to visualize manifolds
 module Manifolds
 
 export AbstractManifold, CoverSpace
-export ℝ², T
+export ℝ², T, S²
 
 
 
@@ -15,11 +15,24 @@ export ℝ², T
 abstract type AbstractManifold end
 
 
-struct Manifoldℝ² <: AbstractManifold end
-ℝ² = Manifoldℝ²()
+struct Manifoldℝ² <: AbstractManifold 
+    xmin::Vector
+    xmax::Vector
+end
+ℝ² = Manifoldℝ²([-100, 100], [100, 100])
 
-struct Torus <: AbstractManifold end
-T = Torus()
+struct Torus <: AbstractManifold 
+    xmin::Vector
+    xmax::Vector
+end
+T = Torus([-32, -32], [32, 32])
+
+
+struct Sphere <: AbstractManifold 
+    xmin::Vector
+    xmax::Vector
+end
+S² = Sphere([-π, -π/2], [π, π/2])
 
 # ---------------------------------------------------------------------------- #
 #                                 COVER SPACES                                 #

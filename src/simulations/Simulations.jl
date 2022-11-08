@@ -6,10 +6,10 @@ using Term.Progress
 using Statistics
 using SparseArrays
 
-import GeneralAttractors: save_simulation_history, moving_average, savepath
+import GeneralAttractors: save_simulation_history, moving_average, savepath, save_model, save_data
 import GeneralAttractors: show_oneforms, show_oneforms!
 import ..Can: AbstractCAN
-import ..Manifolds: AbstractManifold, Manifoldℝ²
+import ..Manifolds: AbstractManifold, Manifoldℝ², Torus, Sphere
 
 export Simulation, run_simulation
 export Trajectory

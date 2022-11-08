@@ -258,7 +258,7 @@ function show_connectivity(can::CAN, i::Int; kwargs...)
         vline!([can.n[2]], lw = 4, color = :white, label = nothing)
         hline!([can.n[1]], lw = 4, color = :white, label = nothing)
 
-        # mark the neruon's location
+        # mark the neuron's location
         for n = 1:length(can.Ws)
             x = can.I[i]
             # Δ = reverse(can.n .* offsets[n])
@@ -296,13 +296,13 @@ end
 #                                   ONE FORMS                                  #
 # ---------------------------------------------------------------------------- #
 # -------------------------------- one oneform ------------------------------- #
-function show_oneforms!(plt, ω::OneForm, xmin::Vector, xmax::Vector; dx = 3)
+function show_oneforms!(plt, ω::OneForm, xmin::Vector, xmax::Vector; dx = 3, x₀=0, y₀=0)
     length(xmin) != 2 && error("not implemented for d != 2")
 
     for x = xmin[1]:dx:xmax[1], y = xmin[2]:dx:xmax[2]
         o = ω([x, y])
-        scatter!([x], [y], ms = 3.5, color = :black, label = nothing)
-        plot!(plt, [x, x + o[1]], [y, y + o[2]], lw = 3, color = :black, label = nothing)
+        scatter!([x+x₀], [y+y₀], ms = 3.5, color = :black, label = nothing)
+        plot!(plt, [x+x₀, x+x₀ + o[1]], [y+y₀, y+y₀ + o[2]], lw = 3, color = :black, label = nothing)
     end
 
 end
@@ -319,16 +319,17 @@ end
 function show_oneforms(can::CAN; kwargs...)
     plt = plot(; aspect_ratio = :equal, grid = false, size = can.n .* 10)
 
+    x̄ = range(0, maximum(can.X[1, :]), length = can.n[1])
+    ȳ = range(0, maximum(can.X[2, :]), length = can.n[2])
+    xmin = [minimum(x̄), minimum(ȳ)]
+    xmax = [maximum(x̄), maximum(ȳ)]
+
     for i = 1:can.d*2
         # get offset position for plotting
         offset = can.offsets[i] .* vec(maximum(can.X; dims = 2))
 
-        # plot activity heatmap
-        x = offset[1] .+ range(0, maximum(can.X[1, :]), length = can.n[1])
-        y = offset[2] .+ range(0, maximum(can.X[2, :]), length = can.n[2])
-
-        show_oneforms!(plt, can.Ω[i], [minimum(x), minimum(y)], [maximum(x), maximum(y)])
-
+        # show one forms
+        show_oneforms!(plt, can.Ω[i], xmin, xmax; x₀=offset[1], y₀=offset[2])
     end
     plt
 end
@@ -336,7 +337,7 @@ end
 
 # ----------------------- ωᵢ  over M (pullback from N) ----------------------- #
 function show_oneforms(ω::OneForm, C::CoverSpace, args...; kwargs...)
-    plt = plot(; aspect_ratio = :equal, grid = false, size = (1000, 1000))
+    plt = plot(; aspect_ratio = :equal, grid = false, size = (800, 800))
 
     show_oneforms!(plt, ω, C, args...; kwargs...)
 end

@@ -142,6 +142,7 @@ function CAN(
     σ::Union{Symbol,Function} = :relu,
     Ω::Union{Nothing,Vector{OneForm}} = nothing,      # one forms for input velocity
     offsets::Union{Nothing,Matrix} = nothing,           # offset directions, rows Aᵢ of A
+    offset_size::Union{Vector, Number} = 1.0,
 ) where {N}
 
     d = length(n)
@@ -167,9 +168,11 @@ function CAN(
 
     # construct connectivity matrices
     Ws::Vector{Matrix} = []
-    for θ in offsets
+    offset_size = offset_size isa Number ? ones(length(offsets)) .* offset_size : offset_size
+    @assert length(offsets) == length(offset_size)
+    for (μ, θ) in zip(offset_size, offsets)
         # get pairwise offset connectivity
-        D = pairwise(metric, X .- θ, X)
+        D = pairwise(metric, X .- μ * θ, X)
 
         # get connectivity matrix with kernel
         push!(Ws, kernel.k.(D))

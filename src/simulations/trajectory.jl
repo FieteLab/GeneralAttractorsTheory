@@ -38,6 +38,7 @@ function Trajectory(
     y₀ = nothing,
 )
     v = rand(T) .* σv .+ μ
+    v[v .< 0] .= 0
 
     θ₀ = isnothing(θ₀) ? rand(0:0.2:2π) : θ₀
     θ̇ = moving_average(rand(T), 11) .- 0.5
@@ -52,4 +53,50 @@ function Trajectory(
     y = cumsum(vy) .+ y₀
 
     return Trajectory(M, hcat(x, y), hcat(vx, vy))
+end
+
+
+function Trajectory(
+    M::Sphere; 
+    T::Int = 250,
+    σv = 0.2,
+    μ = 0.1,
+    σθ = 0.2,
+    θ₀ = nothing,
+    vmax = 0.2
+)   
+    x₀min, x₀max = M.xmin[1], M.xmax[1]
+    x₁min, x₁max = M.xmin[2], M.xmax[2]
+
+
+    X = zeros(T, 2)
+
+    # get velocity vector at each frame
+    v = rand(T) .* σv .+ μ
+    v[v .< 0] .= 0
+
+    θ₀ = isnothing(θ₀) ? rand(0:0.2:2π) : θ₀
+    θ̇ = moving_average(rand(T), 11) .- 0.5
+    θ̇ = cumsum(θ̇ .* σθ) .+ θ₀ # orientation
+
+    v[abs.(v) .> vmax] .= (rand()-0.5)*vmax
+    vx = v .* cos.(θ̇)
+    vy = v .* sin.(θ̇) .* 0.5
+
+    # get position at each frame
+    x = [0.0, 0.0]
+    for t in 1:T
+        v = [vx[t], vy[t]]
+        x = x .+ 0.1v
+
+        # ensure position is "on the manifold"
+        x[1] < x₀min && (x[1] = x₀max - (x₀min - x[1]))
+        x[1] > x₀max && (x[1] = x₀min + (x[1] - x₀max))
+        x[2] < x₁min && (x[2] = x₁max - (x₁min - x[2]))
+        x[2] > x₁max && (x[2] = x₁min + (x[2] - x₁max))
+
+        X[t, :] = x
+    end
+
+    return Trajectory(M, X,  hcat(vx, vy))
 end

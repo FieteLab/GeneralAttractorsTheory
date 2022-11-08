@@ -6,103 +6,58 @@ using GeneralAttractors.Kernels
 using GeneralAttractors: lerp
 using GeneralAttractors.Manifolds
 
-
-
-cover = CoverSpace(ℝ², T, (x, y) -> [mod(x - 32, 64), mod(y - 32, 64)])
-
-
+# ------------------------------- make network ------------------------------- #
 
 n = (64, 64)
-function ξ_t(i::Int, j::Int)::Vector  # neurons coordinates function
-    n̂_i, n̂_j = Int(n[1] / 2), Int(n[2] / 2)
-    [lerp(i, n[1], -n̂_i, n̂_i), lerp(j, n[2], -n̂_j, n̂_j)]   # ∈ [-n/2, n/2] × [-n/2, n/2]
+function ξ_s(i::Int, j::Int)::Vector
+    [lerp(i, n[1], -π, π), lerp(j, n[2], -π / 2, π / 2)]
 end
-d_t = PeriodicEuclidean([n...])  # distance function over a torus manifold
+d_s = SphericalAngle()
+k_s = DiffOfExpKernel(; λ = 0.75)
 
-# connectivity kernel 
-k_t = DiffOfExpKernel(; λ = 13.0)
-
+cover = CoverSpace(S², S², (x, y) -> [x, y])
 
 
 Ω = OneForm[
-    OneForm(1, x -> sin(x / n[1]) + 1.25),
-    OneForm(1, x -> -(sin(x / n[1]) + 1.25)),
-    OneForm(2, x -> sin(x / n[2]) + 1.25),
-    OneForm(2, x -> -(sin(x / n[2]) + 1.25)),
+    OneForm(1, x -> 1),
+    OneForm(1, x -> -1),
+    OneForm(2, x -> 1),
+    OneForm(2, x -> -1),
 ]
 
+can = CAN("sphere", cover, n, ξ_s, d_s, k_s; offset_size=[0.2, 0.2, 0.1, 0.1], Ω=Ω)
 
-tor = CAN("torus", cover, n, ξ_t, d_t, k_t; Ω = Ω)
 
-
-p = show_oneforms(tor.Ω[1], tor.C, [-100, -100], [100, 100]; dx = 10, scale = 1)
+# ----------------------------------- show ----------------------------------- #
+dx, scale = 1, 0.2
+p = show_oneforms(can.Ω[1], can.C, cover.M.xmin, cover.M.xmax; dx = dx, scale = scale)
 show_oneforms!(
     p,
-    tor.Ω[2],
-    tor.C,
-    [-100, -100],
-    [100, 100];
-    dx = 10,
-    scale = 1,
+    can.Ω[2],
+    can.C,
+    cover.M.xmin,
+    cover.M.xmax;
+    dx = dx,
+    scale = scale,
     color = :red,
 )
 show_oneforms!(
     p,
-    tor.Ω[3],
-    tor.C,
-    [-100, -100],
-    [100, 100];
-    dx = 10,
-    scale = 1,
+    can.Ω[3],
+    can.C,
+    cover.M.xmin,
+    cover.M.xmax;
+    dx = dx,
+    scale = scale,
     color = :green,
 )
 show_oneforms!(
     p,
-    tor.Ω[4],
-    tor.C,
-    [-100, -100],
-    [100, 100];
-    dx = 10,
-    scale = 1,
+    can.Ω[4],
+    can.C,
+    cover.M.xmin,
+    cover.M.xmax;
+    dx = dx,
+    scale = scale,
     color = :blue,
 )
-plot!(
-    [-32, 32],
-    [-32, -32],
-    lw = 4,
-    ls = :dash,
-    color = :black,
-    label = nothing,
-    alpha = 0.25,
-)
-plot!(
-    [-32, 32],
-    [32, 32],
-    lw = 4,
-    ls = :dash,
-    color = :black,
-    label = nothing,
-    alpha = 0.25,
-)
-plot!(
-    [-32, -32],
-    [-32, 32],
-    lw = 4,
-    ls = :dash,
-    color = :black,
-    label = nothing,
-    alpha = 0.25,
-)
-plot!(
-    [32, 32],
-    [-32, 32],
-    lw = 4,
-    ls = :dash,
-    color = :black,
-    label = nothing,
-    alpha = 0.25,
-)
-
-
-# TODO get well defined behavior for ρ such that one-forms act correctly
-# TODO test: implement decoding

@@ -66,6 +66,8 @@ function simulation_frame_2dcan(simulation::Simulation, timems, v::Vector; kwarg
 
     h = maximum(can.X) / 2.5
     v̂ = v ./ norm(v) .* h
+    x̄ = range(0, maximum(can.X[1, :]), length = can.n[1])
+    ȳ = range(0, maximum(can.X[2, :]), length = can.n[2])
     for i = 1:can.d*2
         S = simulation.S[:, i]
 
@@ -73,16 +75,20 @@ function simulation_frame_2dcan(simulation::Simulation, timems, v::Vector; kwarg
         offset = simulation.can.offsets[i] .* vec(maximum(can.X; dims = 2))
 
         # plot activity heatmap
-        x = offset[1] .+ range(0, maximum(can.X[1, :]), length = can.n[1])
-        y = offset[2] .+ range(0, maximum(can.X[2, :]), length = can.n[2])
+        x = offset[1] .+ x̄
+        y = offset[2] .+ ȳ
         contourf!(x, y, reshape(S, can.n)', levels = 3)
-
-        # plot input vector direction 
-        x0, y0 = maximum(can.X; dims = 2) ./ 2.1
-
-        plot!([x0, x0 + v̂[1]], [y0, y0 + v̂[2]], lw = 6, color = :green, label = nothing)
-        scatter!([x0], [y0], ms = 8, color = :green, label = nothing)
     end
+
+    # plot the sum of all activations
+    s̄ = sum(simulation.S, dims = 2) |> vec
+    contourf!(x̄, ȳ, reshape(s̄, can.n)', levels = 3)
+
+    # plot input vector direction 
+    x0, y0 = maximum(can.X; dims = 2) ./ 2.1
+    plot!([x0, x0 + v̂[1]], [y0, y0 + v̂[2]], lw = 6, color = :green, label = nothing)
+    scatter!([x0], [y0], ms = 8, color = :green, label = nothing)
+
     plt
 end
 
@@ -140,6 +146,8 @@ function Plots.plot(
         )
     end
 
+    plot(traj, pop_activity, size = (1000, 800), layout=(2, 1))
+
 
     # plot inputs
     # B_actual = map(
@@ -151,7 +159,6 @@ function Plots.plot(
     # # bar!(1:d, B_measured, color=:red, alpha=0.5, label="measured input")
 
     # plot(traj, pop_activity, inpts, plot(), size = (1000, 800))
-    plot(traj, pop_activity, size = (1000, 800))
 end
 
 

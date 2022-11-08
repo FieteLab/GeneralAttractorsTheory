@@ -77,7 +77,7 @@ function step!(simulation::Simulation, x::Vector, v::Vector)
 
     if simulation.η > 0
         η = rand(Float64, size(S, 1), d) .* simulation.η  # get noise input
-        for i = 1:d
+        for i = 1:d 
             Ṡ[:, i] .= W[i] * S̄ .+ B[i] .+ η[i]
         end
     else
@@ -120,7 +120,7 @@ function run_simulation(
     anim = Animation()
 
     # get history to track data
-    # history = History(simulation, N; discard_first_ms=discard_first_ms, kwargs...)
+    history = History(simulation, N; discard_first_ms=discard_first_ms, kwargs...)
 
     # do simulation steps and visualize
     pbar = ProgressBar()
@@ -133,7 +133,7 @@ function run_simulation(
             # framen > 50 && break
 
             # add data to history
-            # add!(history, framen, simulation, v)
+            add!(history, framen, simulation, v)
 
             # add frame to animation
             isnothing(frame_every_n) || begin
@@ -153,6 +153,10 @@ function run_simulation(
     isnothing(frame_every_n) || begin
         gif(anim, savepath(savename, savename, "gif"), fps = fps)
     end
-    # save_simulation_history(history, savename, savename)
-    # return history
+
+    save_simulation_history(history, savename, savename)
+    save_model(simulation.can, savename, "sim_CAN_model", :CAN)
+    save_data(simulation.trajectory.X, savename, "sim_trajectory_X")
+    save_data(simulation.trajectory.V, savename, "sim_trajectory_V")
+    return history
 end

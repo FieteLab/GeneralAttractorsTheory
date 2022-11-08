@@ -25,11 +25,11 @@ end
 d_t = PeriodicEuclidean([n...])  # distance function over a torus manifold
 # connectivity kernel
 
-# k_t = DiffOfExpKernel(; λ = 13.0)  # ? used for hexagonal grid pattern
-k_t = LocalGlobalKernel(α = 0.04, σ = 20.0, β = 0.025)  # ? used for single bump pattern
+k_t = DiffOfExpKernel(; λ = 13.0)  # ? used for hexagonal grid pattern
+# k_t = LocalGlobalKernel(α = 0.04, σ = 20.0, β = 0.025)  # ? used for single bump pattern
 
 # construct network
-cover = CoverSpace(ℝ², T, (x, y) -> [mod(x, 1), mod(y, 1)])
+cover = CoverSpace(ℝ², T, (x, y) -> [mod(x - 32, 64), mod(y - 32, 64)])
 torus_attractor = CAN("torus", cover, n, ξ_t, d_t, k_t;)  # ? if using DiffOfExpKernel, change to α=0.10315
 
 # # ---------------------------------------------------------------------------- #
@@ -47,14 +47,17 @@ torus_attractor = CAN("torus", cover, n, ξ_t, d_t, k_t;)  # ? if using DiffOfEx
 # mobius_attractor = CAN("mobius", n, ξ_m, d_m, k_m; offset_size = 0.2, α = 0.1)
 
 
-# # ---------------------------------------------------------------------------- #
-# #                                    SPHERE                                    #
-# # ---------------------------------------------------------------------------- #
-# @info "Creating sphere attractor"
-# n = (64, 64)
-# function ξ_s(i::Int, j::Int)::Vector
-#     [lerp(i, n[1], -π, π), lerp(j, n[2], -π / 2, π / 2)]
-# end
-# d_s = SphericalAngle()
-# k_s = DiffOfExpKernel(; λ = 0.75)
-# sphere_attractor = CAN("sphere", n, ξ_s, d_s, k_s; offset_size = 0.1, α = 0.1)
+# ---------------------------------------------------------------------------- #
+#                                    SPHERE                                    #
+# ---------------------------------------------------------------------------- #
+@info "Creating sphere attractor"
+n = (64, 64)
+function ξ_s(i::Int, j::Int)::Vector
+    [lerp(i, n[1], -π, π), lerp(j, n[2], -π / 2, π / 2)]
+end
+d_s = SphericalAngle()
+k_s = DiffOfExpKernel(; λ = 0.75)
+
+cover = CoverSpace(S², S², (x, y) -> [mod(x, 1), mod(y, 1)])
+sphere_attractor = CAN("sphere", cover, n, ξ_s, d_s, k_s; offset_size=[0.2, 0.2, 0.1, 0.1])
+
