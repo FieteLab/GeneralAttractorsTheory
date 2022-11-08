@@ -72,12 +72,7 @@ function step!(simulation::Simulation, x::Vector, v::Vector)
 
     # get effect of recurrent connectivity & external input
     d = 2simulation.can.d
-    B = b₀ .+ vec(
-        map(
-            ωᵢ -> ωᵢ(x, v)/norm(ωᵢ(x)),
-            simulation.can.Ω
-        )
-    )  # inputs vector of size 2d
+    B = b₀ .+ vec(map(ωᵢ -> ωᵢ(x, v) / norm(ωᵢ(x)), simulation.can.Ω))  # inputs vector of size 2d
     S̄ = ∑ⱼ(S)  # get the sum of all current activations
 
     if simulation.η > 0
@@ -112,14 +107,14 @@ function run_simulation(
     simulation::Simulation;
     savename::String = simulation.can.name * "_sim",
     frame_every_n::Union{Nothing,Int} = 20,   # how frequently to save an animation frame
-    fps=20,
-    discard_first_ms=0,
+    fps = 20,
+    discard_first_ms = 0,
     kwargs...,
 )
 
     # setup animation
     N = size(simulation.trajectory.X, 1)
-    T = (N+1) * simulation.dt
+    T = (N + 1) * simulation.dt
     time = 1:simulation.dt:T |> collect
     framen = 1
     anim = Animation()
@@ -143,9 +138,9 @@ function run_simulation(
             # add frame to animation
             isnothing(frame_every_n) || begin
                 (i % frame_every_n == 0 || i == 1) &&
-                (time[framen] > discard_first_ms) && 
+                    (time[framen] > discard_first_ms) &&
                     begin
-                        plot(simulation, time[framen], framen, v, x)
+                        plot(simulation, time[framen], framen, x, v)
                         frame(anim)
                     end
             end

@@ -12,6 +12,7 @@ function Plots.plot(traj::Trajectory)
         traj.X[:, 2],
         lw = 3,
         color = :black,
+        label = nothing,
         title = "trajectory",
         grid = false,
         aspect_ratio = :equal,
@@ -31,8 +32,9 @@ function Plots.plot(traj::Trajectory, i::Int)
         title = "trajectory",
         grid = false,
         aspect_ratio = :equal,
-        xlim=[minimum(traj.X[:, 1]), maximum(traj.X[:, 1])],
-        ylim=[minimum(traj.X[:, 2]), maximum(traj.X[:, 2])],
+        label = nothing,
+        xlim = [minimum(traj.X[:, 1]), maximum(traj.X[:, 1])],
+        ylim = [minimum(traj.X[:, 2]), maximum(traj.X[:, 2])],
     )
 end
 
@@ -86,7 +88,17 @@ end
 
 
 
-function Plots.plot(simulation::Simulation, timems, framen, v::Vector, x::Vector; kwargs...)
+function Plots.plot(
+    simulation::Simulation,
+    timems,
+    framen,
+    x::Vector,
+    v::Vector;
+    show_one_forms = false,
+    dx = 20,
+    scale = 8,
+    kwargs...,
+)
     # plot populatiuon actvitiy
     if simulation.can.d == 1
         pop_activity = simulation_frame_1dcan(simulation, timems, v; kwargs...)
@@ -100,28 +112,46 @@ function Plots.plot(simulation::Simulation, timems, framen, v::Vector, x::Vector
     # plot trajectory
     tj = simulation.trajectory
     traj = Plots.plot(tj, framen)
-    scatter!(traj, [x[1]], [x[2]], ms=5, color=:black, label=nothing)
+    scatter!(traj, [x[1]], [x[2]], ms = 5, color = :black, label = nothing)
 
     # visualize oneforms
-    # xmin, xmax = vec(minimum(tj.X, dims=1)), vec(maximum(tj.X, dims=1))
-    # show_oneforms!(traj, simulation.can.Ω[1], simulation.can.C, xmin, xmax; alpha=0.5, dx=30, scale=8)
-    # show_oneforms!(traj, simulation.can.Ω[3], simulation.can.C, xmin, xmax; alpha=0.5, color=:red, dx=30, scale=8)
+    show_one_forms && begin
+        xmin, xmax = vec(minimum(tj.X, dims = 1)), vec(maximum(tj.X, dims = 1))
+        show_oneforms!(
+            traj,
+            simulation.can.Ω[1],
+            simulation.can.C,
+            xmin,
+            xmax;
+            alpha = 0.5,
+            dx = dx,
+            scale = scale,
+        )
+        show_oneforms!(
+            traj,
+            simulation.can.Ω[3],
+            simulation.can.C,
+            xmin,
+            xmax;
+            alpha = 0.5,
+            color = :red,
+            dx = dx,
+            scale = scale,
+        )
+    end
+
 
     # plot inputs
-    # B_measured = map(
-    #         ωᵢ -> ωᵢ(x, v),
+    # B_actual = map(
+    #         ωᵢ -> ωᵢ(x, v)/norm(ωᵢ(x)),
     #         simulation.can.Ω
     #     )
+    # d = length(B_actual)
+    # inpts = bar(1:d, B_actual, color=:black, label="real input")
+    # # bar!(1:d, B_measured, color=:red, alpha=0.5, label="measured input")
 
-    B_actual = map(
-            ωᵢ -> ωᵢ(x, v)/norm(ωᵢ(x)),
-            simulation.can.Ω
-        )
-    d = length(B_actual)
-    inpts = bar(1:d, B_actual, color=:black, label="real input")
-    # bar!(1:d, B_measured, color=:red, alpha=0.5, label="measured input")
-
-    plot(traj, pop_activity, inpts, plot(), size = (1000, 800))
+    # plot(traj, pop_activity, inpts, plot(), size = (1000, 800))
+    plot(traj, pop_activity, size = (1000, 800))
 end
 
 

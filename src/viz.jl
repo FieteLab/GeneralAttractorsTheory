@@ -296,32 +296,28 @@ end
 #                                   ONE FORMS                                  #
 # ---------------------------------------------------------------------------- #
 # -------------------------------- one oneform ------------------------------- #
-function show_oneforms!(plt, ω::OneForm, xmin::Vector, xmax::Vector; dx=3)
+function show_oneforms!(plt, ω::OneForm, xmin::Vector, xmax::Vector; dx = 3)
     length(xmin) != 2 && error("not implemented for d != 2")
 
-    for x in xmin[1]:dx:xmax[1], y in xmin[2]:dx:xmax[2]
+    for x = xmin[1]:dx:xmax[1], y = xmin[2]:dx:xmax[2]
         o = ω([x, y])
-        scatter!([x], [y], ms=3.5, color=:black, label=nothing)
-        plot!(plt, [x, x+o[1]], [y, y+o[2]], lw=3, color=:black, label=nothing)
+        scatter!([x], [y], ms = 3.5, color = :black, label = nothing)
+        plot!(plt, [x, x + o[1]], [y, y + o[2]], lw = 3, color = :black, label = nothing)
     end
 
 end
 
 
-function show_oneforms(ω::OneForm, xmin::Vector, xmax::Vector; dx=3)
-    plt = plot(aspect_ratio=:equal, grid=false)
-    show_oneforms!(plt, ω, xmin, xmax; dx=dx)
+function show_oneforms(ω::OneForm, xmin::Vector, xmax::Vector; dx = 3)
+    plt = plot(aspect_ratio = :equal, grid = false)
+    show_oneforms!(plt, ω, xmin, xmax; dx = dx)
     plt
 end
 
 
 # ---------------------------- all ωᵢ for one CAN ---------------------------- #
 function show_oneforms(can::CAN; kwargs...)
-    plt = plot(;
-        aspect_ratio = :equal,
-        grid = false,
-        size = can.n .* 10,
-    )
+    plt = plot(; aspect_ratio = :equal, grid = false, size = can.n .* 10)
 
     for i = 1:can.d*2
         # get offset position for plotting
@@ -330,7 +326,7 @@ function show_oneforms(can::CAN; kwargs...)
         # plot activity heatmap
         x = offset[1] .+ range(0, maximum(can.X[1, :]), length = can.n[1])
         y = offset[2] .+ range(0, maximum(can.X[2, :]), length = can.n[2])
-        
+
         show_oneforms!(plt, can.Ω[i], [minimum(x), minimum(y)], [maximum(x), maximum(y)])
 
     end
@@ -340,25 +336,39 @@ end
 
 # ----------------------- ωᵢ  over M (pullback from N) ----------------------- #
 function show_oneforms(ω::OneForm, C::CoverSpace, args...; kwargs...)
-    plt = plot(;
-        aspect_ratio = :equal,
-        grid = false,
-        size=(1000, 1000)
-    )
+    plt = plot(; aspect_ratio = :equal, grid = false, size = (1000, 1000))
 
     show_oneforms!(plt, ω, C, args...; kwargs...)
 end
 
 
-function show_oneforms!(plt, ω::OneForm, C::CoverSpace, xmin::Vector, xmax::Vector; dx=10, scale=1, color=:black, kwargs...)
-    for x in xmin[1]:dx:xmax[1], y in xmin[2]:dx:xmax[2]
+function show_oneforms!(
+    plt,
+    ω::OneForm,
+    C::CoverSpace,
+    xmin::Vector,
+    xmax::Vector;
+    dx = 10,
+    scale = 1,
+    color = :black,
+    kwargs...,
+)
+    for x = xmin[1]:dx:xmax[1], y = xmin[2]:dx:xmax[2]
         # get ω at the corresponding mfld
         x̂, ŷ = C.ρ(x, y)
         o = ω([x̂, ŷ]) .* scale
 
         # vis
-        scatter!(plt, [x], [y], ms=3, markercolor=color, label=nothing; kwargs...)
-        plot!(plt, [x, x+o[1]], [y, y+o[2]], lw=3, color=color, label=nothing; kwargs...) 
+        scatter!(plt, [x], [y], ms = 3, markercolor = color, label = nothing; kwargs...)
+        plot!(
+            plt,
+            [x, x + o[1]],
+            [y, y + o[2]],
+            lw = 3,
+            color = color,
+            label = nothing;
+            kwargs...,
+        )
     end
     return plt
 end
