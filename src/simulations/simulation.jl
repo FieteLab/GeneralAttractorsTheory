@@ -113,6 +113,7 @@ function run_simulation(
     savename::String = simulation.can.name * "_sim",
     frame_every_n::Union{Nothing,Int} = 20,   # how frequently to save an animation frame
     fps=20,
+    discard_first_ms=0,
     kwargs...,
 )
 
@@ -124,7 +125,7 @@ function run_simulation(
     anim = Animation()
 
     # get history to track data
-    # history = History(simulation, N; kwargs...)
+    # history = History(simulation, N; discard_first_ms=discard_first_ms, kwargs...)
 
     # do simulation steps and visualize
     pbar = ProgressBar()
@@ -142,8 +143,9 @@ function run_simulation(
             # add frame to animation
             isnothing(frame_every_n) || begin
                 (i % frame_every_n == 0 || i == 1) &&
+                (time[framen] > discard_first_ms) && 
                     begin
-                        plot(simulation, time[framen], framen, v)
+                        plot(simulation, time[framen], framen, v, x)
                         frame(anim)
                     end
             end

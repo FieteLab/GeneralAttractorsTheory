@@ -9,8 +9,8 @@ include("manifolds.jl")
 include("can.jl")
 
 
-export CAN, Kernel
-export show_connectivity, plot_distance_function,  show_oneforms
+export CAN, OneForm
+export show_connectivity, plot_distance_function,  show_oneforms, show_oneforms!
 # export ring_attractor, torus_attractor, mobius_attractor, sphere_attractor
 export torus_attractor
 

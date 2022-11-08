@@ -1,18 +1,15 @@
 using Plots
-
+using Distances
 
 using GeneralAttractors
-using GeneralAttractors.Simulations
-
-
-using Distances
 using GeneralAttractors.Kernels
 using GeneralAttractors: lerp
 using GeneralAttractors.Manifolds
 
 
-# ---------------------------------- network --------------------------------- #
+
 cover = CoverSpace(ℝ², T, (x, y) -> [mod(x, 64), mod(y, 64)])
+
 
 
 n = (64, 64)
@@ -26,7 +23,7 @@ d_t = PeriodicEuclidean([n...])  # distance function over a torus manifold
 k_t = DiffOfExpKernel(; λ = 13.0)
 
 
-# one forms
+
 Ω = OneForm[
     OneForm(1, x->2sin(x/n[1])+0.25),
     OneForm(1, x->2sin(x/n[1])-0.25),
@@ -34,22 +31,9 @@ k_t = DiffOfExpKernel(; λ = 13.0)
     OneForm(2, x->2sin(x/n[2])-0.25),
 ]
 
-# make network
+
 tor = CAN("torus", cover, n, ξ_t, d_t, k_t; Ω=Ω) 
 
-# --------------------------------- simulate --------------------------------- #
-dt= 0.5
-duration = 800
 
-nframes = (Int ∘ round)(duration/dt)
-trajectory = Trajectory(tor; T = nframes, μ = 0.5, σθ = 0.0, σv = 0.0, θ₀=π/6)
-simulation = Simulation(tor, trajectory; η = 0.0)
-
-
-h = @time run_simulation(
-    simulation;
-    frame_every_n = 20,
-    discard_first_ms = 250,
-    average_over_ms = 20,
-    fps=10
-)
+p = show_oneforms(tor.Ω[3], tor.C, [-100, -100], [100, 100]; dx=10, scale=2) 
+# show_oneforms!(p, tor.Ω[1], tor.C, [-100, -100], [100, 100]; dx=10, scale=2, color=:red)

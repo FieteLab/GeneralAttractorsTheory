@@ -7,6 +7,7 @@ using Statistics
 using SparseArrays
 
 import GeneralAttractors: save_simulation_history, moving_average, savepath
+import GeneralAttractors: show_oneforms, show_oneforms!
 import ..Can: AbstractCAN
 import ..Manifolds: AbstractManifold, Manifoldℝ²
 

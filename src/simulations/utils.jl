@@ -48,15 +48,6 @@ function simulation_frame_1dcan(simulation::Simulation, timems, v::Vector; kwarg
     )
 
     heatmap!(simulation.S')
-    # hline!([1.5], lw=5, color=:white, label=nothing)
-
-    # x0 = size(simulation.S, 1)/2
-    # v̂ = v ./ v[1]
-    # plot!(
-    #     [x0, x0+v̂[1]*x0/4], [3, 3], lw=10, color=:black, label=nothing
-    # )
-    # scatter!([x0], [3], ms=10, color=:black, label=nothing)
-
     plt
 end
 
@@ -95,7 +86,7 @@ end
 
 
 
-function Plots.plot(simulation::Simulation, timems, framen, v::Vector; kwargs...)
+function Plots.plot(simulation::Simulation, timems, framen, v::Vector, x::Vector; kwargs...)
     if simulation.can.d == 1
         pop_activity = simulation_frame_1dcan(simulation, timems, v; kwargs...)
     elseif simulation.can.d == 2
@@ -104,7 +95,16 @@ function Plots.plot(simulation::Simulation, timems, framen, v::Vector; kwargs...
         error("Simulation plot for d>2 not implemented")
     end
 
-    traj = Plots.plot(simulation.trajectory, framen)
+
+    # plot trajectory
+    tj = simulation.trajectory
+    traj = Plots.plot(tj, framen)
+    scatter!(traj, [x[1]], [x[2]], ms=5, color=:black, label=nothing)
+
+    # visualize oneforms
+    # xmin, xmax = vec(minimum(tj.X, dims=1)), vec(maximum(tj.X, dims=1))
+    # show_oneforms!(traj, simulation.can.Ω[1], simulation.can.C, xmin, xmax; alpha=0.5, dx=30, scale=8)
+    # show_oneforms!(traj, simulation.can.Ω[3], simulation.can.C, xmin, xmax; alpha=0.5, color=:red, dx=30, scale=8)
 
     plot(traj, pop_activity, size = (1000, 800))
 end

@@ -10,7 +10,7 @@ import LinearAlgebra: ⋅, I
 export AbstractCAN, CAN
 
 using ..Kernels: AbstractKernel
-using ..Manifolds: AbstractManifold
+using ..Manifolds: CoverSpace
 
 # ---------------------------------------------------------------------------- #
 #                              DIFFERENTIAL FORMS                              #
@@ -77,7 +77,7 @@ abstract type AbstractCAN end
 """
     mutable struct CAN <: AbstractCAN
         name::String
-        M::AbstractManifold                # variable manifold
+        C::CoverSpace
         n::NTuple{N,Int} where {N}         # number of neurons in each dimension
         d::Int                             # number of dimensions
         I::Vector{Tuple}                   # index (i,j...) of each neuron in the lattice
@@ -102,7 +102,7 @@ offset direction but (potentially) varying in magnitude over the variable manifo
 """
 mutable struct CAN <: AbstractCAN
     name::String
-    M::AbstractManifold                # variable manifold
+    C::CoverSpace
     n::NTuple{N,Int} where {N}         # number of neurons in each dimension
     d::Int                             # number of dimensions
     I::Vector{Tuple}                   # index (i,j...) of each neuron in the lattice
@@ -134,7 +134,7 @@ Construct a d-dimensional network.
 """
 function CAN(
     name::String,
-    M::AbstractManifold,
+    C::CoverSpace,
     n::NTuple{N,Int},
     ξ::Function,
     metric::Metric,
@@ -183,7 +183,7 @@ function CAN(
     Ω = get_one_forms(Ω, offsets)
 
     @debug "ready" n lattice_idxs eltype(lattice_idxs) X eltype(X) typeof(Ws) eltype(Ws)
-    return CAN(name, M, n, d, lattice_idxs, X, Ws, kernel, σ, Ω, offsets)
+    return CAN(name, C, n, d, lattice_idxs, X, Ws, kernel, σ, Ω, offsets)
 end
 
 

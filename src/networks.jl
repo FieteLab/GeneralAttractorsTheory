@@ -29,7 +29,8 @@ d_t = PeriodicEuclidean([n...])  # distance function over a torus manifold
 k_t = LocalGlobalKernel(α = 0.04, σ = 20.0, β = 0.025)  # ? used for single bump pattern
 
 # construct network
-torus_attractor = CAN("torus", ℝ², n, ξ_t, d_t, k_t;)  # ? if using DiffOfExpKernel, change to α=0.10315
+cover = CoverSpace(ℝ², T, (x, y) -> [mod(x, 1), mod(y, 1)])
+torus_attractor = CAN("torus", cover, n, ξ_t, d_t, k_t;)  # ? if using DiffOfExpKernel, change to α=0.10315
 
 # # ---------------------------------------------------------------------------- #
 # #                               MOBIUS ATTRACTOR                               #

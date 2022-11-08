@@ -295,12 +295,13 @@ end
 # ---------------------------------------------------------------------------- #
 #                                   ONE FORMS                                  #
 # ---------------------------------------------------------------------------- #
+# -------------------------------- one oneform ------------------------------- #
 function show_oneforms!(plt, ω::OneForm, xmin::Vector, xmax::Vector; dx=3)
     length(xmin) != 2 && error("not implemented for d != 2")
 
     for x in xmin[1]:dx:xmax[1], y in xmin[2]:dx:xmax[2]
         o = ω([x, y])
-        scatter!([x], [y], ms=2.5, color=:black, label=nothing)
+        scatter!([x], [y], ms=3.5, color=:black, label=nothing)
         plot!(plt, [x, x+o[1]], [y, y+o[2]], lw=3, color=:black, label=nothing)
     end
 
@@ -314,10 +315,8 @@ function show_oneforms(ω::OneForm, xmin::Vector, xmax::Vector; dx=3)
 end
 
 
-
-
+# ---------------------------- all ωᵢ for one CAN ---------------------------- #
 function show_oneforms(can::CAN; kwargs...)
-
     plt = plot(;
         aspect_ratio = :equal,
         grid = false,
@@ -336,4 +335,30 @@ function show_oneforms(can::CAN; kwargs...)
 
     end
     plt
+end
+
+
+# ----------------------- ωᵢ  over M (pullback from N) ----------------------- #
+function show_oneforms(ω::OneForm, C::CoverSpace, args...; kwargs...)
+    plt = plot(;
+        aspect_ratio = :equal,
+        grid = false,
+        size=(1000, 1000)
+    )
+
+    show_oneforms!(plt, ω, C, args...; kwargs...)
+end
+
+
+function show_oneforms!(plt, ω::OneForm, C::CoverSpace, xmin::Vector, xmax::Vector; dx=10, scale=1, color=:black, kwargs...)
+    for x in xmin[1]:dx:xmax[1], y in xmin[2]:dx:xmax[2]
+        # get ω at the corresponding mfld
+        x̂, ŷ = C.ρ(x, y)
+        o = ω([x̂, ŷ]) .* scale
+
+        # vis
+        scatter!(plt, [x], [y], ms=3, markercolor=color, label=nothing; kwargs...)
+        plot!(plt, [x, x+o[1]], [y, y+o[2]], lw=3, color=color, label=nothing; kwargs...) 
+    end
+    return plt
 end
