@@ -68,11 +68,16 @@ function simulation_frame_2dcan(simulation::Simulation, timems, v::Vector; kwarg
     v̂ = v ./ norm(v) .* h
     x̄ = range(0, maximum(can.X[1, :]), length = can.n[1])
     ȳ = range(0, maximum(can.X[2, :]), length = can.n[2])
-    for i = 1:can.d*2
+
+    offsets = map(
+        o -> o ./ (o .+ 0.01) .* sign.(o), can.offsets
+    )
+
+    for (i, offset) in enumerate(offsets)
         S = simulation.S[:, i]
 
         # get offset position for plotting
-        offset = simulation.can.offsets[i] .* vec(maximum(can.X; dims = 2))
+        offset = offset .* vec(maximum(can.X; dims = 2))
 
         # plot activity heatmap
         x = offset[1] .+ x̄

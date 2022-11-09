@@ -4,6 +4,7 @@ using GeneralAttractors.Manifolds
 using GeneralAttractors: lerp
 using Distances
 
+import GeneralAttractors.Manifolds: sphere_embedding
 
 n = (64, 64)
 function ξ_s(i::Int, j::Int)::Vector
@@ -12,8 +13,38 @@ end
 d_s = SphericalAngle()
 k_s = DiffOfExpKernel(; λ = 0.75)
 
-cover = CoverSpace(S², S², (x, y) -> [mod(x, 1), mod(y, 1)])
-sph = CAN("sphere", cover, n, ξ_s, d_s, k_s; offset_size=[0.2, 0.2, 0.1, 0.1])
+cover = CoverSpace(S², S², (x, y) -> [x, y])
+
+O = [
+    [cos(0), sin(0)],
+    [cos(π * 1/4), sin(π * 1/4)],
+    [cos(π * 2/4), sin(π * 2/4)],
+    [cos(π * 3/4), sin(π * 3/4)],
+    [cos(π), sin(π)],
+    [cos(π+π*1/4), sin(π+π*1/4)],
+    [cos(π+π*2/4), sin(π+π*2/4)],
+    [cos(π+π*3/4), sin(π+π*3/4)],
+    [cos(2π), sin(2π)],
+]
+
+Ω = OneForm[
+    OneForm(1, x -> 1),
+    OneForm(1, x -> 1),
+    OneForm(1, x -> -1),
+    OneForm(1, x -> -1),
+    OneForm(2, x -> 1),
+    OneForm(2, x -> 1),
+    OneForm(2, x -> -1),
+    OneForm(2, x -> -1),
+]
+
+
+sph = CAN("sphere", cover, n, ξ_s, d_s, k_s; 
+        offset_size=0.15,
+        φ=sphere_embedding,
+        offsets=O,
+        # Ω=Ω
+        )
 
 
 
@@ -29,4 +60,7 @@ show_connectivity(
     xlabel = "longitude",
     ylabel = "latitude",
     plot_title = "Sphere attractor connectivity",
+    idxs = [1, 30, 2100, 1500, 800],
+    aspect_ratio=0.5,
+    size=(800, 400)
 )

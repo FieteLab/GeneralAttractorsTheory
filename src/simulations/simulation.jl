@@ -40,10 +40,12 @@ Base.print(io::IO, sim::Simulation) = print(io, string(sim))
 Base.show(io::IO, ::MIME"text/plain", sim::Simulation) = print(io, string(sim))
 
 function Simulation(can::AbstractCAN, trajectory::Trajectory; kwargs...)
+    n_pops = length(can.offsets)
+    
     # initialize activity matrices
     N = *(can.n...)
-    S = spzeros(Float64, N, 2can.d)
-    Ṡ = spzeros(Float64, N, 2can.d)
+    S = spzeros(Float64, N, n_pops)
+    Ṡ = spzeros(Float64, N, n_pops)
 
     # get all connection weights
     W = sparse.(map(x -> Float64.(x), can.Ws))
@@ -71,7 +73,7 @@ function step!(simulation::Simulation, x::Vector, v::Vector)
     Ṡ = simulation.Ṡ
 
     # get effect of recurrent connectivity & external input
-    d = 2simulation.can.d
+    d = size(S, 2)
     B = b₀ .+ vec(map(ωᵢ -> ωᵢ(x, v) / norm(ωᵢ(x)), simulation.can.Ω))  # inputs vector of size 2d
     S̄ = ∑ⱼ(S)  # get the sum of all current activations
 

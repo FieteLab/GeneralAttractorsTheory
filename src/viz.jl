@@ -221,18 +221,20 @@ end
 
 Show connectivity for a can's neuron given its index
 """
-function show_connectivity(can::CAN, i::Int; kwargs...)
+function show_connectivity(can::CAN, i::Int; aspect_ratio=:equal, kwargs...)
     if can.d == 1
         p = plot(; kwargs...)
         for (n, W) in enumerate(can.Ws)
             weights = reshape(W[i, :], can.n...)
-            show_connectivity!(weights; label = nothing)
+            show_connectivity!(weights; label = nothing, kwargs...)
         end
         x = can.I[i]
         vline!([x[1]], label = "Neuron $i", lw = 4, color = :black)
     elseif can.d == 2
         p = plot()
-        offsets = [[0, 0], [1, 0], [0, 1], [1, 1]]
+        offsets = map(
+            o -> o ./ (o .+ 0.01) .* sign.(o), can.offsets
+        )
         for (n, W) in enumerate(can.Ws)
             # plot connectivity map
             w = reshape(W[:, i], can.n...)'
@@ -247,17 +249,15 @@ function show_connectivity(can::CAN, i::Int; kwargs...)
                 colorbar = nothing,
                 xaxis = false,
                 yaxis = false,
-                aspect_ratio = :equal,
+                aspect_ratio = aspect_ratio,
                 xticks = [],
                 yticks = [];
                 kwargs...,
+                color=:bwr,
             )
 
         end
-        # separate heatmaps
-        vline!([can.n[2]], lw = 4, color = :white, label = nothing)
-        hline!([can.n[1]], lw = 4, color = :white, label = nothing)
-
+        
         # mark the neuron's location
         for n = 1:length(can.Ws)
             x = can.I[i]
@@ -266,9 +266,9 @@ function show_connectivity(can::CAN, i::Int; kwargs...)
             scatter!(
                 # reverse(map(z->[z], x .+ Δ))..., 
                 map(z -> [z], x .+ Δ)...,
-                color = :green,
+                color = :black,
                 label = nothing,
-                ms = 8,
+                ms = 4,
             )
         end
     else
@@ -283,11 +283,13 @@ end
 Show the connectivity for a can, the kernel and a 
 few randomly selected neurons.
 """
-function show_connectivity(can::CAN; kwargs...)
-    idxs = [1, rand(1:*(can.n...), 4)...]
+function show_connectivity(can::CAN; idxs = nothing, aspect_ratio=:equal, size=(800, 600), kwargs...)
+    idxs =  isnothing(idxs) ? [1, rand(1:*(can.n...), 4)...] : idxs
     p = plot(can.kernel; title = "Connectivity kernel")
-    ps = map(i -> show_connectivity(can, i), idxs)
-    plot(p, ps...; size = (800, 600), kwargs...) |> display
+
+    clims = (minimum(can.Ws[1]), max(abs(minimum(can.Ws[1]))/2, maximum(can.Ws[1])))
+    ps = map(i -> show_connectivity(can, i; clims=clims, aspect_ratio=aspect_ratio), idxs)
+    plot(p, ps...; size = size, kwargs...) |> display
 end
 
 

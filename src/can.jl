@@ -46,11 +46,8 @@ Base.show(io::IO, ::MIME"text/plain", ω::OneForm) = print(io, string(ω))
 
 Evaluate a one form at a point `x`.
 """
-function (ω::OneForm)(x::Vector)::Vector
-    o = zeros(length(x))
-    o[ω.i] = ω.f(x[ω.i])
-    return o
-end
+(ω::OneForm)(x::Vector)::Vector = ω.f(x...)
+
 
 """
     (ω::OneForm)(x::Vector, v::Vector)::number
@@ -141,11 +138,10 @@ function CAN(
     kernel::AbstractKernel;
     σ::Union{Symbol,Function} = :relu,
     Ω::Union{Nothing,Vector{OneForm}} = nothing,      # one forms for input velocity
-    offsets::Union{Nothing,Matrix} = nothing,           # offset directions, rows Aᵢ of A
+    offsets::Union{Nothing, Vector} = nothing,           # offset directions, rows Aᵢ of A
     offset_size::Union{Vector, Number} = 1.0,
     φ::Union{Function, Nothing} = nothing,          # an embedding function if the distance over M is computed on an embedding of M in ℝᵐ
 ) where {N}
-
     d = length(n)
 
     # check that ξ has the right form
@@ -166,26 +162,25 @@ function CAN(
 
     # get connectivity offset vectors
     offsets = get_offsets(offsets, d, n)
+    offset_size = offset_size isa Number ? ones(length(offsets)) .* offset_size : offset_size
+    @assert length(offsets) == length(offset_size)
 
-    # get manifold deformation if it gets embedded
+    # get manifold deformation (if it gets embedded before computing distance)
     G = isnothing(φ) ? nothing : map(p -> area_deformation(φ, p), eachcol(X))
 
     # construct connectivity matrices
     Ws::Vector{Matrix} = []
-    offset_size = offset_size isa Number ? ones(length(offsets)) .* offset_size : offset_size
-    @assert length(offsets) == length(offset_size)
-    for (μ, θ) in zip(offset_size, offsets)
+    for (s, θ) in zip(offset_size, offsets)
         # get pairwise offset connectivity
-        D = pairwise(metric, X .- μ * θ, X)
+        D = pairwise(metric, X .- s * θ, X)
 
         # get connectivity matrix with kernel
         W = kernel.k.(D)
 
-        # scale by area deformation, but keep self-connections
+        # scale by area deformation
         isnothing(G) || begin
-            old_d = diag(W)
+            G[G .< 1e-10] .= 0.0
             W' .*= G
-            W[diagind(W)] .= old_d
         end
 
         # store connectivity matrix
@@ -194,7 +189,6 @@ function CAN(
 
     # get connectivity function
     σ = σ isa Symbol ? activations[σ] : σ
-
 
     # construct one-forms
     Ω = get_one_forms(Ω, offsets)
@@ -211,7 +205,7 @@ end
 """
     get_one_forms(Nothing, offsets::Vector)::Vector{OneForm}
 
-Construct default One Forms (dxᵢ)
+Construct default One Forms (dxᵢ).
 """
 function get_one_forms(::Nothing, offsets::Vector)::Vector{OneForm}
     Ω = OneForm[]
@@ -224,7 +218,7 @@ function get_one_forms(::Nothing, offsets::Vector)::Vector{OneForm}
 end
 
 """
-validate given one forms. 
+validate one forms passed at CAN creation. 
 """
 function get_one_forms(Ω::Vector{OneForm}, offsets)::Vector{OneForm}
     @assert length(Ω) == length(offsets)
@@ -281,6 +275,11 @@ function get_offsets(offsets::Union{Nothing,Matrix}, d::Int, n::Tuple)::Vector
     @assert length(offsets[1]) == d
 
     @debug "Making CAN given offsets" size(offsets) typeof(offsets) v₀ Aᵢ d n offsets
+    return offsets
+end
+
+function get_offsets(offsets::Vector, d::Int, n::Tuple)::Vector
+    @assert all(length.(offsets) .== d )
     return offsets
 end
 

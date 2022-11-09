@@ -5,32 +5,35 @@ using Distances
 using GeneralAttractors.Kernels
 using GeneralAttractors.Manifolds
 using GeneralAttractors: lerp
+using GeneralAttractors.Manifolds: sphere_embedding
 
-@info "creating torus attractor"
-# neurons position and distance function
+# --------------------------------- make net --------------------------------- #
 n = (64, 64)
-function ξ_t(i::Int, j::Int)::Vector  # neurons coordinates function
-    n̂_i, n̂_j = Int(n[1] / 2), Int(n[2] / 2)
-    [lerp(i, n[1], -n̂_i, n̂_i), lerp(j, n[2], -n̂_j, n̂_j)]   # ∈ [-n/2, n/2] × [-n/2, n/2]
+function ξ_s(i::Int, j::Int)::Vector
+    [lerp(i, n[1], -π, π), lerp(j, n[2], -π / 2, π / 2)]
 end
-d_t = PeriodicEuclidean([n...])  # distance function over a torus manifold
-# connectivity kernel
+d_s = SphericalAngle()
+k_s = DiffOfExpKernel(; λ = 0.75)
 
-k_t = DiffOfExpKernel(; λ = 13.0)  # ? used for hexagonal grid pattern
-# k_t = LocalGlobalKernel(α = 0.04, σ = 20.0, β = 0.025)  # ? used for single bump pattern
+cover = CoverSpace(S², S², (x, y) -> [x, y])
+can = CAN("sphere", cover, n, ξ_s, d_s, k_s; 
+        offset_size=[0.1, 0.1, 0.1, 0.1],
+        φ=sphere_embedding
+        )
 
-# construct network
-cover = CoverSpace(ℝ², T, (x, y) -> [mod(x - 32, 64), mod(y - 32, 64)])
-tor = CAN("torus", cover, n, ξ_t, d_t, k_t;)  # ? if using DiffOfExpKernel, change to α=0.10315
 
+
+
+# --------------------------------- simulate --------------------------------- #
 
 
 """
 Visualize a network's dynamics with each copy of the network beign independent
 """
 Time = 200
-can = tor
 τ = 10
+b = 1.0  # homogeneous input
+η = 0.1  # noise std
 
 d = 2can.d
 N = *(can.n...)
@@ -50,7 +53,7 @@ for t in 1:Time
 
     # step
     for i in 1:d
-        ṡ = W[i] * S[i] .+ 2
+        ṡ = W[i] * S[i] .+ b .+ (rand()-0.5) * η
         S[i] += (can.σ.(ṡ)-S[i])/τ
     end
 
