@@ -140,7 +140,7 @@ https://github.com/JuliaStats/Distances.jl/blob/master/src/haversine.jl
 
 For an embedding of the sphere see: https://stackoverflow.com/questions/10473852/convert-latitude-and-longitude-to-point-in-3d-space
 """
-function plot_distance_function(d::SphericalAngle; kwargs...)
+function plot_distance_function(d::Union{SphericalDistance, SphericalAngle}; kwargs...)
     long = range(-π + 0.01, π - 0.01, length = 100) |> collect
     lat = range(-π / 2 + 0.01, π / 2 - 0.01, length = 100) |> collect
     X = (long × lat) |> collect

@@ -46,8 +46,17 @@ Base.show(io::IO, ::MIME"text/plain", ω::OneForm) = print(io, string(ω))
 
 Evaluate a one form at a point `x`.
 """
-(ω::OneForm)(x::Vector)::Vector = ω.f(x...)
+function (ω::OneForm)(x::Vector)::Vector
+    nargs = first(methods(ω.f)).nargs - 1
 
+    if nargs == 1 && length(x) > 1
+        o = zeros(length(x))
+        o[ω.i] = ω.f(x[ω.i])
+        return o
+    else
+        return ω.f(x...)
+    end
+end
 
 """
     (ω::OneForm)(x::Vector, v::Vector)::number
