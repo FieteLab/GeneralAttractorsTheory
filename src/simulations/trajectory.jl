@@ -59,11 +59,10 @@ end
 function Trajectory(
     M::Sphere; 
     T::Int = 250,
-    σv = 0.2,
-    μ = 0.1,
-    σθ = 0.2,
+    σv = 0.25,
+    σθ = 0.25,
     θ₀ = nothing,
-    vmax = 0.2
+    vmax = 0.3
 )   
     x₀min, x₀max = M.xmin[1], M.xmax[1]
     x₁min, x₁max = M.xmin[2], M.xmax[2]
@@ -72,8 +71,10 @@ function Trajectory(
     X = zeros(T, 2)
 
     # get velocity vector at each frame
-    v = rand(T) .* σv .+ μ
-    v[v .< 0] .= 0
+    v = rand(T) .* σv 
+    for i in 1:T
+        abs(v[1]) > vmax && (v[i] = vmax * sign(v[i]))
+    end
 
     θ₀ = isnothing(θ₀) ? rand(0:0.2:2π) : θ₀
     θ̇ = moving_average(rand(T), 11) .- 0.5

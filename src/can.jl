@@ -4,13 +4,13 @@ import Distances: Metric, pairwise
 import StaticArrays: SVector, SA_F64, SMatrix
 using Term.Progress
 using Plots
-import LinearAlgebra: ⋅, I
+import LinearAlgebra: ⋅, I, diag, diagind
 
 
 export AbstractCAN, CAN
 
 using ..Kernels: AbstractKernel
-using ..Manifolds: CoverSpace
+using ..Manifolds: CoverSpace, area_deformation
 
 # ---------------------------------------------------------------------------- #
 #                              DIFFERENTIAL FORMS                              #
@@ -143,6 +143,7 @@ function CAN(
     Ω::Union{Nothing,Vector{OneForm}} = nothing,      # one forms for input velocity
     offsets::Union{Nothing,Matrix} = nothing,           # offset directions, rows Aᵢ of A
     offset_size::Union{Vector, Number} = 1.0,
+    φ::Union{Function, Nothing} = nothing,          # an embedding function if the distance over M is computed on an embedding of M in ℝᵐ
 ) where {N}
 
     d = length(n)
@@ -166,6 +167,9 @@ function CAN(
     # get connectivity offset vectors
     offsets = get_offsets(offsets, d, n)
 
+    # get manifold deformation if it gets embedded
+    G = isnothing(φ) ? nothing : map(p -> area_deformation(φ, p), eachcol(X))
+
     # construct connectivity matrices
     Ws::Vector{Matrix} = []
     offset_size = offset_size isa Number ? ones(length(offsets)) .* offset_size : offset_size
@@ -175,7 +179,17 @@ function CAN(
         D = pairwise(metric, X .- μ * θ, X)
 
         # get connectivity matrix with kernel
-        push!(Ws, kernel.k.(D))
+        W = kernel.k.(D)
+
+        # scale by area deformation, but keep self-connections
+        isnothing(G) || begin
+            old_d = diag(W)
+            W' .*= G
+            W[diagind(W)] .= old_d
+        end
+
+        # store connectivity matrix
+        push!(Ws, W)
     end
 
     # get connectivity function

@@ -6,7 +6,7 @@ module Manifolds
 export AbstractManifold, CoverSpace
 export ℝ², T, S²
 
-
+include("_manifolds.jl")
 
 
 # ---------------------------------------------------------------------------- #

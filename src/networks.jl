@@ -12,7 +12,7 @@
 # # construct network
 # ring_attractor = CAN("ring", n, ξ_r, d_r, MexicanHatKernel(); offset_size = 0.25, α = 0.1);
 
-# ---------------------------------------------------------------------------- #
+# --------------------------------------------------------------75-------------- #
 #                                TORUS ATTRACTOR                               #
 # ---------------------------------------------------------------------------- #
 @info "creating torus attractor"
@@ -50,6 +50,8 @@ torus_attractor = CAN("torus", cover, n, ξ_t, d_t, k_t;)  # ? if using DiffOfEx
 # ---------------------------------------------------------------------------- #
 #                                    SPHERE                                    #
 # ---------------------------------------------------------------------------- #
+import .Manifolds: sphere_embedding
+
 @info "Creating sphere attractor"
 n = (64, 64)
 function ξ_s(i::Int, j::Int)::Vector
@@ -59,5 +61,7 @@ d_s = SphericalAngle()
 k_s = DiffOfExpKernel(; λ = 0.75)
 
 cover = CoverSpace(S², S², (x, y) -> [mod(x, 1), mod(y, 1)])
-sphere_attractor = CAN("sphere", cover, n, ξ_s, d_s, k_s; offset_size=[0.2, 0.2, 0.1, 0.1])
+sphere_attractor = CAN("sphere", cover, n, ξ_s, d_s, k_s; 
+    offset_size=[0.2, 0.2, 0.1, 0.1], 
+    φ=sphere_embedding)
 
