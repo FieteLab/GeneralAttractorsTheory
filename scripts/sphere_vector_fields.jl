@@ -28,7 +28,7 @@ domain = (-π .. π) × (-π / 2 .. π / 2)
 # domain = (0..π)×(0..2π)
 
 
-pts = sample(domain; n = (20, 10))
+pts = sample(domain; n = (30, 15))
 M = hcat([[x, y] for x in pts[1] for y in pts[2]]...)  # 2 × n²
 
 """
@@ -66,9 +66,9 @@ for i = 1:size(M, 2)
 
     J = jacobian(φ, p)'
 
-    X = 0.2 * J*(z * ∂y - y * ∂z)
-    Y = 0.2 * J*(z * ∂x - x * ∂z)
-    Z = 0.2 * J*(x * ∂y - y * ∂x)
+    X = 0.15 * J*(z * ∂y - y * ∂z)
+    Y = 0.15 * J*(z * ∂x - x * ∂z)
+    Z = 0.15 * J*(x * ∂y - y * ∂x)
 
     plot!(px, [p[1], p[1]+X[1]], [p[2], p[2]+X[2]], lw=2, color="black", label=nothing)
     plot!(py, [p[1], p[1]+Y[1]], [p[2], p[2]+Y[2]], lw=2, color="red", label=nothing)

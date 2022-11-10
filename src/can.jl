@@ -161,16 +161,16 @@ function CAN(
 
     # get the index of every neuron in the lattice | vector of length N `n` with elements of length d
     lattice_idxs::AbstractArray{NTuple{N,Int}} = ×(map(_n -> 1:_n, n)...) |> collect |> vec
-    @info "Got lattice" typeof(lattice_idxs) size(lattice_idxs)
+    @debug "Got lattice" typeof(lattice_idxs) size(lattice_idxs)
 
     # get the coordinates of every neurons
     ξ̂(t::Tuple) = ξ(t...)
     X::Matrix = hcat(ξ̂.(lattice_idxs)...)  # matrix, size d × N
-    @info "X" size(X) typeof(X) eltype(X)
+    @debug "X" size(X) typeof(X) eltype(X)
 
     # get connectivity offset vectors
     offsets::Vector{AbstractWeightOffset} = get_offsets(offsets, d, n)
-    @info "Got offsets" offsets eltype(offsets) offset_size
+    @debug "Got offsets" offsets eltype(offsets) offset_size
 
     # get manifold deformation (if it gets embedded before computing distance)
     G = isnothing(φ) ? nothing : map(p -> area_deformation(φ, p), eachcol(X))
@@ -184,7 +184,7 @@ function CAN(
         # get connectivity matrix with kernel
         W = kernel.k.(D)
 
-        # scale by area deformation
+        # scale by area deformation due to the embedding for distance computation
         isnothing(G) || begin
             G[G.<1e-10] .= 0.0
             W' .*= G
@@ -334,16 +334,34 @@ end
 # ---------------------------- field based offsets --------------------------- #
 
 struct FieldOffset <: AbstractWeightOffset
+    displacement  # used in-place of the real offsets e.g. to display connectivity mtxs during visualization
     ψ::Function
 end
 
 
-function get_offsets(offsets::Vector{Function}, ::Int, n::Tuple)::Vector{FieldOffset}
+""" normalize shift for visualizations """
+offset_for_visual(off::FieldOffset) = off.displacement
+
+
+"""
+Construct offsets given a list of vector field functions
+"""
+function get_offsets(offsets::Vector{Function}, d::Int, n::Tuple)::Vector{FieldOffset}
     @assert length(offsets) >= 2length(n) "Got $(length(offsets)) offset fields, expected at least: $(2length(n))"
-    return FieldOffset.(offsets)
+
+    # get "base" offsets and use them as displacements for visuals
+    k = length(offsets)
+    displacements = map(
+        i -> 1.5 .* [cos(i * 2π/k), sin(i * 2π/k)], 1:k
+    )
+
+    return FieldOffset.(displacements, offsets)
 end
 
 
+"""
+Get pairwise neurons distance given vector field offsets applied directly to the neurons lattice
+"""
 function get_pairwise_distance(
     offset::FieldOffset,
     X::Matrix,
@@ -382,9 +400,24 @@ function get_pairwise_distance(
     # get vectors in embedding space
     V = by_column(offset.ψ, Y)
 
-    # offset neurons coordinates
-    Ŷ = Y .- (offset_size .* V)
-    error("IMplement distance in embedded space")
+    # get vectors in manifold domain
+
+    """ 
+    Get vector in the manifold domain. 
+    x∈X, v∈V. 
+    
+    w = Jᵀv ∈ ℝᵈ is a vector on the lattice of neurons
+    """
+    φᵀ(x::Vector, v::Vector) = jacobian(φ, x)'*v
+
+    N = size(X, 2)
+    W = hcat(map(
+        i -> φᵀ(X[:, i], V[:, i]),
+        1:N
+    )...)
+
+    # apply shifts to neurons coordinates in the lattice & get distance
+    pairwise(metric, X .- (offset_size .* W), X)
 end
 
 

@@ -60,7 +60,7 @@ spherecan = CAN(
     ξ_s,
     d_s,
     k_s;
-    offset_size = 0.1,
+    offset_size = 0.25,
     offsets = [ψx, p -> -ψx(p), ψy, p -> -ψy(p), ψz, p -> -ψz(p)],
     φ=sphere_embedding
 )
