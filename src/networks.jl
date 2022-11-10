@@ -64,4 +64,3 @@
 # sphere_attractor = CAN("sphere", cover, n, ξ_s, d_s, k_s; 
 #     offset_size=[0.2, 0.2, 0.1, 0.1], 
 #     φ=sphere_embedding)
-

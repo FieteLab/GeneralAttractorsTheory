@@ -15,24 +15,24 @@ include("_manifolds.jl")
 abstract type AbstractManifold end
 
 
-struct Manifoldℝ² <: AbstractManifold 
+struct Manifoldℝ² <: AbstractManifold
     xmin::Vector
     xmax::Vector
 end
 ℝ² = Manifoldℝ²([-100, 100], [100, 100])
 
-struct Torus <: AbstractManifold 
+struct Torus <: AbstractManifold
     xmin::Vector
     xmax::Vector
 end
 T = Torus([-32, -32], [32, 32])
 
 
-struct Sphere <: AbstractManifold 
+struct Sphere <: AbstractManifold
     xmin::Vector
     xmax::Vector
 end
-S² = Sphere([-π, -π/2], [π, π/2])
+S² = Sphere([-π, -π / 2], [π, π / 2])
 
 # ---------------------------------------------------------------------------- #
 #                                 COVER SPACES                                 #

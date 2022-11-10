@@ -1,3 +1,6 @@
+by_column(fn::Function, X::Matrix)::Matrix = hcat(fn.(eachcol(X))...)
+
+
 """
     lerp(i::Int, n::Int, x₀::Float64, x₁::Float64)::Float64
 

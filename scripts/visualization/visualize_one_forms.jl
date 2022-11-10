@@ -18,13 +18,13 @@ cover = CoverSpace(S², S², (x, y) -> [x, y])
 
 O = [
     [cos(0), sin(0)],
-    [cos(π * 1/4), sin(π * 1/4)],
-    [cos(π * 2/4), sin(π * 2/4)],
-    [cos(π * 3/4), sin(π * 3/4)],
+    [cos(π * 1 / 4), sin(π * 1 / 4)],
+    [cos(π * 2 / 4), sin(π * 2 / 4)],
+    [cos(π * 3 / 4), sin(π * 3 / 4)],
     [cos(π), sin(π)],
-    [cos(π+π*1/4), sin(π+π*1/4)],
-    [cos(π+π*2/4), sin(π+π*2/4)],
-    [cos(π+π*3/4), sin(π+π*3/4)],
+    [cos(π + π * 1 / 4), sin(π + π * 1 / 4)],
+    [cos(π + π * 2 / 4), sin(π + π * 2 / 4)],
+    [cos(π + π * 3 / 4), sin(π + π * 3 / 4)],
 ]
 
 Ω = OneForm[
@@ -39,18 +39,24 @@ O = [
 ]
 
 
-can = CAN("sphere", cover, n, ξ_s, d_s, k_s; 
-        offset_size=0.15,
-        φ=sphere_embedding,
-        offsets=O,
-        Ω=Ω
-        )
+can = CAN(
+    "sphere",
+    cover,
+    n,
+    ξ_s,
+    d_s,
+    k_s;
+    offset_size = 0.15,
+    φ = sphere_embedding,
+    offsets = O,
+    Ω = Ω,
+)
 
 # ----------------------------------- show ----------------------------------- #
 dx, scale = 1, 0.2
 
 plt = plot()
-for i in 1:length(Ω)
+for i = 1:length(Ω)
     show_oneforms!(
         plt,
         can.Ω[i],

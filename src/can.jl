@@ -1,14 +1,13 @@
 module Can
 import Base.Iterators: product as ×  # cartesian product
 import Distances: Metric, pairwise
-import StaticArrays: SVector, SA_F64, SMatrix
-using Term.Progress
-using Plots
-import LinearAlgebra: ⋅, I, diag, diagind
+import LinearAlgebra: ⋅, I
+import ForwardDiff: jacobian
 
 
 export AbstractCAN, CAN, offset_for_visual
 
+import ..GeneralAttractors: by_column
 using ..Kernels: AbstractKernel
 using ..ManifoldUtils: CoverSpace, area_deformation
 
@@ -147,9 +146,9 @@ function CAN(
     kernel::AbstractKernel;
     σ::Union{Symbol,Function} = :relu,
     Ω::Union{Nothing,Vector{OneForm}} = nothing,      # one forms for input velocity
-    offsets::Union{Nothing, Vector} = nothing,           # offset directions, rows Aᵢ of A
+    offsets::Union{Nothing,Vector} = nothing,           # offset directions, rows Aᵢ of A
     offset_size::Number = 1.0,
-    φ::Union{Function, Nothing} = nothing,          # an embedding function if the distance over M is computed on an embedding of M in ℝᵐ
+    φ::Union{Function,Nothing} = nothing,          # an embedding function if the distance over M is computed on an embedding of M in ℝᵐ
 ) where {N}
     d = length(n)
 
@@ -180,14 +179,14 @@ function CAN(
     Ws::Vector{Matrix} = []
     for offset in offsets
         # get pairwise offset connectivity
-        D::Matrix = get_pairwise_distance(offset, X, metric, offset_size)
+        D::Matrix = get_pairwise_distance(offset, X, metric, offset_size, φ)
 
         # get connectivity matrix with kernel
         W = kernel.k.(D)
 
         # scale by area deformation
         isnothing(G) || begin
-            G[G .< 1e-10] .= 0.0
+            G[G.<1e-10] .= 0.0
             W' .*= G
         end
 
@@ -314,36 +313,78 @@ function get_offsets(::Nothing, d::Int, n::Tuple)::Vector{ConstantOffset}
 end
 
 function get_offsets(offsets::Vector{Number}, d::Int, ::Tuple)::Vector{ConstantOffset}
-    @assert all(length.(offsets) .== d )
+    @assert all(length.(offsets) .== d)
     return ConstantOffset.(offsets)
 end
 
 
 
 
-function get_pairwise_distance(offset::ConstantOffset, X::Matrix, metric::Metric, offset_size::Number)::Matrix
+function get_pairwise_distance(
+    offset::ConstantOffset,
+    X::Matrix,
+    metric::Metric,
+    offset_size::Number,
+    args...,
+)::Matrix
     return pairwise(metric, X .- (offset_size .* offset.θ), X)
 end
 
 
 # ---------------------------- field based offsets --------------------------- #
 
-ℝ³∂x = [1, 0, 0]
-ℝ³∂y = [0, 1, 0]
-ℝ³∂z = [0, 0, 1]
-
 struct FieldOffset <: AbstractWeightOffset
     ψ::Function
 end
 
 
-function get_offsets(offsets::Vector{Function}, d::Int, ::Tuple)::Vector{FieldOffset}
-    error("not impl")
+function get_offsets(offsets::Vector{Function}, ::Int, n::Tuple)::Vector{FieldOffset}
+    @assert length(offsets) >= 2length(n) "Got $(length(offsets)) offset fields, expected at least: $(2length(n))"
+    return FieldOffset.(offsets)
 end
 
 
-function get_pairwise_distance(offset::FieldOffset, X, metric::Metric, offset_size::Number)::Matrix
-    error("not impl")
+function get_pairwise_distance(
+    offset::FieldOffset,
+    X::Matrix,
+    metric::Metric,
+    offset_size::Number,
+    φ::Nothing,
+)::Matrix
+    error("`get_pairwise_distance` not implemented for the case with no embedding function")
+end
+
+
+"""
+---
+    get_pairwise_distance(
+        offset::FieldOffset,
+        X::Matrix,
+        metric::Metric,
+        offset_size::Number,
+        φ::Function,
+    )::Matrix
+
+Offset vectors in the pairwise distance are computed on an embedding of
+the base manifold. Prior to computing the distance, neurons coordinates are 
+offset according to a vector given by a vector field defined over the embedded manifold. 
+"""
+function get_pairwise_distance(
+    offset::FieldOffset,
+    X::Matrix,
+    metric::Metric,
+    offset_size::Number,
+    φ::Function,
+)::Matrix
+    # get coordinates in embedding space
+    Y = by_column(φ, X)  # matrix q × n | q: embedding dimension, n: number of points
+
+    # get vectors in embedding space
+    V = by_column(offset.ψ, Y)
+
+    # offset neurons coordinates
+    Ŷ = Y .- (offset_size .* V)
+    error("IMplement distance in embedded space")
 end
 
 

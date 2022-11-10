@@ -41,7 +41,7 @@ Base.show(io::IO, ::MIME"text/plain", sim::Simulation) = print(io, string(sim))
 
 function Simulation(can::AbstractCAN, trajectory::Trajectory; kwargs...)
     n_pops = length(can.offsets)
-    
+
     # initialize activity matrices
     N = *(can.n...)
     S = spzeros(Float64, N, n_pops)
@@ -79,7 +79,7 @@ function step!(simulation::Simulation, x::Vector, v::Vector)
 
     if simulation.η > 0
         η = rand(Float64, size(S, 1), d) .* simulation.η  # get noise input
-        for i = 1:d 
+        for i = 1:d
             Ṡ[:, i] .= W[i] * S̄ .+ B[i] .+ η[i]
         end
     else
@@ -122,7 +122,7 @@ function run_simulation(
     anim = Animation()
 
     # get history to track data
-    history = History(simulation, N; discard_first_ms=discard_first_ms, kwargs...)
+    history = History(simulation, N; discard_first_ms = discard_first_ms, kwargs...)
 
     # do simulation steps and visualize
     pbar = ProgressBar()

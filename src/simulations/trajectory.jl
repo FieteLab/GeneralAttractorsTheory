@@ -38,7 +38,7 @@ function Trajectory(
     y₀ = nothing,
 )
     v = rand(T) .* σv .+ μ
-    v[v .< 0] .= 0
+    v[v.<0] .= 0
 
     θ₀ = isnothing(θ₀) ? rand(0:0.2:2π) : θ₀
     θ̇ = moving_average(rand(T), 11) .- 0.5
@@ -57,14 +57,14 @@ end
 
 
 function Trajectory(
-    M::Sphere; 
+    M::Sphere;
     T::Int = 250,
     σv = 0.25,
     σθ = 0.15,
-    μv  = 0.5, # average speed
+    μv = 0.5, # average speed
     θ₀ = nothing,
-    vmax = 0.3
-)   
+    vmax = 0.3,
+)
     x₀min, x₀max = M.xmin[1], M.xmax[1]
     x₁min, x₁max = M.xmin[2], M.xmax[2]
 
@@ -73,8 +73,8 @@ function Trajectory(
 
     # get velocity vector at each frame
     v = (rand(T) .- 0.5) .* σv .+ μv
-    v[v .< 0] .= 0.0
-    for i in 1:T
+    v[v.<0] .= 0.0
+    for i = 1:T
         abs(v[1]) > vmax && (v[i] = vmax * sign(v[i]))
     end
 
@@ -82,13 +82,13 @@ function Trajectory(
     θ̇ = moving_average(rand(T), 11) .- 0.5
     θ̇ = cumsum(θ̇ .* σθ) .+ θ₀ # orientation
 
-    v[abs.(v) .> vmax] .= (rand()-0.5)*vmax
+    v[abs.(v).>vmax] .= (rand() - 0.5) * vmax
     vx = v .* cos.(θ̇)
     vy = v .* sin.(θ̇) .* 0.5
 
     # get position at each frame
     x = [0.0, 0.0]
-    for t in 1:T
+    for t = 1:T
         v = [vx[t], vy[t]]
         x = x .+ 0.1v
 
@@ -101,5 +101,5 @@ function Trajectory(
         X[t, :] = x
     end
 
-    return Trajectory(M, X,  hcat(vx, vy))
+    return Trajectory(M, X, hcat(vx, vy))
 end

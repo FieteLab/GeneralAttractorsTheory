@@ -69,9 +69,7 @@ function simulation_frame_2dcan(simulation::Simulation, timems, v::Vector; kwarg
     x̄ = range(0, maximum(can.X[1, :]), length = can.n[1])
     ȳ = range(0, maximum(can.X[2, :]), length = can.n[2])
 
-    offsets = map(
-        o -> o ./ (o .+ 0.01) .* sign.(o), can.offsets
-    )
+    offsets = map(o -> o ./ (o .+ 0.01) .* sign.(o), can.offsets)
 
     for (i, offset) in enumerate(offsets)
         S = simulation.S[:, i]
@@ -151,7 +149,7 @@ function Plots.plot(
         )
     end
 
-    plot(traj, pop_activity, size = (1000, 800), layout=(2, 1))
+    plot(traj, pop_activity, size = (1000, 800), layout = (2, 1))
 
 
     # plot inputs

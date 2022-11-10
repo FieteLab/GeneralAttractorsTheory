@@ -16,10 +16,16 @@ d_s = SphericalAngle()
 k_s = DiffOfExpKernel(; λ = 0.75)
 
 cover = CoverSpace(S², S², (x, y) -> [x, y])
-can = CAN("sphere", cover, n, ξ_s, d_s, k_s; 
-        offset_size=[0.1, 0.1, 0.1, 0.1],
-        φ=sphere_embedding
-        )
+can = CAN(
+    "sphere",
+    cover,
+    n,
+    ξ_s,
+    d_s,
+    k_s;
+    offset_size = [0.1, 0.1, 0.1, 0.1],
+    φ = sphere_embedding,
+)
 
 
 
@@ -40,7 +46,7 @@ N = *(can.n...)
 anim = Animation()
 
 # prep matrices
-S = [spzeros(Float64, N) for i in 1:d]
+S = [spzeros(Float64, N) for i = 1:d]
 W = sparse.(map(x -> Float64.(x), can.Ws))
 droptol!.(W, 0.001)
 
@@ -48,26 +54,26 @@ x̄ = range(0, maximum(can.X[1, :]), length = can.n[1])
 ȳ = range(0, maximum(can.X[2, :]), length = can.n[2])
 
 # simulate animate
-for t in 1:Time
-    t%10 == 0 && println("$t/$Time")
+for t = 1:Time
+    t % 10 == 0 && println("$t/$Time")
 
     # step
-    for i in 1:d
-        ṡ = W[i] * S[i] .+ b .+ (rand()-0.5) * η
-        S[i] += (can.σ.(ṡ)-S[i])/τ
+    for i = 1:d
+        ṡ = W[i] * S[i] .+ b .+ (rand() - 0.5) * η
+        S[i] += (can.σ.(ṡ) - S[i]) / τ
     end
 
     t % 10 == 0 && begin
-        plot(clims=(0, 1), levels=3)
-        for i in 1:d
-            offset = can.offsets[i] .* vec(maximum(can.X; dims = 2)) 
+        plot(clims = (0, 1), levels = 3)
+        for i = 1:d
+            offset = can.offsets[i] .* vec(maximum(can.X; dims = 2))
             x = offset[1] .+ x̄
             y = offset[2] .+ ȳ
             contourf!(x, y, reshape(S[i], can.n)', levels = 3)
         end
         frame(anim)
     end
-    
+
 end
 
 gif(anim, "test.gif", fps = 10)

@@ -15,10 +15,7 @@ d_s = SphericalDistance()
 k_s = DiffOfExpKernel(; λ = 0.75)
 
 cover = CoverSpace(S², S², (x, y) -> [x, y])
-sph = CAN("sphere", cover, n, ξ_s, d_s, k_s; 
-        offset_size=0.15,
-        φ=sphere_embedding,
-        )
+sph = CAN("sphere", cover, n, ξ_s, d_s, k_s; offset_size = 0.15, φ = sphere_embedding)
 
 
 show_connectivity(
@@ -27,6 +24,6 @@ show_connectivity(
     ylabel = "latitude",
     plot_title = "Sphere attractor connectivity",
     idxs = [1, 30, 2100, 1500, 800],
-    aspect_ratio=0.5,
-    size=(800, 400)
+    aspect_ratio = 0.5,
+    size = (800, 400),
 )
