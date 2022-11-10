@@ -1,7 +1,9 @@
 using ForwardDiff: jacobian
 using LinearAlgebra
 
-
+# ---------------------------------------------------------------------------- #
+#                                    SPHERE                                    #
+# ---------------------------------------------------------------------------- #
 """
 Classic sphere embedding in ℝ³
 """
@@ -14,6 +16,48 @@ function sphere_embedding(lon, lat)
 end
 
 
+
+"""
+Killing fields on the unit sphere
+
+These are defined as rotational vector fields
+on the unit sphere in ℝ³ with rotations around X, Y, Z.
+These are killing fields and are divergence free.
+
+
+Given a point p=(x, y, z) ∈ S² ⊂ ℝ²,
+get a vector (fx(p)∂x, fy(p)∂y, fz(p)∂z)
+tangent to the sphere and correpsonding to a rotation.
+"""
+
+∂x = [1, 0, 0]
+∂y = [0, 1, 0]
+∂z = [0, 0, 1]
+
+""" rotation around X axis """
+ψx(x, y, z) = z * ∂y - y * ∂z
+ψx(p) = ψx(p...) .- p
+
+""" rotation around Y axis """
+ψy(x, y, z) = z * ∂x - x * ∂z
+ψy(p) = ψy(p...) .- p
+
+""" rotation around Z axis """
+ψz(x, y, z) = x * ∂y - y * ∂x
+ψz(p) = ψz(p...) .- p
+
+φ = sphere_embedding
+
+""" vector in sphere domain corresponding to vec given by ψx in ℝ³ """
+ψxS²(p) = jacobian(φ, p)'* ψx(φ(p))
+ψyS²(p) = jacobian(φ, p)'* ψy(φ(p))
+ψzS²(p) = jacobian(φ, p)'* ψz(φ(p))
+
+
+
+# ---------------------------------------------------------------------------- #
+#                                   DIFF GEOM                                  #
+# ---------------------------------------------------------------------------- #
 """ 
 First fundamental form of an embedding φ: M → N at a point p ∈ M
 """
