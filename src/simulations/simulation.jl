@@ -25,6 +25,7 @@ Holds information necessary for running a simulation.
 """
 @with_kw_noshow mutable struct Simulation
     can::AbstractCAN
+    trajectory::Trajectory
     S::SparseMatrixCSC               # n_neurons x 2d - state of all neurons
     W::Vector{SparseMatrixCSC}       # all connection weights
     Ṡ::SparseMatrixCSC
@@ -38,18 +39,19 @@ Base.string(sim::Simulation) = "Simulation of $(sim.can)"
 Base.print(io::IO, sim::Simulation) = print(io, string(sim))
 Base.show(io::IO, ::MIME"text/plain", sim::Simulation) = print(io, string(sim))
 
-function Simulation(can::AbstractCAN; kwargs...)
+function Simulation(can::AbstractCAN, trajectory::Trajectory; kwargs...)
+    n_pops = length(can.offsets)
+    
     # initialize activity matrices
     N = *(can.n...)
-    S = spzeros(Float64, N, 2can.d)
-    Ṡ = spzeros(Float64, N, 2can.d)
+    S = spzeros(Float64, N, n_pops)
+    Ṡ = spzeros(Float64, N, n_pops)
 
     # get all connection weights
-    # W = cat(can.Ws..., dims=3)  # n×n×2d
     W = sparse.(map(x -> Float64.(x), can.Ws))
     droptol!.(W, 0.001)
 
-    return Simulation(can = can, S = S, Ṡ = Ṡ, W = W; kwargs...)
+    return Simulation(can = can, trajectory = trajectory, S = S, Ṡ = Ṡ, W = W; kwargs...)
 end
 
 
@@ -58,20 +60,26 @@ end
 # ---------------------------------------------------------------------------- #
 ∑ⱼ(x) = sum(x, dims = 2) |> vec
 
-function step!(simulation::Simulation, v::Vector{Float64})
+"""
+    step!(simulation::Simulation, x::Vector, v::Vector) 
+
+Step the simulation dynamics given that the "particle" is at `x`
+and moving with velocity vector `x`.
+"""
+function step!(simulation::Simulation, x::Vector, v::Vector)
     can = simulation.can
     b₀ = simulation.b₀
-    A, S, W = simulation.can.A, simulation.S, simulation.W
+    S, W = simulation.S, simulation.W
     Ṡ = simulation.Ṡ
 
     # get effect of recurrent connectivity & external input
-    d = 2simulation.can.d
-    B = b₀ .+ A * v  # inputs vector of size 2d
+    d = size(S, 2)
+    B = b₀ .+ vec(map(ωᵢ -> ωᵢ(x, v) / norm(ωᵢ(x)), simulation.can.Ω))  # inputs vector of size 2d
     S̄ = ∑ⱼ(S)  # get the sum of all current activations
 
     if simulation.η > 0
         η = rand(Float64, size(S, 1), d) .* simulation.η  # get noise input
-        for i = 1:d
+        for i = 1:d 
             Ṡ[:, i] .= W[i] * S̄ .+ B[i] .+ η[i]
         end
     else
@@ -98,57 +106,59 @@ end
 include("history.jl")
 
 function run_simulation(
-    simulation::Simulation,
-    chunks::Vector;
+    simulation::Simulation;
     savename::String = simulation.can.name * "_sim",
     frame_every_n::Union{Nothing,Int} = 20,   # how frequently to save an animation frame
+    fps = 20,
+    discard_first_ms = 0,
     kwargs...,
 )
-    @assert eltype(chunks) <: AbstractChunk
 
     # setup animation
-    T = sum(getfield.(chunks, :duration))
+    N = size(simulation.trajectory.X, 1)
+    T = (N + 1) * simulation.dt
     time = 1:simulation.dt:T |> collect
     framen = 1
     anim = Animation()
 
     # get history to track data
-    tot_frames = sum(getfield.(chunks, :nframes))
-    history = History(simulation, tot_frames; kwargs...)
+    history = History(simulation, N; discard_first_ms=discard_first_ms, kwargs...)
 
     # do simulation steps and visualize
     pbar = ProgressBar()
     Progress.with(pbar) do
-        job = addjob!(pbar, description = "Simulation", N = length(time) + 1)
-        for chunk in chunks
-            for i = 1:chunk.nframes
-                v = eltype(chunk.v) == Float64 ? chunk.v : chunk.v[i]
-                step!(simulation, v)
-                # framen > 50 && break
+        job = addjob!(pbar, description = "Simulation", N = N)
+        for i = 1:N
+            x = simulation.trajectory.X[i, :]
+            v = simulation.trajectory.V[i, :]
+            step!(simulation, x, v)
+            # framen > 50 && break
 
-                # add data to history
-                add!(history, framen, simulation, v)
+            # add data to history
+            add!(history, framen, simulation, v)
 
-                # add frame to animation
-                isnothing(frame_every_n) || begin
-                    i % frame_every_n == 0 &&
-                        framen < length(time) &&
-                        begin
-                            plot(simulation, time[framen], v)
-                            frame(anim)
-                        end
-                end
-
-                framen += 1
-                update!(job)
+            # add frame to animation
+            isnothing(frame_every_n) || begin
+                (i % frame_every_n == 0 || i == 1) &&
+                    (time[framen] > discard_first_ms) &&
+                    begin
+                        plot(simulation, time[framen], framen, x, v)
+                        frame(anim)
+                    end
             end
+
+            framen += 1
+            update!(job)
         end
     end
 
     isnothing(frame_every_n) || begin
-        @info "saving animation"
-        gif(anim, savepath(savename, savename, "gif"), fps = 20)
+        gif(anim, savepath(savename, savename, "gif"), fps = fps)
     end
+
     save_simulation_history(history, savename, savename)
+    save_model(simulation.can, savename, "sim_CAN_model", :CAN)
+    save_data(simulation.trajectory.X, savename, "sim_trajectory_X")
+    save_data(simulation.trajectory.V, savename, "sim_trajectory_V")
     return history
 end

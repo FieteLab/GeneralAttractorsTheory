@@ -1,6 +1,29 @@
-
 using Distances: UnionMetric, PeriodicEuclidean, euclidean
 import Distances
+import LinearAlgebra: ⋅
+
+import .Manifolds: sphere_embedding
+
+"""
+Sperical distance on the unit sphere
+https://mathworld.wolfram.com/SphericalDistance.html
+"""
+struct SphericalDistance <: UnionMetric end
+
+function (dist::SphericalDistance)(x₁, x₂)
+    @inbounds begin
+        # get points on the embedded sphere manifold
+        p₁ = sphere_embedding(x₁...)
+        p₂ = sphere_embedding(x₂...)
+
+        # get the distance
+        return acos(p₁ ⋅ p₂)
+    end
+end
+
+Distances.eval_op(::SphericalDistance, ::Float64, ::Float64) = 1.0
+
+
 
 """
     MobiusEuclidean{W}

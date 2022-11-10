@@ -3,7 +3,12 @@
 #                                    HISTORY                                   #
 # ---------------------------------------------------------------------------- #    
 
-""" store simulation data """
+""" 
+Store simulation data 
+
+In addition to storing data at each frame, history also stores a running
+average of all data.
+"""
 mutable struct History
     S::Array                        # activation at each timestep, n_neurons × 2d × T
     Ŝ::Array                        # for averaging
@@ -30,19 +35,19 @@ function History(
     keep_frames = (Int ∘ floor)((nframes - n_discard) / average_over)
     keep_frames < 1 && error("Keep frames < 0, reduce discard or increase duration")
 
-    @info "Creating history arrays" size(simulation.S) size(simulation.can.A) keep_frames average_over
+    @info "Creating history arrays" size(simulation.S) keep_frames average_over
 
     S = Array{Float64}(undef, (size(simulation.S)..., keep_frames))
     Ŝ = Array{Float64}(undef, (size(simulation.S)..., average_over))
-    v = Array{Float64}(undef, (size(simulation.can.A, 2), keep_frames))
-    v̂ = Array{Float64}(undef, (size(simulation.can.A, 2), average_over))
+    v = Array{Float64}(undef, (size(simulation.trajectory.V, 2), keep_frames))
+    v̂ = Array{Float64}(undef, (size(simulation.trajectory.V, 2), average_over))
     @info "Done" size(S) size(Ŝ) size(v) size(v̂)
     metadata = Dict{Symbol,Any}(
         :can => simulation.can.name,
+        :cover => simulation.can.C,
         :n => simulation.can.n,
         :kernel => (string ∘ typeof)(simulation.can.kernel),
         :σ => simulation.can.σ,
-        :A => simulation.can.A,
         :b₀ => simulation.b₀,
         :η => simulation.η,
         :dt => simulation.dt,
@@ -59,8 +64,6 @@ function add!(history::History, framen::Int, simulation::Simulation, v::Vector{F
 
     # make sure it fits in history
     framen > size(history.S, 3) * history.average_over + history.discard && begin
-        # max_d = size(history.S, 3)*history.average_over+history.discard
-        # @warn "Frame too large during add! to history" framen size(history.S) max_d
         return
     end
 

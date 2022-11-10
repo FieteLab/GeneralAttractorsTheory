@@ -2,6 +2,42 @@
 #                                      viz                                     #
 # ---------------------------------------------------------------------------- #
 
+
+function Plots.plot(traj::Trajectory)
+    d = size(traj.X, 2)
+    d != 2 && error("not implemented")
+
+    plot(
+        traj.X[:, 1],
+        traj.X[:, 2],
+        lw = 3,
+        color = :black,
+        label = nothing,
+        title = "trajectory",
+        grid = false,
+        aspect_ratio = :equal,
+    )
+end
+
+
+function Plots.plot(traj::Trajectory, i::Int)
+    d = size(traj.X, 2)
+    d != 2 && error("not implemented")
+
+    plot(
+        traj.X[1:i, 1],
+        traj.X[1:i, 2],
+        lw = 3,
+        color = :black,
+        title = "trajectory",
+        grid = false,
+        aspect_ratio = :equal,
+        label = nothing,
+        xlim = [minimum(traj.X[:, 1]), maximum(traj.X[:, 1])],
+        ylim = [minimum(traj.X[:, 2]), maximum(traj.X[:, 2])],
+    )
+end
+
 function simulation_frame_1dcan(simulation::Simulation, timems, v::Vector; kwargs...)
     @info "ONE DIM CAN SIM PLOT"
     can = simulation.can
@@ -14,15 +50,6 @@ function simulation_frame_1dcan(simulation::Simulation, timems, v::Vector; kwarg
     )
 
     heatmap!(simulation.S')
-    # hline!([1.5], lw=5, color=:white, label=nothing)
-
-    # x0 = size(simulation.S, 1)/2
-    # v̂ = v ./ v[1]
-    # plot!(
-    #     [x0, x0+v̂[1]*x0/4], [3, 3], lw=10, color=:black, label=nothing
-    # )
-    # scatter!([x0], [3], ms=10, color=:black, label=nothing)
-
     plt
 end
 
@@ -37,51 +64,107 @@ function simulation_frame_2dcan(simulation::Simulation, timems, v::Vector; kwarg
         size = simulation.can.n .* 10,
     )
 
-    h = maximum(simulation.can.X) / 2.5
+    h = maximum(can.X) / 2.5
     v̂ = v ./ norm(v) .* h
-    for i = 1:can.d*2
+    x̄ = range(0, maximum(can.X[1, :]), length = can.n[1])
+    ȳ = range(0, maximum(can.X[2, :]), length = can.n[2])
+
+    offsets = map(
+        o -> o ./ (o .+ 0.01) .* sign.(o), can.offsets
+    )
+
+    for (i, offset) in enumerate(offsets)
         S = simulation.S[:, i]
 
         # get offset position for plotting
-        offset = can.A[i, :] ./ maximum(can.A) .* vec(maximum(simulation.can.X; dims = 2))
+        offset = offset .* vec(maximum(can.X; dims = 2))
 
         # plot activity heatmap
-        x = offset[1] .+ range(0, maximum(simulation.can.X[1, :]), length = can.n[1])
-        y = offset[2] .+ range(0, maximum(simulation.can.X[2, :]), length = can.n[2])
+        x = offset[1] .+ x̄
+        y = offset[2] .+ ȳ
         contourf!(x, y, reshape(S, can.n)', levels = 3)
-
-        # plot input vector direction 
-        x0, y0 = maximum(simulation.can.X; dims = 2) ./ 2.1
-
-        plot!([x0, x0 + v̂[1]], [y0, y0 + v̂[2]], lw = 6, color = :green, label = nothing)
-        scatter!([x0], [y0], ms = 8, color = :green, label = nothing)
-
-        # # add text with Aᵢ
-        # Ai = string(round.(ai; digits=3))
-        # vi = ai ⋅ v
-
-        # annotate!(
-        #     [offset[1]+5, x0], 
-        #     [offset[2]+20, y0+20],      
-        #     [
-        #         text(" I: $i\nAi: $Ai\nAv: $(round(vi; digits=4))", :white, :left, 8),
-        #         text("v⃗: $(round.(v; digits=2))", :black, :center, 8),
-        #     ]
-        # )
     end
+
+    # plot the sum of all activations
+    s̄ = sum(simulation.S, dims = 2) |> vec
+    contourf!(x̄, ȳ, reshape(s̄, can.n)', levels = 3)
+
+    # plot input vector direction 
+    x0, y0 = maximum(can.X; dims = 2) ./ 2.1
+    plot!([x0, x0 + v̂[1]], [y0, y0 + v̂[2]], lw = 6, color = :green, label = nothing)
+    scatter!([x0], [y0], ms = 8, color = :green, label = nothing)
+
     plt
 end
 
 
 
-Plots.plot(simulation::Simulation, timems, v::Vector; kwargs...) =
+function Plots.plot(
+    simulation::Simulation,
+    timems,
+    framen,
+    x::Vector,
+    v::Vector;
+    show_one_forms = false,
+    dx = 20,
+    scale = 8,
+    kwargs...,
+)
+    # plot populatiuon actvitiy
     if simulation.can.d == 1
-        simulation_frame_1dcan(simulation, timems, v; kwargs...)
+        pop_activity = simulation_frame_1dcan(simulation, timems, v; kwargs...)
     elseif simulation.can.d == 2
-        simulation_frame_2dcan(simulation, timems, v; kwargs...)
+        pop_activity = simulation_frame_2dcan(simulation, timems, v; kwargs...)
     else
         error("Simulation plot for d>2 not implemented")
     end
+
+
+    # plot trajectory
+    tj = simulation.trajectory
+    traj = Plots.plot(tj, framen)
+    scatter!(traj, [x[1]], [x[2]], ms = 5, color = :black, label = nothing)
+
+    # visualize oneforms
+    show_one_forms && begin
+        xmin, xmax = vec(minimum(tj.X, dims = 1)), vec(maximum(tj.X, dims = 1))
+        show_oneforms!(
+            traj,
+            simulation.can.Ω[1],
+            simulation.can.C,
+            xmin,
+            xmax;
+            alpha = 0.5,
+            dx = dx,
+            scale = scale,
+        )
+        show_oneforms!(
+            traj,
+            simulation.can.Ω[3],
+            simulation.can.C,
+            xmin,
+            xmax;
+            alpha = 0.5,
+            color = :red,
+            dx = dx,
+            scale = scale,
+        )
+    end
+
+    plot(traj, pop_activity, size = (1000, 800), layout=(2, 1))
+
+
+    # plot inputs
+    # B_actual = map(
+    #         ωᵢ -> ωᵢ(x, v)/norm(ωᵢ(x)),
+    #         simulation.can.Ω
+    #     )
+    # d = length(B_actual)
+    # inpts = bar(1:d, B_actual, color=:black, label="real input")
+    # # bar!(1:d, B_measured, color=:red, alpha=0.5, label="measured input")
+
+    # plot(traj, pop_activity, inpts, plot(), size = (1000, 800))
+end
 
 
 # ---------------------------------------------------------------------------- #

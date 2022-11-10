@@ -187,12 +187,6 @@ git-tree-sha1 = "4b859a208b2397a7a623a03449e4636bdb17bcf2"
 uuid = "83423d85-b0ee-5818-9007-b63ccbeb887a"
 version = "1.16.1+1"
 
-[[Calculus]]
-deps = ["LinearAlgebra"]
-git-tree-sha1 = "f641eb0a4f00c343bbc32346e1217b86f3ce9dad"
-uuid = "49dc2e85-a5d0-5ad3-a950-438e2897f1b9"
-version = "0.5.1"
-
 [[CategoricalArrays]]
 deps = ["DataAPI", "Future", "Missings", "Printf", "Requires", "Statistics", "Unicode"]
 git-tree-sha1 = "5084cc1a28976dd1642c9f337b28a3cb03e0f7d2"
@@ -286,6 +280,11 @@ version = "3.46.0"
 deps = ["Artifacts", "Libdl"]
 uuid = "e66e0078-7015-5450-92f7-15fbd957f2ae"
 version = "0.5.2+0"
+
+[[CompositeTypes]]
+git-tree-sha1 = "02d2316b7ffceff992f3096ae48c7829a8aa0638"
+uuid = "b152e2b5-7a66-4b01-a709-34e65c35f657"
+version = "0.1.3"
 
 [[CompositionsBase]]
 git-tree-sha1 = "455419f7e328a1a2493cabc6428d79e951349769"
@@ -390,16 +389,16 @@ git-tree-sha1 = "b19534d1895d702889b219c382a6e18010797f0b"
 uuid = "ffbed154-4ef7-542d-bbb7-c09d3a79fcae"
 version = "0.8.6"
 
+[[DomainSets]]
+deps = ["CompositeTypes", "IntervalSets", "LinearAlgebra", "Random", "StaticArrays", "Statistics"]
+git-tree-sha1 = "85cf537e38b7f34a84eaac22b534aa1b5bf01949"
+uuid = "5b8099bc-c8ec-5219-889f-1d9e522a28bf"
+version = "0.5.14"
+
 [[Downloads]]
 deps = ["ArgTools", "FileWatching", "LibCURL", "NetworkOptions"]
 uuid = "f43a241f-c20a-4ad4-852c-f6b1247861c6"
 version = "1.6.0"
-
-[[DualNumbers]]
-deps = ["Calculus", "NaNMath", "SpecialFunctions"]
-git-tree-sha1 = "5837a837389fccf076445fce071c8ddaea35a566"
-uuid = "fa6b7ba4-c1ee-5f82-b5fc-ecf0adba8f74"
-version = "0.6.8"
 
 [[EarCut_jll]]
 deps = ["Artifacts", "JLLWrappers", "Libdl", "Pkg"]
@@ -1050,15 +1049,15 @@ version = "0.9.0"
 
 [[Manifolds]]
 deps = ["Colors", "Distributions", "Einsum", "Graphs", "HybridArrays", "Kronecker", "LinearAlgebra", "ManifoldsBase", "Markdown", "MatrixEquations", "Quaternions", "Random", "RecipesBase", "RecursiveArrayTools", "Requires", "SimpleWeightedGraphs", "SpecialFunctions", "StaticArrays", "Statistics", "StatsBase"]
-git-tree-sha1 = "fc27ee4e4223961fe54c8012ed52a380e8f0423b"
+git-tree-sha1 = "413abfebb2e577c2082e89e490377d0f87580e05"
 uuid = "1cead3c2-87b3-11e9-0ccd-23c62b72b94e"
-version = "0.8.28"
+version = "0.8.38"
 
 [[ManifoldsBase]]
 deps = ["LinearAlgebra", "Markdown"]
-git-tree-sha1 = "d39d5f8f117c9b370f4b8520182f48ecf9e32620"
+git-tree-sha1 = "a4937b645251d937ceb3b67643f65e8490fd271d"
 uuid = "3362f125-f0bb-47a3-aa74-596ffd7ef2fb"
-version = "0.13.21"
+version = "0.13.24"
 
 [[MappedArrays]]
 git-tree-sha1 = "e8b359ef06ec72e8c030463fe02efe5527ee5142"
@@ -1468,9 +1467,9 @@ version = "2020.2.0+0"
 
 [[Qt5Base_jll]]
 deps = ["Artifacts", "CompilerSupportLibraries_jll", "Fontconfig_jll", "Glib_jll", "JLLWrappers", "Libdl", "Libglvnd_jll", "OpenSSL_jll", "Pkg", "Xorg_libXext_jll", "Xorg_libxcb_jll", "Xorg_xcb_util_image_jll", "Xorg_xcb_util_keysyms_jll", "Xorg_xcb_util_renderutil_jll", "Xorg_xcb_util_wm_jll", "Zlib_jll", "xkbcommon_jll"]
-git-tree-sha1 = "c6c0f690d0cc7caddb74cef7aa847b824a16b256"
+git-tree-sha1 = "0c03844e2231e12fda4d0086fd7cbe4098ee8dc5"
 uuid = "ea2cea3b-5b76-57ae-a6ef-0a8af62496e1"
-version = "5.15.3+1"
+version = "5.15.3+2"
 
 [[QuadGK]]
 deps = ["DataStructures", "LinearAlgebra"]
@@ -1479,10 +1478,10 @@ uuid = "1fd47b50-473d-5c70-9696-f719f8f3bcdc"
 version = "2.5.0"
 
 [[Quaternions]]
-deps = ["DualNumbers", "LinearAlgebra", "Random"]
-git-tree-sha1 = "4ab19353944c46d65a10a75289d426ef57b0a40c"
+deps = ["LinearAlgebra", "Random"]
+git-tree-sha1 = "fcebf40de9a04c58da5073ec09c1c1e95944c79b"
 uuid = "94ee1d12-ae83-5a48-8b1c-48b8ff168ae0"
-version = "0.5.7"
+version = "0.6.1"
 
 [[REPL]]
 deps = ["InteractiveUtils", "Markdown", "Sockets", "Unicode"]
@@ -1530,9 +1529,9 @@ version = "0.6.7"
 
 [[RecursiveArrayTools]]
 deps = ["Adapt", "ArrayInterfaceCore", "ArrayInterfaceStaticArraysCore", "ChainRulesCore", "DocStringExtensions", "FillArrays", "GPUArraysCore", "IteratorInterfaceExtensions", "LinearAlgebra", "RecipesBase", "StaticArraysCore", "Statistics", "Tables", "ZygoteRules"]
-git-tree-sha1 = "3004608dc42101a944e44c1c68b599fa7c669080"
+git-tree-sha1 = "fe25988dce8dd3b763cf39d0ca39b09db3571ff7"
 uuid = "731186ca-8d62-57ce-b412-fbd966d074cd"
-version = "2.32.0"
+version = "2.32.1"
 
 [[Reexport]]
 git-tree-sha1 = "45e428421666073eab6f2da5c9d310d99bb12f9b"
@@ -1568,6 +1567,12 @@ deps = ["Artifacts", "JLLWrappers", "Libdl", "Pkg"]
 git-tree-sha1 = "68db32dff12bb6127bac73c209881191bf0efbb7"
 uuid = "f50d1b31-88e8-58de-be2c-1cc44531875f"
 version = "0.3.0+0"
+
+[[Rotations]]
+deps = ["LinearAlgebra", "Quaternions", "Random", "StaticArrays", "Statistics"]
+git-tree-sha1 = "793b6ef92f9e96167ddbbd2d9685009e200eb84f"
+uuid = "6038ab10-8711-5258-84ad-4b1120ba62dc"
+version = "1.3.3"
 
 [[SHA]]
 uuid = "ea8e919c-243c-51af-8825-aaa63cd721ce"

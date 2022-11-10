@@ -140,7 +140,7 @@ https://github.com/JuliaStats/Distances.jl/blob/master/src/haversine.jl
 
 For an embedding of the sphere see: https://stackoverflow.com/questions/10473852/convert-latitude-and-longitude-to-point-in-3d-space
 """
-function plot_distance_function(d::SphericalAngle; kwargs...)
+function plot_distance_function(d::Union{SphericalDistance, SphericalAngle}; kwargs...)
     long = range(-π + 0.01, π - 0.01, length = 100) |> collect
     lat = range(-π / 2 + 0.01, π / 2 - 0.01, length = 100) |> collect
     X = (long × lat) |> collect
@@ -221,18 +221,20 @@ end
 
 Show connectivity for a can's neuron given its index
 """
-function show_connectivity(can::CAN, i::Int; kwargs...)
+function show_connectivity(can::CAN, i::Int; aspect_ratio=:equal, kwargs...)
     if can.d == 1
         p = plot(; kwargs...)
         for (n, W) in enumerate(can.Ws)
             weights = reshape(W[i, :], can.n...)
-            show_connectivity!(weights; label = nothing)
+            show_connectivity!(weights; label = nothing, kwargs...)
         end
         x = can.I[i]
         vline!([x[1]], label = "Neuron $i", lw = 4, color = :black)
     elseif can.d == 2
         p = plot()
-        offsets = [[0, 0], [1, 0], [0, 1], [1, 1]]
+        offsets = map(
+            o -> o ./ (o .+ 0.01) .* sign.(o), can.offsets
+        )
         for (n, W) in enumerate(can.Ws)
             # plot connectivity map
             w = reshape(W[:, i], can.n...)'
@@ -247,18 +249,16 @@ function show_connectivity(can::CAN, i::Int; kwargs...)
                 colorbar = nothing,
                 xaxis = false,
                 yaxis = false,
-                aspect_ratio = :equal,
+                aspect_ratio = aspect_ratio,
                 xticks = [],
                 yticks = [];
                 kwargs...,
+                color=:bwr,
             )
 
         end
-        # separate heatmaps
-        vline!([can.n[2]], lw = 4, color = :white, label = nothing)
-        hline!([can.n[1]], lw = 4, color = :white, label = nothing)
-
-        # mark the neruon's location
+        
+        # mark the neuron's location
         for n = 1:length(can.Ws)
             x = can.I[i]
             # Δ = reverse(can.n .* offsets[n])
@@ -266,9 +266,9 @@ function show_connectivity(can::CAN, i::Int; kwargs...)
             scatter!(
                 # reverse(map(z->[z], x .+ Δ))..., 
                 map(z -> [z], x .+ Δ)...,
-                color = :green,
+                color = :black,
                 label = nothing,
-                ms = 8,
+                ms = 4,
             )
         end
     else
@@ -283,9 +283,95 @@ end
 Show the connectivity for a can, the kernel and a 
 few randomly selected neurons.
 """
-function show_connectivity(can::CAN; kwargs...)
-    idxs = [1, rand(1:*(can.n...), 4)...]
+function show_connectivity(can::CAN; idxs = nothing, aspect_ratio=:equal, size=(800, 600), kwargs...)
+    idxs =  isnothing(idxs) ? [1, rand(1:*(can.n...), 4)...] : idxs
     p = plot(can.kernel; title = "Connectivity kernel")
-    ps = map(i -> show_connectivity(can, i), idxs)
-    plot(p, ps...; size = (800, 600), kwargs...) |> display
+
+    clims = (minimum(can.Ws[1]), max(abs(minimum(can.Ws[1]))/2, maximum(can.Ws[1])))
+    ps = map(i -> show_connectivity(can, i; clims=clims, aspect_ratio=aspect_ratio), idxs)
+    plot(p, ps...; size = size, kwargs...) |> display
+end
+
+
+
+# ---------------------------------------------------------------------------- #
+#                                   ONE FORMS                                  #
+# ---------------------------------------------------------------------------- #
+# -------------------------------- one oneform ------------------------------- #
+function show_oneforms!(plt, ω::OneForm, xmin::Vector, xmax::Vector; dx = 3, x₀=0, y₀=0)
+    length(xmin) != 2 && error("not implemented for d != 2")
+
+    for x = xmin[1]:dx:xmax[1], y = xmin[2]:dx:xmax[2]
+        o = ω([x, y])
+        scatter!([x+x₀], [y+y₀], ms = 3.5, color = :black, label = nothing)
+        plot!(plt, [x+x₀, x+x₀ + o[1]], [y+y₀, y+y₀ + o[2]], lw = 3, color = :black, label = nothing)
+    end
+
+end
+
+
+function show_oneforms(ω::OneForm, xmin::Vector, xmax::Vector; dx = 3)
+    plt = plot(aspect_ratio = :equal, grid = false)
+    show_oneforms!(plt, ω, xmin, xmax; dx = dx)
+    plt
+end
+
+
+# ---------------------------- all ωᵢ for one CAN ---------------------------- #
+function show_oneforms(can::CAN; kwargs...)
+    plt = plot(; aspect_ratio = :equal, grid = false, size = can.n .* 10)
+
+    x̄ = range(0, maximum(can.X[1, :]), length = can.n[1])
+    ȳ = range(0, maximum(can.X[2, :]), length = can.n[2])
+    xmin = [minimum(x̄), minimum(ȳ)]
+    xmax = [maximum(x̄), maximum(ȳ)]
+
+    for i = 1:can.d*2
+        # get offset position for plotting
+        offset = can.offsets[i] .* vec(maximum(can.X; dims = 2))
+
+        # show one forms
+        show_oneforms!(plt, can.Ω[i], xmin, xmax; x₀=offset[1], y₀=offset[2])
+    end
+    plt
+end
+
+
+# ----------------------- ωᵢ  over M (pullback from N) ----------------------- #
+function show_oneforms(ω::OneForm, C::CoverSpace, args...; kwargs...)
+    plt = plot(; aspect_ratio = :equal, grid = false, size = (800, 800))
+
+    show_oneforms!(plt, ω, C, args...; kwargs...)
+end
+
+
+function show_oneforms!(
+    plt,
+    ω::OneForm,
+    C::CoverSpace,
+    xmin::Vector,
+    xmax::Vector;
+    dx = 10,
+    scale = 1,
+    color = :black,
+    kwargs...,
+)
+    for x = xmin[1]:dx:xmax[1], y = xmin[2]:dx:xmax[2]
+        # get ω at the corresponding mfld
+        x̂, ŷ = C.ρ(x, y)
+        o = ω([x̂, ŷ]) .* scale
+
+        # vis
+        scatter!(plt, [x], [y], ms = 3, markercolor = color, label = nothing; kwargs...)
+        plot!(
+            plt,
+            [x, x + o[1]],
+            [y, y + o[2]],
+            lw = 3,
+            color = color,
+            label = nothing;
+            kwargs...,
+        )
+    end
+    return plt
 end

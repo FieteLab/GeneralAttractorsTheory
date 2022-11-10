@@ -4,37 +4,95 @@ import Distances: Metric, pairwise
 import StaticArrays: SVector, SA_F64, SMatrix
 using Term.Progress
 using Plots
-import LinearAlgebra: ⋅, I
+import LinearAlgebra: ⋅, I, diag, diagind
 
 
 export AbstractCAN, CAN
 
 using ..Kernels: AbstractKernel
+using ..Manifolds: CoverSpace, area_deformation
 
+# ---------------------------------------------------------------------------- #
+#                              DIFFERENTIAL FORMS                              #
+# ---------------------------------------------------------------------------- #
+"""
+Differential forms are used to provide spatially varyi-ing inputs onto a network. 
+"""
+
+"""
+
+Diferential one forms in d dimensions are defined by:
+    ω = [f_1(x), f_2(x), ..., f_d(x)]
+with x being the coordinates of a point on the manifold.
+We want our one-forms to be aligned to basis one forms 
+    dx_i = [0, ..., 1, ..., 0]
+so we have 
+    ω_i = [0, ..., f_i(x), ..., 0]
+
+such that each one form is defined by `f` and `i`. 
+"""
+struct OneForm
+    i::Int
+    f::Function
+end
+
+Base.string(ω::OneForm) = "OneForm($(ω.i), $(ω.f))"
+Base.print(io::IO, ω::OneForm) = print(io, string(ω))
+Base.show(io::IO, ::MIME"text/plain", ω::OneForm) = print(io, string(ω))
+
+
+"""
+    (ω::OneForm)(x::Vector)
+
+Evaluate a one form at a point `x`.
+"""
+function (ω::OneForm)(x::Vector)::Vector
+    nargs = first(methods(ω.f)).nargs - 1
+
+    if nargs == 1 && length(x) > 1
+        o = zeros(length(x))
+        o[ω.i] = ω.f(x[ω.i])
+        return o
+    else
+        return ω.f(x...)
+    end
+end
+
+"""
+    (ω::OneForm)(x::Vector, v::Vector)::number
+
+Evaluate ωₚ(v).
+"""
+function (ω::OneForm)(x::Vector, v::Vector)::Number
+    return v ⋅ ω(x)
+end
+
+# ---------------------------------------------------------------------------- #
+#                                      CAN                                     #
+# ---------------------------------------------------------------------------- #
 
 # --------------------------- activation functions --------------------------- #
 relu(x) = max(0, x)
 
 activations::Dict{Symbol,Function} = Dict(:relu => relu, :tanh => tanh)
 
-# --------------------------------- abstract --------------------------------- #
+
 abstract type AbstractCAN end
 
 
-# ---------------------------------------------------------------------------- #
-#                                      CAN                                     #
-# ---------------------------------------------------------------------------- #
 """
     mutable struct CAN <: AbstractCAN
         name::String
-        n::NTuple{N,Int} where {N}           # number of neurons in each dimension
+        C::CoverSpace
+        n::NTuple{N,Int} where {N}         # number of neurons in each dimension
         d::Int                             # number of dimensions
         I::Vector{Tuple}                   # index (i,j...) of each neuron in the lattice
         X::Matrix                          # N × n_neurons matrix with coordinates of each neuron in lattice
         Ws::Vector{Array}                  # connectivity matrices with lateral offsets | length N
         kernel::AbstractKernel             # connectivity kernel
         σ::Function                        # activation function
-        A::Matrix{Float64}                 # K×D map projecting v∈Φ to manifold dimensions
+        Ω::Vector{OneForm}                 # vector of `OneForm`s representing input measuring forms
+        offsets::Vector                    # vector of offset directions
     end
 
 A Continous Attractor Network. 
@@ -45,21 +103,21 @@ the neurons' indices.
 Each CAN is comprised of 2d "copies" of a neural population, each with its connectivity matrix Wᵢ. 
 The `Ws` are computed based on offset pairwise neuron coordinates. For each copy the offeset is in a direction
 specified by `offsets` vectors (generally ± each basis direction) and scaled by an `offset_size` magnitude. 
-The velocity inputs onto each copy are scaled by α * the offset direction. α is the same across all directions
-and used only to scale the magnitude of the velocity inputs. 
-
-Thus, the connectivity matrix's shape depends on the offset directions and the offset magnitude. 
+The velocity inputs onto each copy are scaled by ωᵢ(v) with `ωᵢ` being a `OneForm` aligned to the i-th
+offset direction but (potentially) varying in magnitude over the variable manifold. 
 """
 mutable struct CAN <: AbstractCAN
     name::String
-    n::NTuple{N,Int} where {N}           # number of neurons in each dimension
+    C::CoverSpace
+    n::NTuple{N,Int} where {N}         # number of neurons in each dimension
     d::Int                             # number of dimensions
     I::Vector{Tuple}                   # index (i,j...) of each neuron in the lattice
     X::Matrix                          # N × n_neurons matrix with coordinates of each neuron in lattice
     Ws::Vector{Array}                  # connectivity matrices with lateral offsets | length N
     kernel::AbstractKernel             # connectivity kernel
     σ::Function                        # activation function
-    A::Matrix{Float64}                 # K×D map projecting v∈Φ to manifold dimensions
+    Ω::Vector{OneForm}                 # vector of `OneForm`s representing input measuring forms
+    offsets::Vector
 end
 
 Base.string(can::CAN) = "CAN (dim=$(length(can.n))) - n neurons: $(can.n)"
@@ -74,7 +132,6 @@ Base.show(io::IO, ::MIME"text/plain", can::CAN) = print(io, string(can))
         metric::Metric,
         kernel::AbstractKernel;
         σ::Union{Symbol,Function} = :relu,
-        offset_size::Number = 1.0,                        # magnitude of weights offset (distance)
         offsets::Union{Nothing,Matrix} = nothing,         # offset directions, rows Aᵢ of A
         α::Float64 = 1.0,                                 # scales A matrix
     ) where {N}
@@ -83,16 +140,17 @@ Construct a d-dimensional network.
 """
 function CAN(
     name::String,
+    C::CoverSpace,
     n::NTuple{N,Int},
     ξ::Function,
     metric::Metric,
     kernel::AbstractKernel;
     σ::Union{Symbol,Function} = :relu,
-    offset_size::Number = 1.0,                        # magnitude of weights offset (distance)
-    offsets::Union{Nothing,Matrix} = nothing,         # offset directions, rows Aᵢ of A
-    α::Float64 = 1.0,                                 # scales A matrix
+    Ω::Union{Nothing,Vector{OneForm}} = nothing,      # one forms for input velocity
+    offsets::Union{Nothing, Vector} = nothing,           # offset directions, rows Aᵢ of A
+    offset_size::Union{Vector, Number} = 1.0,
+    φ::Union{Function, Nothing} = nothing,          # an embedding function if the distance over M is computed on an embedding of M in ℝᵐ
 ) where {N}
-
     d = length(n)
 
     # check that ξ has the right form
@@ -113,25 +171,73 @@ function CAN(
 
     # get connectivity offset vectors
     offsets = get_offsets(offsets, d, n)
+    offset_size = offset_size isa Number ? ones(length(offsets)) .* offset_size : offset_size
+    @assert length(offsets) == length(offset_size)
+
+    # get manifold deformation (if it gets embedded before computing distance)
+    G = isnothing(φ) ? nothing : map(p -> area_deformation(φ, p), eachcol(X))
 
     # construct connectivity matrices
     Ws::Vector{Matrix} = []
-    for θ in offsets
+    for (s, θ) in zip(offset_size, offsets)
         # get pairwise offset connectivity
-        D = pairwise(metric, X .- offset_size .* θ, X)
+        D = pairwise(metric, X .- s * θ, X)
 
         # get connectivity matrix with kernel
-        push!(Ws, kernel.k.(D))
+        W = kernel.k.(D)
+
+        # scale by area deformation
+        isnothing(G) || begin
+            G[G .< 1e-10] .= 0.0
+            W' .*= G
+        end
+
+        # store connectivity matrix
+        push!(Ws, W)
     end
 
     # get connectivity function
     σ = σ isa Symbol ? activations[σ] : σ
 
+    # construct one-forms
+    Ω = get_one_forms(Ω, offsets)
+
     @debug "ready" n lattice_idxs eltype(lattice_idxs) X eltype(X) typeof(Ws) eltype(Ws)
-    A =  α .* Matrix(hcat(offsets...)')
-    return CAN(name, n, d, lattice_idxs, X, Ws, kernel, σ, A)
+    return CAN(name, C, n, d, lattice_idxs, X, Ws, kernel, σ, Ω, offsets)
 end
 
+
+# ---------------------------------------------------------------------------- #
+#                                   ONE FORMS                                  #
+# ---------------------------------------------------------------------------- #
+
+"""
+    get_one_forms(Nothing, offsets::Vector)::Vector{OneForm}
+
+Construct default One Forms (dxᵢ).
+"""
+function get_one_forms(::Nothing, offsets::Vector)::Vector{OneForm}
+    Ω = OneForm[]
+    for (i, v) in enumerate(offsets)
+        î = (Int ∘ ceil)(i / 2)
+        ω = OneForm(î, x -> v[î])
+        push!(Ω, ω)
+    end
+    Ω
+end
+
+"""
+validate one forms passed at CAN creation. 
+"""
+function get_one_forms(Ω::Vector{OneForm}, offsets)::Vector{OneForm}
+    @assert length(Ω) == length(offsets)
+    return Ω
+end
+
+
+# ---------------------------------------------------------------------------- #
+#                                    offsets                                   #
+# ---------------------------------------------------------------------------- #
 """
     Aᵢ(A::Matrix, i::Int)
 
@@ -178,6 +284,11 @@ function get_offsets(offsets::Union{Nothing,Matrix}, d::Int, n::Tuple)::Vector
     @assert length(offsets[1]) == d
 
     @debug "Making CAN given offsets" size(offsets) typeof(offsets) v₀ Aᵢ d n offsets
+    return offsets
+end
+
+function get_offsets(offsets::Vector, d::Int, n::Tuple)::Vector
+    @assert all(length.(offsets) .== d )
     return offsets
 end
 

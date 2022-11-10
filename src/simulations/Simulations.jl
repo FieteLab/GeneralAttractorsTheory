@@ -6,12 +6,15 @@ using Term.Progress
 using Statistics
 using SparseArrays
 
-import GeneralAttractors: save_simulation_history, moving_average, savepath
+import GeneralAttractors: save_simulation_history, moving_average, savepath, save_model, save_data
+import GeneralAttractors: show_oneforms, show_oneforms!
 import ..Can: AbstractCAN
+import ..Manifolds: AbstractManifold, Manifoldℝ², Torus, Sphere
 
-export Simulation, ConstantChunk, run_simulation, RandomChunk
+export Simulation, run_simulation
+export Trajectory
 
-include("chunk.jl")
+include("trajectory.jl")
 include("simulation.jl")
 include("utils.jl")
 end
