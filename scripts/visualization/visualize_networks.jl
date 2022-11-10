@@ -1,10 +1,10 @@
 using GeneralAttractors
 using GeneralAttractors.Kernels
-using GeneralAttractors.Manifolds
+using GeneralAttractors.ManifoldUtils
 using GeneralAttractors: lerp
 using Distances
 
-import GeneralAttractors.Manifolds: sphere_embedding
+import GeneralAttractors.ManifoldUtils: sphere_embedding
 
 n = (64, 64)
 function ξ_s(i::Int, j::Int)::Vector

@@ -6,9 +6,9 @@ using Interpolations
 
 using GeneralAttractors.Simulations
 using GeneralAttractors.Kernels
-using GeneralAttractors.Manifolds
+using GeneralAttractors.ManifoldUtils
 using GeneralAttractors: lerp
-import GeneralAttractors.Manifolds: sphere_embedding
+import GeneralAttractors.ManifoldUtils: sphere_embedding
 using Distances
 
 # --------------------------------- make net --------------------------------- #

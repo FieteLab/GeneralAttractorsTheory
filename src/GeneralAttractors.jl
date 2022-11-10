@@ -17,7 +17,7 @@ export torus_attractor, sphere_attractor
 export load_simulation_history, save_data, load_data, save_model, load_model
 
 using .Kernels
-using .Manifolds
+using .ManifoldUtils
 using .Can: CAN, OneForm
 
 include("metrics.jl")

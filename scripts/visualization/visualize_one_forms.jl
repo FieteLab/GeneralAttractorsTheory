@@ -4,7 +4,7 @@ using Distances
 using GeneralAttractors
 using GeneralAttractors.Kernels
 using GeneralAttractors: lerp
-using GeneralAttractors.Manifolds
+using GeneralAttractors.ManifoldUtils
 
 # ------------------------------- make network ------------------------------- #
 n = (64, 64)

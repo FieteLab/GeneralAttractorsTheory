@@ -8,7 +8,7 @@ using GeneralAttractors.Simulations
 using Distances
 using GeneralAttractors.Kernels
 using GeneralAttractors: lerp
-using GeneralAttractors.Manifolds
+using GeneralAttractors.ManifoldUtils
 
 
 # ---------------------------------- network --------------------------------- #

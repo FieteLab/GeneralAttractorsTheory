@@ -2,8 +2,8 @@ using GLMakie
 
 using GeneralAttractors
 using GeneralAttractors.Simulations
-using GeneralAttractors.Manifolds
-import GeneralAttractors.Manifolds: sphere_embedding
+using GeneralAttractors.ManifoldUtils
+import GeneralAttractors.ManifoldUtils: sphere_embedding
 
 """
 Animate a simulation given it's history `h`

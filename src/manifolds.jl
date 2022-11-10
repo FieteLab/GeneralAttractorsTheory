@@ -1,7 +1,7 @@
 """
 Collection of code useful to visualize manifolds
 """
-module Manifolds
+module ManifoldUtils
 
 export AbstractManifold, CoverSpace
 export ℝ², T, S²

@@ -3,9 +3,9 @@ using Plots
 
 using GeneralAttractors.Simulations
 using GeneralAttractors.Kernels
-using GeneralAttractors.Manifolds
+using GeneralAttractors.ManifoldUtils
 using GeneralAttractors: lerp
-import GeneralAttractors.Manifolds: sphere_embedding
+import GeneralAttractors.ManifoldUtils: sphere_embedding
 using Distances
 
 # --------------------------------- make net --------------------------------- #
@@ -38,9 +38,9 @@ trajectory = Trajectory(can; T = nframes,
 )
 simulation = Simulation(can, trajectory; b₀=1.0, η=0.0)
 
-h = run_simulation(
-    simulation,
-    frame_every_n = 20,
-    discard_first_ms = 0,
-    average_over_ms = 1,
-)
+# h = run_simulation(
+#     simulation,
+#     frame_every_n = 20,
+#     discard_first_ms = 0,
+#     average_over_ms = 1,
+# )

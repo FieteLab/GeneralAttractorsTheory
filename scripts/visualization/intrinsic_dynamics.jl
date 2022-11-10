@@ -3,9 +3,9 @@ using GeneralAttractors
 using SparseArrays
 using Distances
 using GeneralAttractors.Kernels
-using GeneralAttractors.Manifolds
+using GeneralAttractors.ManifoldUtils
 using GeneralAttractors: lerp
-using GeneralAttractors.Manifolds: sphere_embedding
+using GeneralAttractors.ManifoldUtils: sphere_embedding
 
 # --------------------------------- make net --------------------------------- #
 n = (64, 64)
