@@ -1,9 +1,3 @@
-using Plots
-using Measures
-using Distances: PeriodicEuclidean, evaluate, UnionMetric, SphericalAngle
-import Base.Iterators: product as ×  # cartesian product
-
-
 # ---------------------------------- kernel ---------------------------------- #
 function Plots.plot(K::AbstractKernel; kwargs...)
     x = -100:0.001:100 |> collect
@@ -232,9 +226,7 @@ function show_connectivity(can::CAN, i::Int; aspect_ratio=:equal, kwargs...)
         vline!([x[1]], label = "Neuron $i", lw = 4, color = :black)
     elseif can.d == 2
         p = plot()
-        offsets = map(
-            o -> o ./ (o .+ 0.01) .* sign.(o), can.offsets
-        )
+        offsets = map(offset_for_visual, can.offsets)
         for (n, W) in enumerate(can.Ws)
             # plot connectivity map
             w = reshape(W[:, i], can.n...)'

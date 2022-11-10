@@ -2,7 +2,7 @@ using Distances: UnionMetric, PeriodicEuclidean, euclidean
 import Distances
 import LinearAlgebra: ⋅
 
-import .Manifolds: sphere_embedding
+import .ManifoldUtils: sphere_embedding
 
 """
 Sperical distance on the unit sphere

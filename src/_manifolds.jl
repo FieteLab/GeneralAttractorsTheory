@@ -1,9 +1,5 @@
 using ForwardDiff: jacobian
 using LinearAlgebra
-using Rotations
-
-
-R = RotXYZ(90, 90, 90)
 
 
 """
