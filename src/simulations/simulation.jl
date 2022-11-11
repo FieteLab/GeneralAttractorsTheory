@@ -74,7 +74,7 @@ function step!(simulation::Simulation, x::Vector, v::Vector)
 
     # get effect of recurrent connectivity & external input
     d = size(S, 2)
-    B = b₀ .+ 1/can.offset_size .* vec(
+    V = vec(
         map(
             # ωᵢ -> ωᵢ(x, v) / norm(ωᵢ(x)), 
             ωᵢ -> ωᵢ(x, v), 
@@ -87,11 +87,11 @@ function step!(simulation::Simulation, x::Vector, v::Vector)
     if simulation.η > 0
         η = rand(Float64, size(S, 1), d) .* simulation.η  # get noise input
         for i = 1:d
-            Ṡ[:, i] .= W[i] * S̄ .+ B[i] .+ η[i]
+            Ṡ[:, i] .= W[i] * S̄ .+ V[i] .+ η[i] .+ b₀
         end
     else
         for i = 1:d
-            Ṡ[:, i] .= W[i] * S̄ .+ B[i]
+            Ṡ[:, i] .= W[i] * S̄ .+ V[i] .+ b₀
         end
     end
 
@@ -101,6 +101,7 @@ function step!(simulation::Simulation, x::Vector, v::Vector)
 
     # update activity
     simulation.S += (can.σ.(Ṡ) - S) / (simulation.τ)
+    return S̄
 end
 
 
@@ -133,13 +134,17 @@ function run_simulation(
 
     # do simulation steps and visualize
     pbar = ProgressBar()
+    X̄ = zeros(size(simulation.trajectory.X))
     Progress.with(pbar) do
         job = addjob!(pbar, description = "Simulation", N = N)
         for i = 1:N
+            # step simulation
             x = simulation.trajectory.X[i, :]
             v = simulation.trajectory.V[i, :]
-            step!(simulation, x, v)
-            # framen > 50 && break
+            S̄ = step!(simulation, X̄[i, :], v)
+            
+            # decode manifold bump position
+            X̄[i, :] = decode_peak_location(S̄, simulation.can)
 
             # add data to history
             add!(history, framen, simulation, v)
@@ -149,7 +154,7 @@ function run_simulation(
                 (i % frame_every_n == 0 || i == 1) &&
                     (time[framen] > discard_first_ms) &&
                     begin
-                        plot(simulation, time[framen], framen, x, v)
+                        plot(simulation, time[framen], framen, x, v, X̄)
                         frame(anim)
                     end
             end

@@ -20,9 +20,13 @@ function Plots.plot(traj::Trajectory)
 end
 
 
-function Plots.plot(traj::Trajectory, i::Int)
+function Plots.plot(traj::Trajectory, i::Int; xmin=nothing, xmax=nothing)
     d = size(traj.X, 2)
     d != 2 && error("not implemented")
+
+
+    xmin = isnothing(xmin) ? minimum(traj.X, dims=2) : xmin
+    xmax = isnothing(xmax) ? maximum(traj.X, dims=2) : xmax
 
     plot(
         traj.X[1:i, 1],
@@ -33,8 +37,8 @@ function Plots.plot(traj::Trajectory, i::Int)
         grid = false,
         aspect_ratio = :equal,
         label = nothing,
-        xlim = [minimum(traj.X[:, 1]), maximum(traj.X[:, 1])],
-        ylim = [minimum(traj.X[:, 2]), maximum(traj.X[:, 2])],
+        xlim = [xmin[1], xmax[1]],
+        ylim = [xmin[2], xmax[2]],
     )
 end
 
@@ -56,9 +60,11 @@ end
 
 function simulation_frame_2dcan(simulation::Simulation, timems, v::Vector; kwargs...)
     can = simulation.can
+    s̄ = sum(simulation.S, dims = 2) |> vec
+
     plt = plot(;
         title = "elapsed: $(round(timems)) ms",
-        clims = (0.0, 1.0),
+        clims = (min(0, minimum(s̄)), max(maximum(s̄)/2, 0.1)),
         aspect_ratio = :equal,
         grid = false,
         size = simulation.can.n .* 10,
@@ -83,7 +89,6 @@ function simulation_frame_2dcan(simulation::Simulation, timems, v::Vector; kwarg
     end
 
     # plot the sum of all activations
-    s̄ = sum(simulation.S, dims = 2) |> vec
     contourf!(x̄, ȳ, reshape(s̄, can.n)', levels = 3)
 
     # plot input vector direction 
@@ -101,7 +106,8 @@ function Plots.plot(
     timems,
     framen,
     x::Vector,
-    v::Vector;
+    v::Vector,
+    X̄;
     show_one_forms = false,
     dx = 20,
     scale = 8,
@@ -119,8 +125,11 @@ function Plots.plot(
 
     # plot trajectory
     tj = simulation.trajectory
-    traj = Plots.plot(tj, framen)
-    scatter!(traj, [x[1]], [x[2]], ms = 5, color = :black, label = nothing)
+    traj = Plots.plot(tj, framen; xmin=simulation.can.C.M.xmin, xmax=simulation.can.C.M.xmax)
+    scatter!(traj, [x[1]], [x[2]], ms = 5, color = :black, label = "actual")
+
+    framen > 202 && plot!(traj, X̄[200:framen, 1], X̄[200:framen, 2], color=:red, label=nothing, alpha=.2)
+    scatter!(traj, [X̄[framen, 1]], [X̄[framen, 2]], ms = 7, color = :red, label = "decoded")
 
     # visualize oneforms
     show_one_forms && begin

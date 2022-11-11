@@ -11,13 +11,17 @@ using Distances
 
 include("../networks/sphere.jl") 
 
+
 # --------------------------------- simulate --------------------------------- #
 dt = 0.5
-duration = 100  # ms   
+duration = 1500  # ms   
 
 nframes = (Int ∘ round)(duration / dt)
-trajectory = Trajectory(spherecan; T = nframes, σ=[0.0, 0.0, 0.0], x₀=[π/2, 0])
-simulation = Simulation(spherecan, trajectory; b₀ = 1.0, η = 0.0)
+trajectory = Trajectory(spherecan; T = nframes, σ=[0.0, 0.0, 0.0], x₀=[-π/2, 0], still=300)
+simulation = Simulation(spherecan, trajectory; b₀ = 0.1, η = 0.0)
+
+
+plot(trajectory.X[1:end, 1])
 
 h = run_simulation(
     simulation,

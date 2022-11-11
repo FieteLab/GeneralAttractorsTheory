@@ -17,6 +17,7 @@ export Simulation, run_simulation
 export Trajectory
 
 include("trajectory.jl")
+include("decoding.jl")
 include("simulation.jl")
 include("utils.jl")
 end

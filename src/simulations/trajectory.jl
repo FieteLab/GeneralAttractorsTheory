@@ -67,8 +67,10 @@ function Trajectory(
     σ = [1, 1, 1],
     scale=0.01, 
     x₀=nothing,
+    still=0,
+    vmax=0.25
 )
-    dt = 10
+    dt = 1
     T2 = T*dt
 
     # get starting point
@@ -79,23 +81,29 @@ function Trajectory(
     vy = moving_average((rand(T2).-0.5) .* σ[2], 20dt) |> cumsum
     vz = moving_average((rand(T2).-0.5) .* σ[3], 20dt) |> cumsum
 
-    vz = ones(T2) .* 3
+    vz = cumsum(ones(T2)) .* 0.01
+    vx = 0.5 .* cumsum(ones(T2)) .* 0.01
+
+    vx[vx .> vmax] .= vmax
+    vx[vx .< -vmax] .= -vmax
+    vy[vy .> vmax] .= vmax
+    vy[vy .< -vmax] .= -vmax
+    vz[vz .> vmax] .= vmax
+    vz[vz .< -vmax] .= -vmax
 
 
     ∑ψ(p, i) = scale .* (vx[i]*ψxS²(p) + vy[i]*ψyS²(p) + vz[i]*ψzS²(p))
     
     X, V = zeros(T2, 2), zeros(T2, 2)
-    for t in 1:T2
-        x = t == 1 ? x₀ : X[t-1, :]
-        V[t, :] = ∑ψ(x, t)
-        # println(V[t, :], ψxS²(x))
+    X[1, :] = x₀
+    for t in 2:T2
+        x = X[t-1, :]
+        v = ∑ψ(x, t)/dt
 
-        if t > 1
-            X[t, :] = X[t-1, :] + V[t-1, :]*1/dt
-        else
-            X[1, :] = x₀
-        end
-
+        X[t, :] = X[t-1, :] + v
+        V[t, :] = v
+        
+        # correct for boundarie
         X[t, 2] > π/2 && begin
             X[t, 2] = π/2
             X[t, 1] += π
@@ -110,5 +118,17 @@ function Trajectory(
         X[t, 1] > π && (X[t, 1] = X[t, 1] - 2π)
     end
 
-    return Trajectory(M, X[1:dt:end, :], V[1:dt:end, :])
+    # add a still phase at the beginning
+    X, V = X[1:dt:end, :], V[1:dt:end, :]
+
+    if still > 0
+        standing = zeros(still, 2)
+        standing[:, 1] .= x₀[1]
+        standing[:, 2] .= x₀[2]
+        X = vcat(standing, X)
+        V = vcat(zeros(still, 2), V)
+    end
+
+
+    return Trajectory(M, X, V)
 end
