@@ -9,8 +9,8 @@ import ForwardDiff: jacobian
 
 import GeneralAttractors: by_column
 
-T = 600
-traj = Trajectory(S²; T=T)
+T = 2000
+traj = Trajectory(S²; T=T, σ=[0, 0, 0], x₀=[π/2, 0])
 
 
 plt = plot(xlim=[-4, 4], ylim=[-2, 2])

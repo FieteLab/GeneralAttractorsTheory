@@ -74,7 +74,14 @@ function step!(simulation::Simulation, x::Vector, v::Vector)
 
     # get effect of recurrent connectivity & external input
     d = size(S, 2)
-    B = b₀ .+ vec(map(ωᵢ -> ωᵢ(x, v) / norm(ωᵢ(x)), simulation.can.Ω))  # inputs vector of size 2d
+    B = b₀ .+ 1/can.offset_size .* vec(
+        map(
+            # ωᵢ -> ωᵢ(x, v) / norm(ωᵢ(x)), 
+            ωᵢ -> ωᵢ(x, v), 
+            simulation.can.Ω
+            )
+    )  # inputs vector of size 2d
+
     S̄ = ∑ⱼ(S)  # get the sum of all current activations
 
     if simulation.η > 0

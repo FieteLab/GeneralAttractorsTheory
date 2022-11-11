@@ -20,15 +20,20 @@ Differential forms are used to provide spatially varyi-ing inputs onto a network
 
 """
 
-Diferential one forms in d dimensions are defined by:
+Diferential one forms in d dimensions over the neuronal lattice.
+
+One forms are defined by:
     ω = [f_1(x), f_2(x), ..., f_d(x)]
 with x being the coordinates of a point on the manifold.
-We want our one-forms to be aligned to basis one forms 
+
+Constant  one-forms are assumed to be aligned to basis one forms 
     dx_i = [0, ..., 1, ..., 0]
 so we have 
     ω_i = [0, ..., f_i(x), ..., 0]
-
 such that each one form is defined by `f` and `i`. 
+
+More generally, `f` is a function of points on the lattice giving a one form
+in coordinates representation and `i` is ignored.
 """
 struct OneForm
     i::Int
@@ -117,6 +122,7 @@ mutable struct CAN <: AbstractCAN
     σ::Function                        # activation function
     Ω::Vector{OneForm}                 # vector of `OneForm`s representing input measuring forms
     offsets::Vector
+    offset_size
 end
 
 Base.string(can::CAN) = "CAN (dim=$(length(can.n))) - n neurons: $(can.n)"
@@ -201,7 +207,7 @@ function CAN(
     Ω = get_one_forms(Ω, offsets)
 
     @debug "ready" n lattice_idxs eltype(lattice_idxs) X eltype(X) typeof(Ws) eltype(Ws)
-    return CAN(name, C, n, d, lattice_idxs, X, Ws, kernel, σ, Ω, offsets)
+    return CAN(name, C, n, d, lattice_idxs, X, Ws, kernel, σ, Ω, offsets, offset_size)
 end
 
 

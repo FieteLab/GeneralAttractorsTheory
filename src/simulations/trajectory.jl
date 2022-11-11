@@ -64,30 +64,31 @@ iii. use the embedding map's jacobian to get tangent vectors on the sphere domai
 function Trajectory(
     M::Sphere;
     T::Int = 250,
-    σ = 2,
+    σ = [1, 1, 1],
+    scale=0.01, 
+    x₀=nothing,
 )
     dt = 10
     T2 = T*dt
 
     # get starting point
-    x₀ = [rand(-2:.1:2), rand(-1:.1:1)]
+    x₀ = isnothing(x₀) ? [rand(-2:.1:2), rand(-1:.1:1)] : x₀
 
     # smooth sum of vector fields
-    vx = moving_average((rand(T2).-0.5) .* σ, 2dt)
-    vy = moving_average((rand(T2).-0.5) .* σ, 2dt)
-    vz = moving_average((rand(T2).-0.5) .* σ, 2dt)
+    vx = moving_average((rand(T2).-0.5) .* σ[1], 20dt) |> cumsum
+    vy = moving_average((rand(T2).-0.5) .* σ[2], 20dt) |> cumsum
+    vz = moving_average((rand(T2).-0.5) .* σ[3], 20dt) |> cumsum
 
-    # function ∑ψ(p, i)
-    #     y = p[2]
-    #     α = y > -π/2+0.1 && y < π/2-0.1 ? 1 : 0
-    #     return α*vx[i]*ψxS²(p) + α*vy[i]*ψyS²(p) + vz[i]*ψzS²(p)
-    # end
-    ∑ψ(p, i) = vx[i]*ψxS²(p) + vy[i]*ψyS²(p) + vz[i]*ψzS²(p)
+    vz = ones(T2) .* 3
+
+
+    ∑ψ(p, i) = scale .* (vx[i]*ψxS²(p) + vy[i]*ψyS²(p) + vz[i]*ψzS²(p))
     
     X, V = zeros(T2, 2), zeros(T2, 2)
     for t in 1:T2
-        x = t == 1 ? x₀ : X[t, :]
+        x = t == 1 ? x₀ : X[t-1, :]
         V[t, :] = ∑ψ(x, t)
+        # println(V[t, :], ψxS²(x))
 
         if t > 1
             X[t, :] = X[t-1, :] + V[t-1, :]*1/dt
