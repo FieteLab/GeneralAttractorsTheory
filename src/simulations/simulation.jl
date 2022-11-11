@@ -81,6 +81,7 @@ function step!(simulation::Simulation, x::Vector, v::Vector; s₀=nothing)
             simulation.can.Ω
             )
     )  # inputs vector of size 2d
+    # println(V, "   ", v, "   ", x)
 
     S̄ = ∑ⱼ(S)  # get the sum of all current activations
     !isnothing(s₀) && (S̄ .*= s₀)
@@ -138,6 +139,7 @@ function run_simulation(
     # do simulation steps and visualize
     pbar = ProgressBar()
     X̄ = zeros(size(simulation.trajectory.X))
+    X̄[1, :] = simulation.trajectory.X[1, :]
     Progress.with(pbar) do
         job = addjob!(pbar, description = "Simulation", N = N)
         for i = 1:N
@@ -149,8 +151,11 @@ function run_simulation(
             # step simulation
             x = simulation.trajectory.X[i, :]
             v = simulation.trajectory.V[i, :]
-            S̄ = step!(simulation, X̄[i, :], v; s₀=s₀)
-            
+            # S̄ = step!(simulation, X̄[i, :], v; s₀=s₀)
+
+            x̂ = i < 10 ? simulation.trajectory.X[i, :] : X̄[i-1, :]
+            S̄ = step!(simulation, x̂, v; s₀=s₀)
+
             # decode manifold bump position
             X̄[i, :] = decode_peak_location(S̄, simulation.can)
 

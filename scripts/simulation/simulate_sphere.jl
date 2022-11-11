@@ -9,20 +9,20 @@ import GeneralAttractors.ManifoldUtils: sphere_embedding
 using Distances
 import LinearAlgebra: norm
 
-include("../networks/sphere.jl") 
+# include("../networks/sphere.jl") 
 
 
 # --------------------------------- simulate --------------------------------- #
 dt = 0.5
-duration = 700  # ms   
+duration = 300  # ms   
 x₀ = [1, 0, 0]
 x₀ /= norm(x₀)
-still = 100  # initialization period
+still = 50  # initialization period
 dmin = 0.5
 
 
 nframes = (Int ∘ round)(duration / dt)
-trajectory = Trajectory(spherecan; T = nframes, σ=[0.0, 0.0, 0.0], x₀=x₀, scale=0.1, still=still)
+trajectory = Trajectory(spherecan; T = nframes, σ=[0.0, 0.0, 0.0], x₀=x₀, scale=0.05, still=still)
 
 
 # get activation to initialize bump

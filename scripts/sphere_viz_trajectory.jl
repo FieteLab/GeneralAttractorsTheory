@@ -13,10 +13,10 @@ T = 20000
 traj = Trajectory(S²; T=T, σ=[0.0, 0.0, 0.0])
 
 
-plt = plot(xlim=[-1.1, 1.1], ylim=[-1.1, 1.1], zlim=[-1.1, 1.1])
+plt = Plots.plot(xlim=[-1.1, 1.1], ylim=[-1.1, 1.1], zlim=[-1.1, 1.1])
 
 
-plot!(eachcol(traj.X)...)
+Plots.plot!(eachcol(traj.X)...)
 
 # for i in 1:2:T
 #     plot!(
