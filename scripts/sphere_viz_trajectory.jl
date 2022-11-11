@@ -9,21 +9,21 @@ import ForwardDiff: jacobian
 
 import GeneralAttractors: by_column
 
-T = 2000
-traj = Trajectory(S²; T=T, σ=[0, 0, 0], x₀=[π/2, 0])
+T = 20000
+traj = Trajectory(S²; T=T, σ=[0.0, 0.0, 0.0])
 
 
-plt = plot(xlim=[-4, 4], ylim=[-2, 2])
+plt = plot(xlim=[-1.1, 1.1], ylim=[-1.1, 1.1], zlim=[-1.1, 1.1])
 
 
-plot!(traj.X[:, 1], traj.X[:, 2])
+plot!(eachcol(traj.X)...)
 
-for i in 1:2:T
-    plot!(
-        [traj.X[i, 1], traj.X[i, 1]+traj.V[i, 1]],
-        [traj.X[i, 2], traj.X[i, 2]+traj.V[i, 2]],
-        label=nothing, color=:black
-    )
-end
+# for i in 1:2:T
+#     plot!(
+#         [traj.X[i, 1], traj.X[i, 1]+traj.V[i, 1]],
+#         [traj.X[i, 2], traj.X[i, 2]+traj.V[i, 2]],
+#         label=nothing, color=:black
+#     )
+# end
 
 plt

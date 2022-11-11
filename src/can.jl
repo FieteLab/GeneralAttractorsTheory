@@ -148,16 +148,8 @@ function CAN(
     C::CoverSpace,
     n::NTuple{N,Int},
     ξ::Function,
-    metric::Metric,
-    kernel::AbstractKernel;
-    σ::Union{Symbol,Function} = :relu,
-    Ω::Union{Nothing,Vector{OneForm}} = nothing,      # one forms for input velocity
-    offsets::Union{Nothing,Vector} = nothing,           # offset directions, rows Aᵢ of A
-    offset_size::Number = 1.0,
-    φ::Union{Function,Nothing} = nothing,          # an embedding function if the distance over M is computed on an embedding of M in ℝᵐ
+    args...; kwargs...
 ) where {N}
-    d = length(n)
-
     # check that ξ has the right form
     nargs = first(methods(ξ)).nargs - 1
     @assert N == nargs "ξ should accept $(N) arguments, accepts: $(nargs)"
@@ -173,6 +165,28 @@ function CAN(
     ξ̂(t::Tuple) = ξ(t...)
     X::Matrix = hcat(ξ̂.(lattice_idxs)...)  # matrix, size d × N
     @debug "X" size(X) typeof(X) eltype(X)
+    
+    # finalize
+    return CAN(name, C, n, lattice_idxs, X, args...; kwargs...)
+end
+
+
+
+function CAN(
+    name::String,
+    C::CoverSpace,
+    n::NTuple{N,Int},
+    lattice_idxs::Vector,
+    X::Matrix,
+    metric::Metric,
+    kernel::AbstractKernel;
+    σ::Union{Symbol,Function} = :relu,
+    Ω::Union{Nothing,Vector{OneForm}} = nothing,      # one forms for input velocity
+    offsets::Union{Nothing,Vector} = nothing,           # offset directions, rows Aᵢ of A
+    offset_size::Number = 1.0,
+    φ::Union{Function,Nothing} = nothing,          # an embedding function if the distance over M is computed on an embedding of M in ℝᵐ
+) where {N}
+    d = length(n)
 
     # get connectivity offset vectors
     offsets::Vector{AbstractWeightOffset} = get_offsets(offsets, d, n)
@@ -352,7 +366,7 @@ offset_for_visual(off::FieldOffset) = off.displacement
 """
 Construct offsets given a list of vector field functions
 """
-function get_offsets(offsets::Vector{Function}, d::Int, n::Tuple)::Vector{FieldOffset}
+function get_offsets(offsets::Vector{Function}, ::Int, n::Tuple)::Vector{FieldOffset}
     @assert length(offsets) >= 2length(n) "Got $(length(offsets)) offset fields, expected at least: $(2length(n))"
 
     # get "base" offsets and use them as displacements for visuals
@@ -373,9 +387,10 @@ function get_pairwise_distance(
     X::Matrix,
     metric::Metric,
     offset_size::Number,
-    φ::Nothing,
+    ::Nothing,
 )::Matrix
-    error("`get_pairwise_distance` not implemented for the case with no embedding function")
+    δx = by_column(offset.ψ, X)
+    pairwise(metric, X .- (offset_size .* δx), X)
 end
 
 

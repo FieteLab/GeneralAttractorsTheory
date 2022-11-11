@@ -1,59 +1,58 @@
 using Distances
 using Term
 
-
+import GeneralAttractors: SphericalDistance
 using GeneralAttractors
 using GeneralAttractors.Kernels
 using GeneralAttractors: lerp
 using GeneralAttractors.ManifoldUtils
 import GeneralAttractors.ManifoldUtils: sphere_embedding, ψx, ψy, ψz, ψxS², ψyS², ψzS²
 import GeneralAttractors.Can: OneForm
+import Manifolds: Sphere as 𝕊
+import Manifolds: uniform_distribution
 
 println(Panel("Creating sphere attractor", style="green", justify=:center))
 
 
 # number of neurons
-n = (64, 32)
+m = 32
+n = m^2
 
-""" coordinates map on the sphere """
-function ξ_s(i::Int, j::Int)::Vector
-    δ1, δ2 = 2π/n[1], π/n[2]
-    [lerp(i, n[1], -π, π-δ1), lerp(j, n[2], -π / 2 + δ2, π / 2-δ2)]
-    # [lerp(i, n[1], -π, π-δ1), lerp(j, n[2], -π / 2, π / 2)]
+# get neurons on S² ⊂ ℝ³
+sphere = 𝕊(2)
+X = hcat(rand(uniform_distribution(sphere), n)...)  # 3 × N neurons coordinate
 
-end
+# get neurons indices
+I = [(i, ) for i in 1:size(X, 2)]
 
-# distance metric
-d_s = SphericalAngle()
+# distance metric on the unit sphere
+d_s = SphericalDistance()
 
-# kernel
-k_s = DiffOfExpKernel(; λ = 3.25)
-# k_s = DiffOfExpKernel(; λ = 0.75)
-# k_s = MexicanHatKernel(α=.015, σ=.3, β=0.005)
+# kernel  
+k_s = DiffOfExpKernel(; λ = 5.0)  #
 
 # cover space
 cover = CoverSpace(S², S², (x, y) -> [x, y])
 
 # define offset vector fields
 offsets = [
-    ψx,
+    p -> ψx(p),
     p -> -ψx(p),
-    ψy,
+    p -> ψy(p),
     p -> -ψy(p),
-    ψz,
+    p -> ψz(p),
     p -> -ψz(p)]
-offset_size = 0.25
-
+offset_size = 0.1
 
 # define one forms
-α = 1/offset_size 
+α = 1/offset_size .* 10
 Ω = [
-    OneForm(1, (x, y) -> α * ψxS²([x,y])),
-    OneForm(2, (x, y) -> -α * ψxS²([x,y])),
-    OneForm(3, (x, y) -> α * ψyS²([x,y])),
-    OneForm(4, (x, y) -> -α * ψyS²([x,y])),
-    OneForm(5, (x, y) -> α * ψzS²([x,y])),
-    OneForm(6, (x, y) -> -α * ψzS²([x,y])),
+    OneForm(1, (x, y, z) -> α * ψx(x,y,z)),
+    OneForm(2, (x, y, z) -> -α * ψx(x,y,z)),
+    OneForm(3, (x, y, z) -> α * ψy(x,y,z)),
+    OneForm(4, (x, y, z) -> -α * ψy(x,y,z)),
+    OneForm(5, (x, y, z) -> α * ψz(x,y,z)),
+    OneForm(6, (x, y, z) -> -α * ψz(x,y,z)),
 ]
 
 
@@ -61,12 +60,12 @@ offset_size = 0.25
 spherecan = CAN(
     "sphere",
     cover,
-    n,
-    ξ_s,
+    (m, m),
+    I,
+    X,
     d_s,
     k_s;
     offset_size = offset_size,
     offsets = offsets,
-    φ=sphere_embedding,
     Ω=Ω
 )

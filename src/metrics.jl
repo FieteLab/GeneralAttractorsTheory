@@ -1,26 +1,26 @@
-using Distances: UnionMetric, PeriodicEuclidean, euclidean
+using Distances: UnionMetric, PeriodicEuclidean, euclidean, Metric
 import Distances
 import LinearAlgebra: ⋅
+import Manifolds: Sphere as 𝕊
+import Manifolds: distance as mdist
 
 import .ManifoldUtils: sphere_embedding
 
 """
-Sperical distance on the unit sphere
-https://mathworld.wolfram.com/SphericalDistance.html
+Sperical distance on the unit sphere by Manifolds.jl
 """
-struct SphericalDistance <: UnionMetric end
-
-function (dist::SphericalDistance)(x₁, x₂)
-    @inbounds begin
-        # get points on the embedded sphere manifold
-        p₁ = sphere_embedding(x₁...)
-        p₂ = sphere_embedding(x₂...)
-
-        # get the distance
-        return acos(p₁ ⋅ p₂)
-    end
+struct SphericalDistance <: Metric 
+    s::𝕊
 end
 
+SphericalDistance() = SphericalDistance(𝕊(2))
+
+# (dist::SphericalDistance)(p1, p2) = mdist(dist.s, p1, p2)
+(dist::SphericalDistance)(p1, p2) = begin
+    c = max(p1 ⋅ p2, -1)
+    c = min(c, 1)
+    acos(c)
+end
 Distances.eval_op(::SphericalDistance, ::Float64, ::Float64) = 1.0
 
 

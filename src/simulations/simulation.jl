@@ -66,7 +66,7 @@ end
 Step the simulation dynamics given that the "particle" is at `x`
 and moving with velocity vector `x`.
 """
-function step!(simulation::Simulation, x::Vector, v::Vector)
+function step!(simulation::Simulation, x::Vector, v::Vector; s₀=nothing)
     can = simulation.can
     b₀ = simulation.b₀
     S, W = simulation.S, simulation.W
@@ -83,6 +83,7 @@ function step!(simulation::Simulation, x::Vector, v::Vector)
     )  # inputs vector of size 2d
 
     S̄ = ∑ⱼ(S)  # get the sum of all current activations
+    !isnothing(s₀) && (S̄ .*= s₀)
 
     if simulation.η > 0
         η = rand(Float64, size(S, 1), d) .* simulation.η  # get noise input
@@ -119,6 +120,8 @@ function run_simulation(
     frame_every_n::Union{Nothing,Int} = 20,   # how frequently to save an animation frame
     fps = 20,
     discard_first_ms = 0,
+    s₀ = nothing,
+    activation_steps=20,
     kwargs...,
 )
 
@@ -138,10 +141,15 @@ function run_simulation(
     Progress.with(pbar) do
         job = addjob!(pbar, description = "Simulation", N = N)
         for i = 1:N
+            # get activation for bump initialization
+            if i > activation_steps
+                s₀ = nothing
+            end
+
             # step simulation
             x = simulation.trajectory.X[i, :]
             v = simulation.trajectory.V[i, :]
-            S̄ = step!(simulation, X̄[i, :], v)
+            S̄ = step!(simulation, X̄[i, :], v; s₀=s₀)
             
             # decode manifold bump position
             X̄[i, :] = decode_peak_location(S̄, simulation.can)
@@ -160,7 +168,7 @@ function run_simulation(
             end
 
             framen += 1
-            update!(job)
+        update!(job)
         end
     end
 
@@ -168,9 +176,9 @@ function run_simulation(
         gif(anim, savepath(savename, savename, "gif"), fps = fps)
     end
 
-    save_simulation_history(history, savename, savename)
-    save_model(simulation.can, savename, "sim_CAN_model", :CAN)
-    save_data(simulation.trajectory.X, savename, "sim_trajectory_X")
-    save_data(simulation.trajectory.V, savename, "sim_trajectory_V")
-    return history
+    # save_simulation_history(history, savename, savename)
+    # save_model(simulation.can, savename, "sim_CAN_model", :CAN)
+    # save_data(simulation.trajectory.X, savename, "sim_trajectory_X")
+    # save_data(simulation.trajectory.V, savename, "sim_trajectory_V")
+    return history, X̄
 end

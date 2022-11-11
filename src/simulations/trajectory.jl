@@ -56,10 +56,9 @@ function Trajectory(
 end
 
 """
-Define random trajectories on the sphere by:
+Define random trajectories on the sphere (in ℝ³) by:
 i. defining three smooth 1-d random functions
 ii. use these to take linear combinations of killing fields of the unit sphere
-iii. use the embedding map's jacobian to get tangent vectors on the sphere domain
 """
 function Trajectory(
     M::Sphere;
@@ -68,21 +67,23 @@ function Trajectory(
     scale=0.01, 
     x₀=nothing,
     still=0,
-    vmax=0.25
+    vmax=0.1
 )
-    dt = 1
+    dt = 10
     T2 = T*dt
 
     # get starting point
-    x₀ = isnothing(x₀) ? [rand(-2:.1:2), rand(-1:.1:1)] : x₀
+    x₀ = !isnothing(x₀) ? x₀ : begin
+        p = rand(-1:.1:1, 3)
+        p ./= norm(p)
+    end
 
     # smooth sum of vector fields
     vx = moving_average((rand(T2).-0.5) .* σ[1], 20dt) |> cumsum
     vy = moving_average((rand(T2).-0.5) .* σ[2], 20dt) |> cumsum
     vz = moving_average((rand(T2).-0.5) .* σ[3], 20dt) |> cumsum
 
-    vz = cumsum(ones(T2)) .* 0.01
-    vx = 0.5 .* cumsum(ones(T2)) .* 0.01
+    vy = cumsum(ones(T2)) .* 0.1
 
     vx[vx .> vmax] .= vmax
     vx[vx .< -vmax] .= -vmax
@@ -92,9 +93,12 @@ function Trajectory(
     vz[vz .< -vmax] .= -vmax
 
 
-    ∑ψ(p, i) = scale .* (vx[i]*ψxS²(p) + vy[i]*ψyS²(p) + vz[i]*ψzS²(p))
-    
-    X, V = zeros(T2, 2), zeros(T2, 2)
+    ∑ψ(p, i) = scale .* (vx[i]*ψx(p...) + vy[i]*ψy(p...) + vz[i]*ψz(p...))
+    # ∑ψ(p, i) = i < T2/2 ? scale .* ψx(p...) : scale .* ψz(p...)
+    # ∑ψ(p, i) = scale .* ψz(p...)
+
+
+    X, V = zeros(T2, 3), zeros(T2, 3)
     X[1, :] = x₀
     for t in 2:T2
         x = X[t-1, :]
@@ -102,31 +106,18 @@ function Trajectory(
 
         X[t, :] = X[t-1, :] + v
         V[t, :] = v
-        
-        # correct for boundarie
-        X[t, 2] > π/2 && begin
-            X[t, 2] = π/2
-            X[t, 1] += π
-        end
-
-        X[t, 2] < -π/2 && begin
-            X[t, 2] = -π/2
-            X[t, 1] -= π
-        end
-
-        X[t, 1] < -π && (X[t, 1] = X[t, 1] + 2π)
-        X[t, 1] > π && (X[t, 1] = X[t, 1] - 2π)
     end
 
     # add a still phase at the beginning
     X, V = X[1:dt:end, :], V[1:dt:end, :]
 
     if still > 0
-        standing = zeros(still, 2)
+        standing = zeros(still, 3)
         standing[:, 1] .= x₀[1]
         standing[:, 2] .= x₀[2]
+        standing[:, 3] .= x₀[3]
         X = vcat(standing, X)
-        V = vcat(zeros(still, 2), V)
+        V = vcat(zeros(still, 3), V)
     end
 
 

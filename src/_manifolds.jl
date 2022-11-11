@@ -35,16 +35,16 @@ tangent to the sphere and correpsonding to a rotation.
 ∂z = [0, 0, 1]
 
 """ rotation around X axis """
-ψx(x, y, z) = z * ∂y - y * ∂z
-ψx(p) = ψx(p...) .- p
+ψx(x, y, z) = (z * ∂y - y * ∂z) .- [x, y, z]
+ψx(p) = ψx(p...)
 
 """ rotation around Y axis """
-ψy(x, y, z) = z * ∂x - x * ∂z
-ψy(p) = ψy(p...) .- p
+ψy(x, y, z) = (z * ∂x - x * ∂z) .- [x, y, z]
+ψy(p) = ψy(p...)
 
 """ rotation around Z axis """
-ψz(x, y, z) = x * ∂y - y * ∂x
-ψz(p) = ψz(p...) .- p
+ψz(x, y, z) = (x * ∂y - y * ∂x) .- [x, y, z]
+ψz(p) = ψz(p...)
 
 φ = sphere_embedding
 

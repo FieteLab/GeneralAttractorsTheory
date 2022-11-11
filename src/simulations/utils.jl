@@ -22,23 +22,31 @@ end
 
 function Plots.plot(traj::Trajectory, i::Int; xmin=nothing, xmax=nothing)
     d = size(traj.X, 2)
-    d != 2 && error("not implemented")
 
+    xmin = isnothing(xmin) ? minimum(traj.X, dims=1) : xmin
+    xmax = isnothing(xmax) ? maximum(traj.X, dims=1) : xmax
 
-    xmin = isnothing(xmin) ? minimum(traj.X, dims=2) : xmin
-    xmax = isnothing(xmax) ? maximum(traj.X, dims=2) : xmax
+    if d == 2
+        xlim = [xmin[1], xmax[1]]
+        ylim = [xmin[2], xmax[2]]
+        xlim = nothing
+    else
+        xlim = [xmin[1], xmax[1]]
+        ylim = [xmin[2], xmax[2]]
+        zlim = [xmin[3], xmax[3]]
+    end
 
     plot(
-        traj.X[1:i, 1],
-        traj.X[1:i, 2],
+        eachcol(traj.X[1:i, :])...,
         lw = 3,
         color = :black,
         title = "trajectory",
         grid = false,
         aspect_ratio = :equal,
         label = nothing,
-        xlim = [xmin[1], xmax[1]],
-        ylim = [xmin[2], xmax[2]],
+        xlim =xlim,
+        ylim = ylim,
+        zlim=zlim
     )
 end
 
@@ -58,45 +66,71 @@ function simulation_frame_1dcan(simulation::Simulation, timems, v::Vector; kwarg
 end
 
 
+# function simulation_frame_2dcan(simulation::Simulation, timems, v::Vector; kwargs...)
+#     can = simulation.can
+#     s̄ = sum(simulation.S, dims = 2) |> vec
+
+#     plt = plot(;
+#         title = "elapsed: $(round(timems)) ms",
+#         clims = (min(0, minimum(s̄)), max(maximum(s̄)/2, 0.1)),
+#         aspect_ratio = :equal,
+#         grid = false,
+#         size = simulation.can.n .* 10,
+#     )
+
+#     h = maximum(can.X) / 2.5
+#     v̂ = v ./ norm(v) .* h
+#     x̄ = range(0, maximum(can.X[1, :]), length = can.n[1])
+#     ȳ = range(0, maximum(can.X[2, :]), length = can.n[2])
+
+#     offsets = map(offset_for_visual, can.offsets)
+#     for (i, offset) in enumerate(offsets)
+#         S = simulation.S[:, i]
+
+#         # get offset position for plotting
+#         offset = offset .* vec(maximum(can.X; dims = 2))
+
+#         # plot activity heatmap
+#         x = offset[1] .+ x̄
+#         y = offset[2] .+ ȳ
+#         contourf!(x, y, reshape(S, can.n)', levels = 3)
+#     end
+
+#     # plot the sum of all activations
+#     contourf!(x̄, ȳ, reshape(s̄, can.n)', levels = 3)
+
+#     # plot input vector direction 
+#     x0, y0 = maximum(can.X; dims = 2) ./ 2.1
+#     plot!([x0, x0 + v̂[1]], [y0, y0 + v̂[2]], lw = 6, color = :green, label = nothing)
+#     scatter!([x0], [y0], ms = 8, color = :green, label = nothing)
+
+#     plt
+# end
+
+
 function simulation_frame_2dcan(simulation::Simulation, timems, v::Vector; kwargs...)
     can = simulation.can
-    s̄ = sum(simulation.S, dims = 2) |> vec
+    s = sum(simulation.S, dims = 2) |> vec
 
-    plt = plot(;
-        title = "elapsed: $(round(timems)) ms",
-        clims = (min(0, minimum(s̄)), max(maximum(s̄)/2, 0.1)),
-        aspect_ratio = :equal,
-        grid = false,
-        size = simulation.can.n .* 10,
-    )
+    th = maximum(s) .* 0.5
+    active = s .>= th
+    inactive = s .< th
 
-    h = maximum(can.X) / 2.5
-    v̂ = v ./ norm(v) .* h
-    x̄ = range(0, maximum(can.X[1, :]), length = can.n[1])
-    ȳ = range(0, maximum(can.X[2, :]), length = can.n[2])
+    plt = scatter3d(
+        eachrow(can.X[:, inactive])..., marker_z=s[inactive],
+        title = "elapsed: $(round(timems)) ms", grid=false,
+        msa=0, msw=0, clims=(0, maximum(s)*0.95), 
+        ms=6, alpha=.1,
+        label=nothing, colorbar=nothing,
+        )
+    scatter3d!(
+            eachrow(can.X[:, active])..., marker_z=s[active],
+            title = "elapsed: $(round(timems)) ms", grid=false,
+            msa=0, msw=0, clims=(0, maximum(s)*0.95), ms=8,
+            label=nothing, colorbar=nothing,
+            )
 
-    offsets = map(offset_for_visual, can.offsets)
-    for (i, offset) in enumerate(offsets)
-        S = simulation.S[:, i]
-
-        # get offset position for plotting
-        offset = offset .* vec(maximum(can.X; dims = 2))
-
-        # plot activity heatmap
-        x = offset[1] .+ x̄
-        y = offset[2] .+ ȳ
-        contourf!(x, y, reshape(S, can.n)', levels = 3)
-    end
-
-    # plot the sum of all activations
-    contourf!(x̄, ȳ, reshape(s̄, can.n)', levels = 3)
-
-    # plot input vector direction 
-    x0, y0 = maximum(can.X; dims = 2) ./ 2.1
-    plot!([x0, x0 + v̂[1]], [y0, y0 + v̂[2]], lw = 6, color = :green, label = nothing)
-    scatter!([x0], [y0], ms = 8, color = :green, label = nothing)
-
-    plt
+    return plt
 end
 
 
@@ -125,11 +159,19 @@ function Plots.plot(
 
     # plot trajectory
     tj = simulation.trajectory
-    traj = Plots.plot(tj, framen; xmin=simulation.can.C.M.xmin, xmax=simulation.can.C.M.xmax)
-    scatter!(traj, [x[1]], [x[2]], ms = 5, color = :black, label = "actual")
+    traj = Plots.plot(tj, framen; xmin=[-1.5, -1.5, -1.5], xmax=[1.5, 1.5, 1.5])
+    scatter3d!(traj, [x[1]], [x[2]], [x[3]], ms = 5, color = :black, label = "actual")
 
-    framen > 202 && plot!(traj, X̄[200:framen, 1], X̄[200:framen, 2], color=:red, label=nothing, alpha=.2)
-    scatter!(traj, [X̄[framen, 1]], [X̄[framen, 2]], ms = 7, color = :red, label = "decoded")
+    framen > (100+2) && plot3d!(traj, X̄[100:framen, 1], X̄[100:framen, 2], X̄[100:framen, 3], color=:red, label=nothing, alpha=.2)
+
+    
+    scatter3d!(traj, [X̄[framen, 1]], [X̄[framen, 2]], [X̄[framen, 3]], ms = 7, color = :red, label = "decoded")
+
+
+    # framen > (100+2) && plot3d!(traj, X̄[100:framen, 1] .* 0 .+ 1, X̄[100:framen, 2], X̄[100:framen, 3], color=:red, label=nothing, alpha=.05)
+    # framen > (100+2) && plot3d!(traj, X̄[100:framen, 1], X̄[100:framen, 2].* 0 .- 1, X̄[100:framen, 3], color=:red, label=nothing, alpha=.05)
+    # framen > (100+2) && plot3d!(traj, X̄[100:framen, 1], X̄[100:framen, 2], X̄[100:framen, 3].* 0 .- 1, color=:red, label=nothing, alpha=.05)
+
 
     # visualize oneforms
     show_one_forms && begin
