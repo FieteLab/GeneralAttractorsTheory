@@ -24,8 +24,8 @@ end
 d_s = SphericalAngle()
 
 # kernel
-k_s = DiffOfExpKernel(; λ = 0.75)
-# k_s = MexicanHatKernel(α=.33, σ=.4, β=0.00)
+# k_s = DiffOfExpKernel(; λ = 0.75)
+k_s = MexicanHatKernel(α=.015, σ=.3, β=0.01)
 
 # cover space
 cover = CoverSpace(S², S², (x, y) -> [x, y])

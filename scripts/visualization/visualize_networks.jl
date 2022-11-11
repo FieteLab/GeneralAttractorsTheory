@@ -12,7 +12,7 @@ using GeneralAttractors
 # show_connectivity(mobius_attractor; plot_title = "Mobius attractor connectivity")
 
 # ---------------------------------- sphere ---------------------------------- #
-# include("../networks/sphere.jl")
+include("../networks/sphere.jl")
 show_connectivity(
     spherecan;
     xlabel = "longitude",

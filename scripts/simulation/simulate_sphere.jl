@@ -9,14 +9,14 @@ import GeneralAttractors.ManifoldUtils: sphere_embedding
 using Distances
 
 
-# include("../networks/sphere.jl") 
+include("../networks/sphere.jl") 
 
 # --------------------------------- simulate --------------------------------- #
 dt = 0.5
-duration = 600  # ms   
+duration = 100  # ms   
 
 nframes = (Int ∘ round)(duration / dt)
-trajectory = Trajectory(spherecan; T = nframes, σ=[0.0, 0.0, 0.0], x₀=[π/2, .2])
+trajectory = Trajectory(spherecan; T = nframes, σ=[0.0, 0.0, 0.0], x₀=[π/2, 0])
 simulation = Simulation(spherecan, trajectory; b₀ = 1.0, η = 0.0)
 
 h = run_simulation(
