@@ -15,7 +15,7 @@ println(Panel("Creating sphere attractor", style="green", justify=:center))
 
 
 # number of neurons
-m = 32
+m = 48
 n = m^2
 
 # get neurons on S² ⊂ ℝ³
