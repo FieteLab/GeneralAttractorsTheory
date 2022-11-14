@@ -69,7 +69,7 @@ function Trajectory(
     still=0,
     vmax=0.1
 )
-    dt = 10
+    dt = 100
     T2 = T*dt
 
     # get starting point
@@ -83,9 +83,15 @@ function Trajectory(
     vy = moving_average((rand(T2).-0.5) .* σ[2], 20dt) |> cumsum
     vz = moving_average((rand(T2).-0.5) .* σ[3], 20dt) |> cumsum
 
-    vz = ones(T2) .* 0.2
-    # vy = ones(T2) .* 0.1
-    # vz = ones(T2) .* 0.1
+
+    a = (Int ∘ round)(T2/2)
+    vz = ones(T2) .* 0.05
+    vy = ones(T2) .* 0.1
+    # vz[a:end] .*= 0.0
+    vy[1:a] .*= 0.0
+
+    # vy = range(0, .1, length=T2) |> collect
+    
     
     clamp!(vx, -vmax, vmax)
     clamp!(vy, -vmax, vmax)
@@ -98,8 +104,10 @@ function Trajectory(
     for t in 2:T2
         x = X[t-1, :]
         v = ∑ψ(x, t)
+        x̂ =  X[t-1, :] + v/dt
+        x̂ ./= norm(x̂)
 
-        X[t, :] = X[t-1, :] + v/dt
+        X[t, :] = x̂
         V[t, :] = v
     end
 

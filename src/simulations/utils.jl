@@ -47,7 +47,7 @@ function Plots.plot(traj::Trajectory, i::Int; xmin=nothing, xmax=nothing)
         xlim =xlim,
         ylim = ylim,
         zlim=zlim,
-        camera=(.025*i, 20)
+        camera=(.075*i, 20)
     )
 
     plot!(

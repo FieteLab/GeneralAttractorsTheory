@@ -38,7 +38,7 @@ end
 
 
 # number of neurons
-m = 48
+m = 32
 n = m^2
 
 # get neurons on S² ⊂ ℝ³
@@ -53,8 +53,7 @@ I = [(i, ) for i in 1:size(X, 2)]
 d_s = SphericalDistance()
 
 # kernel  
-# k_s = DiffOfExpKernel(; λ = 5.0) 
-k_s = LocalGlobalKernel(α = 0.5, σ = 1.0, β = 0.6)
+k_s = LocalGlobalKernel(α = 0.5, σ = 1.0, β = 0.5)
 
 # cover space
 cover = CoverSpace(S², S², (x, y) -> [x, y])
@@ -68,10 +67,10 @@ offsets = [
     p -> ψz(p),
     p -> -ψz(p),
 ]
-offset_size = .05
+offset_size = .15
 
 # define one forms
-α = 1/offset_size # .* 100
+α = 1/offset_size .* 1
 Ω = [
     OneForm(1, (x, y, z) -> α * ψx(x,y,z)),
     OneForm(2, (x, y, z) -> -α * ψx(x,y,z)),

@@ -22,7 +22,11 @@ dmin = 0.5
 
 
 nframes = (Int ∘ round)(duration / dt)
-trajectory = Trajectory(spherecan; T = nframes, σ=[0.0, 0.0, 0.0], x₀=x₀, scale=0.05, still=still)
+trajectory = Trajectory(
+    spherecan; T = nframes, 
+    σ=[0.0, 0.0, 0.0], x₀=x₀, scale=0.05, 
+    still=still
+)
 
 
 # get activation to initialize bump
