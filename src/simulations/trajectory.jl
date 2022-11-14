@@ -83,9 +83,9 @@ function Trajectory(
     vy = moving_average((rand(T2).-0.5) .* σ[2], 20dt) |> cumsum
     vz = moving_average((rand(T2).-0.5) .* σ[3], 20dt) |> cumsum
 
-    vx = ones(T2) .* 0.1
-    vy = ones(T2) .* 0.1
-    vz = ones(T2) .* 0.1
+    vz = ones(T2) .* 0.2
+    # vy = ones(T2) .* 0.1
+    # vz = ones(T2) .* 0.1
     
     clamp!(vx, -vmax, vmax)
     clamp!(vy, -vmax, vmax)

@@ -9,7 +9,7 @@ import GeneralAttractors.ManifoldUtils: sphere_embedding
 using Distances
 import LinearAlgebra: norm
 
-# include("../networks/sphere.jl") 
+include("../networks/sphere.jl") 
 
 
 # --------------------------------- simulate --------------------------------- #
