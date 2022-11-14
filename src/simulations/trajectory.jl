@@ -90,7 +90,7 @@ function Trajectory(
     scale=0.01, 
     x₀=nothing,
     still=0,
-    vmax=0.1,
+    vmax=0.075,
     modality=:piecewise
 )
     dt = 100
@@ -104,9 +104,9 @@ function Trajectory(
 
     # get vfield "activation" at each frame
     if modality == :piecewise
-        vx = piecewise_linear(T2, 6, -0.1:0.01:0.1)
-        vy = piecewise_linear(T2, 6, -0.1:0.01:0.1)
-        vz = piecewise_linear(T2, 6, -0.1:0.01:0.1)
+        vx = piecewise_linear(T2, 6, -0.075:0.01:0.075)
+        vy = piecewise_linear(T2, 6, -0.075:0.01:0.075)
+        vz = piecewise_linear(T2, 6, -0.075:0.01:0.075)
     else
         vx = moving_average((rand(T2).-0.5) .* σ[1], 20dt) |> cumsum
         vy = moving_average((rand(T2).-0.5) .* σ[2], 20dt) |> cumsum
