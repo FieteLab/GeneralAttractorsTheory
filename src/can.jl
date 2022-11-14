@@ -123,6 +123,7 @@ mutable struct CAN <: AbstractCAN
     Ω::Vector{OneForm}                 # vector of `OneForm`s representing input measuring forms
     offsets::Vector
     offset_size
+    metric::Metric
 end
 
 Base.string(can::CAN) = "CAN (dim=$(length(can.n))) - n neurons: $(can.n)"
@@ -221,7 +222,7 @@ function CAN(
     Ω = get_one_forms(Ω, offsets)
 
     @debug "ready" n lattice_idxs eltype(lattice_idxs) X eltype(X) typeof(Ws) eltype(Ws)
-    return CAN(name, C, n, d, lattice_idxs, X, Ws, kernel, σ, Ω, offsets, offset_size)
+    return CAN(name, C, n, d, lattice_idxs, X, Ws, kernel, σ, Ω, offsets, offset_size, metric)
 end
 
 

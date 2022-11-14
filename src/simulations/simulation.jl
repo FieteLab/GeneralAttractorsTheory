@@ -81,18 +81,17 @@ function step!(simulation::Simulation, x::Vector, v::Vector; s₀=nothing)
             simulation.can.Ω
             )
     )  # inputs vector of size 2d
-    # rand() > .75 && println(V, "   ", v, "   ", x)
+    # r(x) = round(x, digits=2)
+    # rand() > .75 && println(r.(100 .* v), " "^10, r.(V))
 
     S̄ = ∑ⱼ(S)  # get the sum of all current activations
     !isnothing(s₀) && (S̄ .*= s₀)
 
-    if simulation.η > 0
-        η = rand(Float64, size(S, 1), d) .* simulation.η  # get noise input
-        for i = 1:d
+    for i = 1:d
+        if simulation.η > 0
+            η = rand(Float64, size(S, 1), d) .* simulation.η  # get noise input
             Ṡ[:, i] .= W[i] * S̄ .+ V[i] .+ η[i] .+ b₀
-        end
-    else
-        for i = 1:d
+        else
             Ṡ[:, i] .= W[i] * S̄ .+ V[i] .+ b₀
         end
     end

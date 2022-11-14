@@ -153,9 +153,9 @@ function Plots.plot(
     simulation::Simulation,
     timems,
     framen,
-    x::Vector,
+    x::Vector,   # trajectory's position
     v::Vector,
-    X̄;
+    X̄;           # decoded position
     show_one_forms = false,
     dx = 20,
     scale = 8,
@@ -206,7 +206,16 @@ function Plots.plot(
         )
     end
 
-    plot(traj, pop_activity, size = (1000, 800), layout = (1, 2))
+    # visualiza activation of each individual population
+    _x = 1:size(simulation.S, 2)
+    y = map(i -> maximum(simulation.S[:, i]), _x)
+    b = bar(_x, y)
+
+    # visualize distance between decoded and real position
+    d = simulation.can.metric(x, X̄[framen, :])
+    b2 = bar([0], [d], title="Dedoded distance", ylim=[0, 3])
+
+    plot(traj, pop_activity, b, b2, size = (1000, 800), layout = (2, 2))
 end
 
 

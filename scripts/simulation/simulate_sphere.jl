@@ -14,8 +14,8 @@ include("../networks/sphere.jl")
 
 # --------------------------------- simulate --------------------------------- #
 dt = 0.5
-duration = 700  # ms   
-x₀ = [1, 0, 0]
+duration = 500  # ms   
+x₀ = [1, 1, 0]
 x₀ /= norm(x₀)
 still = 50  # initialization period                                                                             
 dmin = 0.5

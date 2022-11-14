@@ -54,19 +54,13 @@ d_s = SphericalDistance()
 
 # kernel  
 # k_s = DiffOfExpKernel(; λ = 5.0) 
-k_s = LocalGlobalKernel(α = 0.5, σ = 0.5, β = 0.4)
+k_s = LocalGlobalKernel(α = 0.5, σ = 1.0, β = 0.6)
 
 # cover space
 cover = CoverSpace(S², S², (x, y) -> [x, y])
 
 # define offset vector fields
 offsets = [
-    # p -> (ψx(p) .- p),
-    # p -> (ψx(p) .- p),
-    # p -> (ψy(p) .- p),
-    # p -> (ψy(p) .- p),
-    # p -> (ψz(p) .- p),
-    # p -> (ψz(p) .- p),
     p -> ψx(p),
     p -> -ψx(p),
     p -> ψy(p),
@@ -79,12 +73,6 @@ offset_size = .1
 # define one forms
 α = 1/offset_size .* 100
 Ω = [
-    # OneForm(1, (x, y, z) -> α * (ψx(x,y,z) .- [x, y, z])),
-    # OneForm(2, (x, y, z) -> -α * (ψx(x,y,z) .- [x, y, z])),
-    # OneForm(3, (x, y, z) -> α * (ψy(x,y,z) .- [x, y, z])),
-    # OneForm(4, (x, y, z) -> -α * (ψy(x,y,z) .- [x, y, z])),
-    # OneForm(5, (x, y, z) -> α * (ψz(x,y,z) .- [x, y, z])),
-    # OneForm(6, (x, y, z) -> -α * (ψz(x,y,z) .- [x, y, z])),
     OneForm(1, (x, y, z) -> α * ψx(x,y,z)),
     OneForm(2, (x, y, z) -> -α * ψx(x,y,z)),
     OneForm(3, (x, y, z) -> α * ψy(x,y,z)),
