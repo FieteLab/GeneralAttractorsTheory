@@ -9,13 +9,13 @@ import GeneralAttractors.ManifoldUtils: sphere_embedding
 using Distances
 import LinearAlgebra: norm
 
-include("../networks/sphere.jl") 
+# include("../networks/sphere.jl") 
 
 
 # --------------------------------- simulate --------------------------------- #
 dt = 0.5
-duration = 500  # ms   
-x₀ = [1, 1, 0]
+duration = 750  # ms   
+x₀ = [0, 1, 0]
 x₀ /= norm(x₀)
 still = 50  # initialization period                                                                             
 dmin = 0.5
@@ -39,10 +39,9 @@ h, X̄ = @time run_simulation(
     s₀=1.0 .* activate,
     activation_steps=still
 );
-
+nothing
 
 # plot(trajectory.V[:, 1 ])
 # plot!(trajectory.V[:, 2 ])
 # plot!(trajectory.V[:, 3 ])
 
-nothing

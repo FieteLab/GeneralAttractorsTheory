@@ -83,28 +83,23 @@ function Trajectory(
     vy = moving_average((rand(T2).-0.5) .* σ[2], 20dt) |> cumsum
     vz = moving_average((rand(T2).-0.5) .* σ[3], 20dt) |> cumsum
 
-    vz = range(0, 1 ,length=T2) .* 0.2
-
-    vx[vx .> vmax] .= vmax
-    vx[vx .< -vmax] .= -vmax
-    vy[vy .> vmax] .= vmax
-    vy[vy .< -vmax] .= -vmax
-    # vz[vz .> vmax] .= vmax
-    # vz[vz .< -vmax] .= -vmax
+    vx = ones(T2) .* 0.1
+    vy = ones(T2) .* 0.1
+    vz = ones(T2) .* 0.1
+    
+    clamp!(vx, -vmax, vmax)
+    clamp!(vy, -vmax, vmax)
+    clamp!(vz, -vmax, vmax)
 
 
     ∑ψ(p, i) = scale .* (vx[i]*ψx(p...) + vy[i]*ψy(p...) + vz[i]*ψz(p...))
-    # ∑ψ(p, i) = i < T2/2 ? scale .* ψx(p...) : scale .* ψz(p...)
-    # ∑ψ(p, i) = scale .* ψz(p...)
-
-
     X, V = zeros(T2, 3), zeros(T2, 3)
     X[1, :] = x₀
     for t in 2:T2
         x = X[t-1, :]
-        v = ∑ψ(x, t)/dt
+        v = ∑ψ(x, t)
 
-        X[t, :] = X[t-1, :] + v
+        X[t, :] = X[t-1, :] + v/dt
         V[t, :] = v
     end
 

@@ -68,10 +68,10 @@ offsets = [
     p -> ψz(p),
     p -> -ψz(p),
 ]
-offset_size = .1
+offset_size = .05
 
 # define one forms
-α = 1/offset_size .* 100
+α = 1/offset_size # .* 100
 Ω = [
     OneForm(1, (x, y, z) -> α * ψx(x,y,z)),
     OneForm(2, (x, y, z) -> -α * ψx(x,y,z)),
