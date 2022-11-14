@@ -99,11 +99,12 @@ struct DiffOfExpKernel <: AbstractKernel
         λ::Float64 = 5 / 2π,
         β::Float64 = 3 / (λ^2),
         γ::Float64 = 1.05 * β,
+        δ::Float64 = 0.0,  # offset
     )
 
         k(x) = begin
             _x = abs(x)^2
-            a * exp(-γ * _x) - exp(-β * _x)
+            a * exp(-γ * _x) - exp(-β * _x) + δ
         end
         new(a, λ, β, γ, k)
     end

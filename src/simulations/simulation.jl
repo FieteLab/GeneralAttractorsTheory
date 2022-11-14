@@ -81,7 +81,7 @@ function step!(simulation::Simulation, x::Vector, v::Vector; s₀=nothing)
             simulation.can.Ω
             )
     )  # inputs vector of size 2d
-    # println(V, "   ", v, "   ", x)
+    # rand() > .75 && println(V, "   ", v, "   ", x)
 
     S̄ = ∑ⱼ(S)  # get the sum of all current activations
     !isnothing(s₀) && (S̄ .*= s₀)

@@ -1,5 +1,5 @@
 # ---------------------------------- kernel ---------------------------------- #
-function Plots.plot(K::AbstractKernel; kwargs...)
+function Plots.plot(K::AbstractKernel; σ=4, kwargs...)
     x = -100:0.001:100 |> collect
     y = K.(x)
     x̂ = x[argmin(y)]
@@ -12,7 +12,7 @@ function Plots.plot(K::AbstractKernel; kwargs...)
         label = nothing,
         color = "black";
         kwargs...,
-        xlim = [-4abs(x̂), 4abs(x̂)],
+        xlim = [-σ*abs(x̂), σ*abs(x̂)],
     )
 end
 

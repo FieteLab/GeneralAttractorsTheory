@@ -83,14 +83,14 @@ function Trajectory(
     vy = moving_average((rand(T2).-0.5) .* σ[2], 20dt) |> cumsum
     vz = moving_average((rand(T2).-0.5) .* σ[3], 20dt) |> cumsum
 
-    vx = cumsum(ones(T2)) .* 0.1
+    vz = range(0, 1 ,length=T2) .* 0.25
 
     vx[vx .> vmax] .= vmax
     vx[vx .< -vmax] .= -vmax
     vy[vy .> vmax] .= vmax
     vy[vy .< -vmax] .= -vmax
-    vz[vz .> vmax] .= vmax
-    vz[vz .< -vmax] .= -vmax
+    # vz[vz .> vmax] .= vmax
+    # vz[vz .< -vmax] .= -vmax
 
 
     ∑ψ(p, i) = scale .* (vx[i]*ψx(p...) + vy[i]*ψy(p...) + vz[i]*ψz(p...))

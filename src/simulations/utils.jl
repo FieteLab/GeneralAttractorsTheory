@@ -36,7 +36,7 @@ function Plots.plot(traj::Trajectory, i::Int; xmin=nothing, xmax=nothing)
         zlim = [xmin[3], xmax[3]]
     end
 
-    plot(
+    plt = plot(
         eachcol(traj.X[1:i, :])...,
         lw = 3,
         color = :black,
@@ -46,9 +46,23 @@ function Plots.plot(traj::Trajectory, i::Int; xmin=nothing, xmax=nothing)
         label = nothing,
         xlim =xlim,
         ylim = ylim,
-        zlim=zlim
+        zlim=zlim,
+        camera=(.025*i, 20)
     )
+
+    plot!(
+        plt,
+        eachcol(traj.X)...,
+        lw = 1.5,
+        color = :black,
+        label = nothing,
+        alpha=.5,
+    )
+
+    plt
 end
+
+# -------------------------------- simulation -------------------------------- #
 
 function simulation_frame_1dcan(simulation::Simulation, timems, v::Vector; kwargs...)
     @info "ONE DIM CAN SIM PLOT"
@@ -162,16 +176,9 @@ function Plots.plot(
     traj = Plots.plot(tj, framen; xmin=[-1.5, -1.5, -1.5], xmax=[1.5, 1.5, 1.5])
     scatter3d!(traj, [x[1]], [x[2]], [x[3]], ms = 5, color = :black, label = "actual")
 
-    framen > (100+2) && plot3d!(traj, X̄[100:framen, 1], X̄[100:framen, 2], X̄[100:framen, 3], color=:red, label=nothing, alpha=.2)
-
-    
+    ϕ(x) = moving_average(x, 31)
+    framen > (100+2) && plot3d!(traj, ϕ(X̄[100:framen, 1]), ϕ(X̄[100:framen, 2]), ϕ(X̄[100:framen, 3]), color=:red, label=nothing, alpha=.6)
     scatter3d!(traj, [X̄[framen, 1]], [X̄[framen, 2]], [X̄[framen, 3]], ms = 7, color = :red, label = "decoded")
-
-
-    # framen > (100+2) && plot3d!(traj, X̄[100:framen, 1] .* 0 .+ 1, X̄[100:framen, 2], X̄[100:framen, 3], color=:red, label=nothing, alpha=.05)
-    # framen > (100+2) && plot3d!(traj, X̄[100:framen, 1], X̄[100:framen, 2].* 0 .- 1, X̄[100:framen, 3], color=:red, label=nothing, alpha=.05)
-    # framen > (100+2) && plot3d!(traj, X̄[100:framen, 1], X̄[100:framen, 2], X̄[100:framen, 3].* 0 .- 1, color=:red, label=nothing, alpha=.05)
-
 
     # visualize oneforms
     show_one_forms && begin
@@ -199,19 +206,7 @@ function Plots.plot(
         )
     end
 
-    plot(traj, pop_activity, size = (1000, 800), layout = (2, 1))
-
-
-    # plot inputs
-    # B_actual = map(
-    #         ωᵢ -> ωᵢ(x, v)/norm(ωᵢ(x)),
-    #         simulation.can.Ω
-    #     )
-    # d = length(B_actual)
-    # inpts = bar(1:d, B_actual, color=:black, label="real input")
-    # # bar!(1:d, B_measured, color=:red, alpha=0.5, label="measured input")
-
-    # plot(traj, pop_activity, inpts, plot(), size = (1000, 800))
+    plot(traj, pop_activity, size = (1000, 800), layout = (1, 2))
 end
 
 
