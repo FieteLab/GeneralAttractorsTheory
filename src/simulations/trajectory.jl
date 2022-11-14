@@ -30,13 +30,14 @@ given angular velocity (randomy drawn) reflecting a change in orientation
 function Trajectory(
     M::Manifoldℝ²;
     T::Int = 250,
-    σv = 0.5,
-    μ = 0.1,
+    σv = 0.25,
+    μ = 0.05,
     σθ = 0.5,
     θ₀ = nothing,
     x₀ = nothing,
     y₀ = nothing,
-)
+)   
+    # get speed and orientation
     v = rand(T) .* σv .+ μ
     v[v.<0] .= 0
 
@@ -44,6 +45,7 @@ function Trajectory(
     θ̇ = moving_average(rand(T), 11) .- 0.5
     θ̇ = cumsum(θ̇ .* σθ) .+ θ₀ # orientation
 
+    # get velocity at each component and trajectory
     vx = v .* cos.(θ̇)
     vy = v .* sin.(θ̇)
 

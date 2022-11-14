@@ -27,28 +27,35 @@ function Plots.plot(traj::Trajectory, i::Int; xmin=nothing, xmax=nothing)
     xmax = isnothing(xmax) ? maximum(traj.X, dims=1) : xmax
 
     if d == 2
-        xlim = [xmin[1], xmax[1]]
-        ylim = [xmin[2], xmax[2]]
-        xlim = nothing
+        plt = plot(
+            eachcol(traj.X[1:i, :])...,
+            lw = 3,
+            color = :black,
+            title = "trajectory",
+            grid = false,
+            aspect_ratio = :equal,
+            label = nothing,
+            xlim = [xmin[1], xmax[1]],
+            ylim = [xmin[2], xmax[2]],
+            camera=(.075*i, 20)
+        )
     else
-        xlim = [xmin[1], xmax[1]]
-        ylim = [xmin[2], xmax[2]]
-        zlim = [xmin[3], xmax[3]]
+        plt = plot(
+            eachcol(traj.X[1:i, :])...,
+            lw = 3,
+            color = :black,
+            title = "trajectory",
+            grid = false,
+            aspect_ratio = :equal,
+            label = nothing,
+            xlim = [xmin[1], xmax[1]],
+            ylim = [xmin[2], xmax[2]],
+            zlim = [xmin[3], xmax[3]],
+            camera=(.075*i, 20)
+        )
     end
 
-    plt = plot(
-        eachcol(traj.X[1:i, :])...,
-        lw = 3,
-        color = :black,
-        title = "trajectory",
-        grid = false,
-        aspect_ratio = :equal,
-        label = nothing,
-        xlim =xlim,
-        ylim = ylim,
-        zlim=zlim,
-        camera=(.075*i, 20)
-    )
+
 
     plot!(
         plt,
@@ -66,7 +73,6 @@ end
 
 function simulation_frame_1dcan(simulation::Simulation, timems, v::Vector; kwargs...)
     @info "ONE DIM CAN SIM PLOT"
-    can = simulation.can
     plt = plot(;
         title = "elapsed: $(round(timems)) ms",
         clims = (0.0, 0.6),
@@ -80,49 +86,49 @@ function simulation_frame_1dcan(simulation::Simulation, timems, v::Vector; kwarg
 end
 
 
-# function simulation_frame_2dcan(simulation::Simulation, timems, v::Vector; kwargs...)
-#     can = simulation.can
-#     s̄ = sum(simulation.S, dims = 2) |> vec
-
-#     plt = plot(;
-#         title = "elapsed: $(round(timems)) ms",
-#         clims = (min(0, minimum(s̄)), max(maximum(s̄)/2, 0.1)),
-#         aspect_ratio = :equal,
-#         grid = false,
-#         size = simulation.can.n .* 10,
-#     )
-
-#     h = maximum(can.X) / 2.5
-#     v̂ = v ./ norm(v) .* h
-#     x̄ = range(0, maximum(can.X[1, :]), length = can.n[1])
-#     ȳ = range(0, maximum(can.X[2, :]), length = can.n[2])
-
-#     offsets = map(offset_for_visual, can.offsets)
-#     for (i, offset) in enumerate(offsets)
-#         S = simulation.S[:, i]
-
-#         # get offset position for plotting
-#         offset = offset .* vec(maximum(can.X; dims = 2))
-
-#         # plot activity heatmap
-#         x = offset[1] .+ x̄
-#         y = offset[2] .+ ȳ
-#         contourf!(x, y, reshape(S, can.n)', levels = 3)
-#     end
-
-#     # plot the sum of all activations
-#     contourf!(x̄, ȳ, reshape(s̄, can.n)', levels = 3)
-
-#     # plot input vector direction 
-#     x0, y0 = maximum(can.X; dims = 2) ./ 2.1
-#     plot!([x0, x0 + v̂[1]], [y0, y0 + v̂[2]], lw = 6, color = :green, label = nothing)
-#     scatter!([x0], [y0], ms = 8, color = :green, label = nothing)
-
-#     plt
-# end
-
-
 function simulation_frame_2dcan(simulation::Simulation, timems, v::Vector; kwargs...)
+    can = simulation.can
+    s̄ = sum(simulation.S, dims = 2) |> vec
+
+    plt = plot(;
+        title = "elapsed: $(round(timems)) ms",
+        clims = (min(0, minimum(s̄)), max(maximum(s̄)/2, 0.1)),
+        aspect_ratio = :equal,
+        grid = false,
+        size = simulation.can.n .* 10,
+    )
+
+    h = maximum(can.X) / 2.5
+    v̂ = v ./ norm(v) .* h
+    x̄ = range(0, maximum(can.X[1, :]), length = can.n[1])
+    ȳ = range(0, maximum(can.X[2, :]), length = can.n[2])
+
+    offsets = map(offset_for_visual, can.offsets)
+    for (i, offset) in enumerate(offsets)
+        S = simulation.S[:, i]
+
+        # get offset position for plotting
+        offset = offset .* vec(maximum(can.X; dims = 2))
+
+        # plot activity heatmap
+        x = offset[1] .+ x̄
+        y = offset[2] .+ ȳ
+        contourf!(x, y, reshape(S, can.n)', levels = 3)
+    end
+
+    # plot the sum of all activations
+    contourf!(x̄, ȳ, reshape(s̄, can.n)', levels = 3)
+
+    # plot input vector direction 
+    x0, y0 = maximum(can.X; dims = 2) ./ 2.1
+    plot!([x0, x0 + v̂[1]], [y0, y0 + v̂[2]], lw = 6, color = :green, label = nothing)
+    scatter!([x0], [y0], ms = 8, color = :green, label = nothing)
+
+    plt
+end
+
+
+function simulation_frame_2dcan_3dviz(simulation::Simulation, timems, v::Vector; kwargs...)
     can = simulation.can
     s = sum(simulation.S, dims = 2) |> vec
 
@@ -156,16 +162,17 @@ function Plots.plot(
     x::Vector,   # trajectory's position
     v::Vector,
     X̄;           # decoded position
-    show_one_forms = false,
-    dx = 20,
-    scale = 8,
     kwargs...,
 )
     # plot populatiuon actvitiy
     if simulation.can.d == 1
         pop_activity = simulation_frame_1dcan(simulation, timems, v; kwargs...)
     elseif simulation.can.d == 2
-        pop_activity = simulation_frame_2dcan(simulation, timems, v; kwargs...)
+        if simulation.can.name == "sphere"
+            pop_activity = simulation_frame_2dcan_3dviz(simulation, timems, v; kwargs...)
+        else
+            pop_activity = simulation_frame_2dcan(simulation, timems, v; kwargs...)
+        end
     else
         error("Simulation plot for d>2 not implemented")
     end
@@ -173,49 +180,36 @@ function Plots.plot(
 
     # plot trajectory
     tj = simulation.trajectory
-    traj = Plots.plot(tj, framen; xmin=[-1.5, -1.5, -1.5], xmax=[1.5, 1.5, 1.5])
-    scatter3d!(traj, [x[1]], [x[2]], [x[3]], ms = 5, color = :black, label = "actual")
-
     ϕ(x) = moving_average(x, 31)
-    framen > (100+2) && plot3d!(traj, ϕ(X̄[100:framen, 1]), ϕ(X̄[100:framen, 2]), ϕ(X̄[100:framen, 3]), color=:red, label=nothing, alpha=.6)
-    scatter3d!(traj, [X̄[framen, 1]], [X̄[framen, 2]], [X̄[framen, 3]], ms = 7, color = :red, label = "decoded")
+    if simulation.can.name == "sphere"
+        traj = Plots.plot(tj, framen; xmin=[-1.5, -1.5, -1.5], xmax=[1.5, 1.5, 1.5])
+        scatter3d!(traj, [x[1]], [x[2]], [x[3]], ms = 5, color = :black, label = "actual")
 
-    # visualize oneforms
-    show_one_forms && begin
-        xmin, xmax = vec(minimum(tj.X, dims = 1)), vec(maximum(tj.X, dims = 1))
-        show_oneforms!(
-            traj,
-            simulation.can.Ω[1],
-            simulation.can.C,
-            xmin,
-            xmax;
-            alpha = 0.5,
-            dx = dx,
-            scale = scale,
-        )
-        show_oneforms!(
-            traj,
-            simulation.can.Ω[3],
-            simulation.can.C,
-            xmin,
-            xmax;
-            alpha = 0.5,
-            color = :red,
-            dx = dx,
-            scale = scale,
-        )
+        # plot decoded trajectory
+        framen > (100+2) && plot3d!(traj, ϕ(X̄[100:framen, 1]), ϕ(X̄[100:framen, 2]), ϕ(X̄[100:framen, 3]), color=:red, label=nothing, alpha=.6)
+        scatter3d!(traj, [X̄[framen, 1]], [X̄[framen, 2]], [X̄[framen, 3]], ms = 7, color = :red, label = "decoded")
+
+        # visualize activation of each individual population
+        _x = 1:size(simulation.S, 2)
+        y = map(i -> maximum(simulation.S[:, i]), _x)
+        b = bar(_x, y)
+
+        # visualize distance between decoded and real position
+        d = simulation.can.metric(x, X̄[framen, :])
+        b2 = bar([0], [d], title="Dedoded distance", ylim=[0, 3])
+
+        # main figure
+        plot(traj, pop_activity, b, b2, size = (1000, 800), layout = (2, 2))
+    else
+        traj = Plots.plot(tj, framen, xmin=[-300, -300], xmax=[300, 300])
+        
+        # plot decoded trajectory
+        framen > (100+2) && plot!(traj, ϕ(X̄[100:framen, 1]), ϕ(X̄[100:framen, 2]), color=:red, label=nothing, alpha=.6)
+        scatter!(traj, [X̄[framen, 1]], [X̄[framen, 2]], ms = 7, color = :red, label = "decoded")
+
+        # main figure
+        plot(traj, pop_activity,  size = (1000, 800), layout = (2, 1))
     end
-
-    # visualiza activation of each individual population
-    _x = 1:size(simulation.S, 2)
-    y = map(i -> maximum(simulation.S[:, i]), _x)
-    b = bar(_x, y)
-
-    # visualize distance between decoded and real position
-    d = simulation.can.metric(x, X̄[framen, :])
-    b2 = bar([0], [d], title="Dedoded distance", ylim=[0, 3])
-
-    plot(traj, pop_activity, b, b2, size = (1000, 800), layout = (2, 2))
 end
 
 

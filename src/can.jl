@@ -239,7 +239,7 @@ function get_one_forms(::Nothing, offsets::Vector)::Vector{OneForm}
     Ω = OneForm[]
     for (i, v) in enumerate(offsets)
         î = (Int ∘ ceil)(i / 2)
-        ω = OneForm(î, x -> v[î])
+        ω = OneForm(î, x -> v.θ[î])
         push!(Ω, ω)
     end
     Ω
