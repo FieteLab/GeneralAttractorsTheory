@@ -11,7 +11,7 @@ import GeneralAttractors: by_column
 
 T = 2500
 x₀ = [0, 1, 0]
-traj = Trajectory(S²; T=T, σ=[0.0, 0.0, 0.0], x₀=x₀, scale=0.05)
+traj = Trajectory(S²; T=T, σ=[0.0, 0.0, 0.0], x₀=x₀, scale=0.05, modality=:rand)
 
 
 plt = Plots.plot(

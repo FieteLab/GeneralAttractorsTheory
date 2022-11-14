@@ -55,6 +55,29 @@ function Trajectory(
     return Trajectory(M, hcat(x, y), hcat(vx, vy))
 end
 
+function piecewise_linear(
+    T::Int,  # total number of frames
+    n_intervals::Int,  # number of different liear segments
+    rng::AbstractVector,  # values ranges
+)
+    # get values and switches timepoints
+    vals = rand(rng, n_intervals)
+    switches = (1:n_intervals) .* (T/n_intervals ) .- (T/n_intervals ) |> collect
+
+    function x(t)
+        idx = findlast(switches .<= t)
+        idx = isnothing(idx) ? 1 : idx
+        return vals[idx]
+    end
+
+
+    # get value at each step
+    t = 1:T |> collect
+    return x.(t)
+end
+
+
+
 """
 Define random trajectories on the sphere (in ℝ³) by:
 i. defining three smooth 1-d random functions
@@ -67,7 +90,8 @@ function Trajectory(
     scale=0.01, 
     x₀=nothing,
     still=0,
-    vmax=0.1
+    vmax=0.1,
+    modality=:piecewise
 )
     dt = 100
     T2 = T*dt
@@ -78,26 +102,22 @@ function Trajectory(
         p ./= norm(p)
     end
 
-    # smooth sum of vector fields
-    vx = moving_average((rand(T2).-0.5) .* σ[1], 20dt) |> cumsum
-    vy = moving_average((rand(T2).-0.5) .* σ[2], 20dt) |> cumsum
-    vz = moving_average((rand(T2).-0.5) .* σ[3], 20dt) |> cumsum
-
-
-    a = (Int ∘ round)(T2/2)
-    vz = ones(T2) .* 0.05
-    vy = ones(T2) .* 0.1
-    # vz[a:end] .*= 0.0
-    vy[1:a] .*= 0.0
-
-    # vy = range(0, .1, length=T2) |> collect
-    
+    # get vfield "activation" at each frame
+    if modality == :piecewise
+        vx = piecewise_linear(T2, 6, -0.1:0.01:0.1)
+        vy = piecewise_linear(T2, 6, -0.1:0.01:0.1)
+        vz = piecewise_linear(T2, 6, -0.1:0.01:0.1)
+    else
+        vx = moving_average((rand(T2).-0.5) .* σ[1], 20dt) |> cumsum
+        vy = moving_average((rand(T2).-0.5) .* σ[2], 20dt) |> cumsum
+        vz = moving_average((rand(T2).-0.5) .* σ[3], 20dt) |> cumsum
+    end
     
     clamp!(vx, -vmax, vmax)
     clamp!(vy, -vmax, vmax)
     clamp!(vz, -vmax, vmax)
 
-
+    # get position and velocity vectors
     ∑ψ(p, i) = scale .* (vx[i]*ψx(p...) + vy[i]*ψy(p...) + vz[i]*ψz(p...))
     X, V = zeros(T2, 3), zeros(T2, 3)
     X[1, :] = x₀

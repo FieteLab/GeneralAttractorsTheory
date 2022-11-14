@@ -14,7 +14,7 @@ include("../networks/sphere.jl")
 
 # --------------------------------- simulate --------------------------------- #
 dt = 0.5
-duration = 750  # ms   
+duration = 2500  # ms   
 x₀ = [0, 1, 0]
 x₀ /= norm(x₀)
 still = 50  # initialization period                                                                             
@@ -25,7 +25,7 @@ nframes = (Int ∘ round)(duration / dt)
 trajectory = Trajectory(
     spherecan; T = nframes, 
     σ=[0.0, 0.0, 0.0], x₀=x₀, scale=0.05, 
-    still=still
+    still=still,
 )
 
 
