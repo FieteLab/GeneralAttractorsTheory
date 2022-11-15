@@ -15,7 +15,7 @@ import GeneralAttractors.Simulations: plot_trajectory_and_decoded
 
 # --------------------------------- simulate --------------------------------- #
 dt = 0.5
-duration = 500
+duration = 2500
 still = 250  # initialization period        
 
 # select neurons to initialize
@@ -33,7 +33,7 @@ trajectory = Trajectory(
         σθ = 0.2, θ₀ = nothing, 
         still=still
 )
-simulation = Simulation(toruscan, trajectory; η = 0.0, b₀=0.3)
+simulation = Simulation(toruscan, trajectory; η = 0.0, b₀=0.31)
 
 # run
 h, X̄ = @time run_simulation(
