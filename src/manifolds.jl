@@ -4,7 +4,7 @@ Collection of code useful to visualize manifolds
 module ManifoldUtils
 using Distances
 
-import ..GeneralAttractors: SphericalDistance
+import ..GeneralAttractors: SphericalDistance, MobiusEuclidean
 
 export AbstractManifold, CoverSpace
 export ℝ², T, S²
@@ -41,6 +41,14 @@ struct Sphere <: AbstractManifold
     metric::Metric
 end
 S² = Sphere([-π, -π / 2], [π, π / 2], SphericalDistance())
+
+
+struct Mobius <: AbstractManifold
+    xmin::Vector
+    xmax::Vector
+    metric::Metric
+end
+Mobius(m) = Mobius([0, 0], [m, m], MobiusEuclidean(m))
 
 # ---------------------------------------------------------------------------- #
 #                                 COVER SPACES                                 #
