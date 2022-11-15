@@ -158,18 +158,18 @@ function run_simulation(
             S̄ = step!(simulation, x̂, v; s₀=s₀)
 
             # initialize decoder if necessary
-            if i > simulation.trajectory.still && !decoder_initialized
+            if i >= simulation.trajectory.still && !decoder_initialized
                 # prep decoder
                 decoder = Decoder(
                         simulation.trajectory.X[i, :],
                         decode_peak_location(S̄, simulation.can)
                 )
                 decoder_initialized = true
-                @info "Initializing decoder at frame $i"
             end
 
             # decode manifold bump position
             decoder_initialized && (X̄[i, :] = decoder(S̄, simulation.can))
+            decoder_initialized || (X̄[i, :] = x)
 
             # add data to history
             add!(history, framen, simulation, v)
@@ -178,7 +178,7 @@ function run_simulation(
             isnothing(frame_every_n) || begin
                 (i % frame_every_n == 0 || i == 1) &&
                     (time[framen] > discard_first_ms) &&
-                    (framen > simulation.trajectory.still) &&
+                    # (framen > simulation.trajectory.still) &&
                     begin
                         plot(simulation, time[framen], framen, x, v, X̄)
                         frame(anim)

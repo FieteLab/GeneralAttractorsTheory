@@ -12,7 +12,11 @@ end
 mutable struct Decoder
     x::Vector # last state in can.C.M, the cover space mfld coordinates
     n::Vector # last state in can.C.N, the neural lattice coordinates
+    Δ::Vector # shift between x,n at time t=0 (they will be offset when decoding start)
 end
+
+Decoder(x::Vector, n::Vector) = Decoder(x, n, x-n)
+    
 
 
 """
@@ -38,40 +42,35 @@ that are closest to it.
 """
 function (dec::Decoder)(s::Vector, can::AbstractCAN)
     # get the position of activity bump in neural mfld coordinates
-    peak = decode_peak_location(s, can)
-    can.C.M == can.C.N && return peak
+    n̂ = decode_peak_location(s, can)
+    can.C.M == can.C.N && return n̂
 
     # get Δn relative to previous bump coordinates
-    Δn = peak .- dec.n
+    Δn = n̂ .- dec.n
 
     if norm(Δn) < 5
         # for small on-mfld movement, just look at the change in coordinates
         dec.x += Δn
-        dec.n = peak
+        dec.n = n̂
     else
         # for large Δn look at the pre-image of n in the variable manifold given cover map
-        candidates = can.C.ρⁱ(peak...) # shape d × N
+        candidates = can.C.ρⁱ(n̂...) # shape d × N
 
-        # get the point closest to the latest decoded location
-        d = map(i -> can.C.M.metric(dec.x, candidates[:, i]'), 1:size(candidates, 2))
-        selected = argmin(
-            d
-        )
+        # get the point closest to the latest decoded location (minus manifold shift)
+        d = map(i -> can.C.M.metric(dec.x-dec.Δ, candidates[:, i]), 1:size(candidates, 2))
+        selected = argmin(d)
+        @debug "decoding recalibration triggered" d[selected]
 
-        # @info "decoding" dec.x selected candidates[:, selected]
-        # plt = scatter(eachrow(candidates)..., marker_z=d)
-        # scatter!([dec.x[1]], [dec.x[2]], color=:green)
-        # scatter!([dec.n[1]], [dec.n[2]], color=:blue, ms=5)
-        # # scatter!([candidates[1, selected]], [candidates[2, selected]], color=:black, ms=5)
+        if d[selected] > 2.5
+            r(x) = round(x; digits=2)
+            @warn "Decoding problems" r.(dec.x) r.(dec.n) r.(n̂) dec.Δ
+        end
 
-        # scatter!([peak[1]], [peak[2]], color=:red)
-        # display(plt)
-        
         # set it as the new "decoded" position
-        dec.x = candidates[:, selected]
+        dec.x = candidates[:, selected] + dec.Δ
         
-        # update stored representation of peak location on neural manifold
-        dec.n = peak
+        # update stored representation of n̂ location on neural manifold
+        dec.n = n̂
 
         
     end

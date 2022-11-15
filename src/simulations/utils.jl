@@ -29,12 +29,11 @@ function Plots.plot(traj::Trajectory, i::Int; xmin=nothing, xmax=nothing)
     if d == 2
         plt = plot(
             eachcol(traj.X[1:i, :])...,
-            lw = 3,
+            lw = 4,
             color = :black,
-            title = "trajectory",
             grid = false,
             aspect_ratio = :equal,
-            label = nothing,
+            label = "trajectory",
             # xlim = [xmin[1], xmax[1]],
             # ylim = [xmin[2], xmax[2]],
             camera=(.075*i, 20)
@@ -42,12 +41,11 @@ function Plots.plot(traj::Trajectory, i::Int; xmin=nothing, xmax=nothing)
     else
         plt = plot(
             eachcol(traj.X[1:i, :])...,
-            lw = 3,
+            lw = 4,
             color = :black,
-            title = "trajectory",
             grid = false,
             aspect_ratio = :equal,
-            label = nothing,
+            label = "trajectory",
             xlim = [xmin[1], xmax[1]],
             ylim = [xmin[2], xmax[2]],
             zlim = [xmin[3], xmax[3]],
@@ -56,7 +54,7 @@ function Plots.plot(traj::Trajectory, i::Int; xmin=nothing, xmax=nothing)
     end
 
 
-
+    # fain line
     plot!(
         plt,
         eachcol(traj.X)...,
@@ -186,7 +184,7 @@ function Plots.plot(
         scatter3d!(traj, [x[1]], [x[2]], [x[3]], ms = 5, color = :black, label = "actual")
 
         # plot decoded trajectory
-        framen > (100+2) && plot3d!(traj, ϕ(X̄[100:framen, 1]), ϕ(X̄[100:framen, 2]), ϕ(X̄[100:framen, 3]), color=:red, label=nothing, alpha=.6)
+        plot3d!(traj, X̄[1:framen, 1], X̄[1:framen, 2], X̄[1:framen, 3], color=:red, label=nothing, alpha=1, lw=2)
         scatter3d!(traj, [X̄[framen, 1]], [X̄[framen, 2]], [X̄[framen, 3]], ms = 7, color = :red, label = "decoded")
 
         # visualize activation of each individual population
@@ -214,9 +212,30 @@ end
 
 
 # ---------------------------------------------------------------------------- #
+#                               END OF SIMULATION                              #
+# ---------------------------------------------------------------------------- #
+function plot_trajectory_and_decoded(trajectory::Trajectory, X̄::Matrix)
+    plt = plot(eachcol(trajectory.X)..., lw=3, color=:black, label="traj.",
+        grid=false, aspect_ratio=:equal, title="Decoded trajectory"
+    )
+
+    scatter!([[x] for x in trajectory.X[1, :]]..., ms=5, color=:black, label=nothing)
+
+    plot!(eachcol(X̄)..., lw=3, color=:red, label="decoded")
+    return plt
+end
+
+
+
+
+
+# ---------------------------------------------------------------------------- #
 #                                     utils                                    #
 # ---------------------------------------------------------------------------- #
 reset(simulation::Simulation) = begin
     simulation.Ṡ .*= 0.0
 end
 reset(Ṡ::Vector) = Ṡ * 0.0
+
+
+
