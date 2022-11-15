@@ -1,11 +1,5 @@
-using Plots
-using Measures
-using Distances: PeriodicEuclidean, evaluate, UnionMetric, SphericalAngle
-import Base.Iterators: product as ×  # cartesian product
-
-
 # ---------------------------------- kernel ---------------------------------- #
-function Plots.plot(K::AbstractKernel; kwargs...)
+function Plots.plot(K::AbstractKernel; σ=4, kwargs...)
     x = -100:0.001:100 |> collect
     y = K.(x)
     x̂ = x[argmin(y)]
@@ -18,7 +12,7 @@ function Plots.plot(K::AbstractKernel; kwargs...)
         label = nothing,
         color = "black";
         kwargs...,
-        xlim = [-4abs(x̂), 4abs(x̂)],
+        xlim = [-σ*abs(x̂), σ*abs(x̂)],
     )
 end
 
@@ -140,7 +134,7 @@ https://github.com/JuliaStats/Distances.jl/blob/master/src/haversine.jl
 
 For an embedding of the sphere see: https://stackoverflow.com/questions/10473852/convert-latitude-and-longitude-to-point-in-3d-space
 """
-function plot_distance_function(d::Union{SphericalDistance, SphericalAngle}; kwargs...)
+function plot_distance_function(d::Union{SphericalDistance,SphericalAngle}; kwargs...)
     long = range(-π + 0.01, π - 0.01, length = 100) |> collect
     lat = range(-π / 2 + 0.01, π / 2 - 0.01, length = 100) |> collect
     X = (long × lat) |> collect
@@ -221,7 +215,7 @@ end
 
 Show connectivity for a can's neuron given its index
 """
-function show_connectivity(can::CAN, i::Int; aspect_ratio=:equal, kwargs...)
+function show_connectivity(can::CAN, i::Int; aspect_ratio = :equal, kwargs...)
     if can.d == 1
         p = plot(; kwargs...)
         for (n, W) in enumerate(can.Ws)
@@ -232,9 +226,7 @@ function show_connectivity(can::CAN, i::Int; aspect_ratio=:equal, kwargs...)
         vline!([x[1]], label = "Neuron $i", lw = 4, color = :black)
     elseif can.d == 2
         p = plot()
-        offsets = map(
-            o -> o ./ (o .+ 0.01) .* sign.(o), can.offsets
-        )
+        offsets = map(offset_for_visual, can.offsets)
         for (n, W) in enumerate(can.Ws)
             # plot connectivity map
             w = reshape(W[:, i], can.n...)'
@@ -253,11 +245,11 @@ function show_connectivity(can::CAN, i::Int; aspect_ratio=:equal, kwargs...)
                 xticks = [],
                 yticks = [];
                 kwargs...,
-                color=:bwr,
+                color = :bwr,
             )
 
         end
-        
+
         # mark the neuron's location
         for n = 1:length(can.Ws)
             x = can.I[i]
@@ -283,12 +275,21 @@ end
 Show the connectivity for a can, the kernel and a 
 few randomly selected neurons.
 """
-function show_connectivity(can::CAN; idxs = nothing, aspect_ratio=:equal, size=(800, 600), kwargs...)
-    idxs =  isnothing(idxs) ? [1, rand(1:*(can.n...), 4)...] : idxs
+function show_connectivity(
+    can::CAN;
+    idxs = nothing,
+    aspect_ratio = :equal,
+    size = (800, 600),
+    kwargs...,
+)
+    idxs = isnothing(idxs) ? [1, rand(1:*(can.n...), 4)...] : idxs
     p = plot(can.kernel; title = "Connectivity kernel")
 
-    clims = (minimum(can.Ws[1]), max(abs(minimum(can.Ws[1]))/2, maximum(can.Ws[1])))
-    ps = map(i -> show_connectivity(can, i; clims=clims, aspect_ratio=aspect_ratio), idxs)
+    clims = (minimum(can.Ws[1]), max(abs(minimum(can.Ws[1])) / 2, maximum(can.Ws[1])))
+    ps = map(
+        i -> show_connectivity(can, i; clims = clims, aspect_ratio = aspect_ratio),
+        idxs,
+    )
     plot(p, ps...; size = size, kwargs...) |> display
 end
 
@@ -298,13 +299,20 @@ end
 #                                   ONE FORMS                                  #
 # ---------------------------------------------------------------------------- #
 # -------------------------------- one oneform ------------------------------- #
-function show_oneforms!(plt, ω::OneForm, xmin::Vector, xmax::Vector; dx = 3, x₀=0, y₀=0)
+function show_oneforms!(plt, ω::OneForm, xmin::Vector, xmax::Vector; dx = 3, x₀ = 0, y₀ = 0)
     length(xmin) != 2 && error("not implemented for d != 2")
 
     for x = xmin[1]:dx:xmax[1], y = xmin[2]:dx:xmax[2]
         o = ω([x, y])
-        scatter!([x+x₀], [y+y₀], ms = 3.5, color = :black, label = nothing)
-        plot!(plt, [x+x₀, x+x₀ + o[1]], [y+y₀, y+y₀ + o[2]], lw = 3, color = :black, label = nothing)
+        scatter!([x + x₀], [y + y₀], ms = 3.5, color = :black, label = nothing)
+        plot!(
+            plt,
+            [x + x₀, x + x₀ + o[1]],
+            [y + y₀, y + y₀ + o[2]],
+            lw = 3,
+            color = :black,
+            label = nothing,
+        )
     end
 
 end
@@ -331,7 +339,7 @@ function show_oneforms(can::CAN; kwargs...)
         offset = can.offsets[i] .* vec(maximum(can.X; dims = 2))
 
         # show one forms
-        show_oneforms!(plt, can.Ω[i], xmin, xmax; x₀=offset[1], y₀=offset[2])
+        show_oneforms!(plt, can.Ω[i], xmin, xmax; x₀ = offset[1], y₀ = offset[2])
     end
     plt
 end

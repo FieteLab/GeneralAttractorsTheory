@@ -5,16 +5,27 @@ using Plots
 using Term.Progress
 using Statistics
 using SparseArrays
+import ForwardDiff: jacobian
 
-import GeneralAttractors: save_simulation_history, moving_average, savepath, save_model, save_data
+import GeneralAttractors:
+    save_simulation_history, moving_average, savepath, save_model, save_data
 import GeneralAttractors: show_oneforms, show_oneforms!
-import ..Can: AbstractCAN
-import ..Manifolds: AbstractManifold, Manifoldℝ², Torus, Sphere
+import ..Can: AbstractCAN, offset_for_visual
+import ..ManifoldUtils: AbstractManifold,
+                Manifoldℝ²,
+                Torus,
+                Sphere,
+                sphere_embedding,
+                ψx,
+                ψy,
+                ψz, 
+                CoverSpace
 
 export Simulation, run_simulation
 export Trajectory
 
 include("trajectory.jl")
+include("decoding.jl")
 include("simulation.jl")
 include("utils.jl")
 end

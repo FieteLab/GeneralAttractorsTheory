@@ -9,52 +9,47 @@ using Distances
 using GeneralAttractors.Kernels
 using GeneralAttractors: lerp
 using GeneralAttractors.ManifoldUtils
+import GeneralAttractors.Simulations: plot_trajectory_and_decoded
 
-
-# ---------------------------------- network --------------------------------- #
-cover = CoverSpace(ℝ², T, (x, y) -> [mod(x - 32, 64), mod(y - 32, 64)])
-
-
-n = (64, 64)
-function ξ_t(i::Int, j::Int)::Vector  # neurons coordinates function
-    n̂_i, n̂_j = Int(n[1] / 2), Int(n[2] / 2)
-    [lerp(i, n[1], -n̂_i, n̂_i), lerp(j, n[2], -n̂_j, n̂_j)]   # ∈ [-n/2, n/2] × [-n/2, n/2]
-end
-d_t = PeriodicEuclidean([n...])  # distance function over a torus manifold
-
-# connectivity kernel 
-k_t = DiffOfExpKernel(; λ = 13.0)
-
-
-# one forms
-Ω = OneForm[
-    OneForm(1, x -> sin(2x / n[1]) + 1.25),
-    OneForm(1, x -> -(sin(2x / n[1]) + 1.25)),
-    OneForm(2, x -> sin(2x / n[2]) + 1.25),
-    OneForm(2, x -> -(sin(2x / n[2]) + 1.25)),
-]
-
-# make network
-tor = CAN("torus", cover, n, ξ_t, d_t, k_t; Ω = Ω)
+# include("../networks/torus.jl")
 
 # --------------------------------- simulate --------------------------------- #
 dt = 0.5
-duration = 800
+duration = 2500
+still = 250  # initialization period        
 
+# select neurons to initialize
+x₀ = [0, 0]
+d = map(i -> toruscan.metric(x₀, toruscan.X[:, i]), 1:size(toruscan.X, 2))
+activate = zeros(length(d))
+activate[d.<2] .= 1
+
+# initialize trajectory and simulation
 nframes = (Int ∘ round)(duration / dt)
-trajectory = Trajectory(tor; T = nframes, μ = 0.5, σθ = 0.3, σv = 0.5, θ₀ = nothing)
-simulation = Simulation(tor, trajectory; η = 0.0)
+trajectory = Trajectory(
+        toruscan; T = nframes, dt=dt,
+        # x₀=-4.0, y₀=0.0,
+        σv = 0.00, μv = 0.1, vmax=0.1,
+        σθ = 0.2, θ₀ = nothing, 
+        still=still
+)
+simulation = Simulation(toruscan, trajectory; η = 0.0, b₀=0.31)
 
-
-h = @time run_simulation(
+# run
+h, X̄ = @time run_simulation(
     simulation;
     frame_every_n = 20,
-    discard_first_ms = 250,
+    discard_first_ms = 0,
     average_over_ms = 1,
     fps = 10,
-)
+    s₀=1.0 .* activate,
+);     
+
+plot_trajectory_and_decoded(trajectory, X̄) |> display
+
+nothing
+
+# TODO decoding has to be initialized at the end of the `still` phase with decoded peak position
+# TODO fix mess in simulation plotting to be more consisten
 
 
-# plot(simulation, duration, nframes, 
-#         trajectory.X[end, :], trajectory.V[end, :]; 
-#         show_one_forms=true, dx=10, scale=2)

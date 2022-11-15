@@ -1,5 +1,7 @@
 *.mp4
 
+base
+base/*
 data/*
 data
 

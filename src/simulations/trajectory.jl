@@ -1,5 +1,58 @@
+# ----------------------------------- utils ---------------------------------- #
+"""
+    function piecewise_linear(
+        T::Int,  # total number of frames
+        n_intervals::Int,  # number of different liear segments
+        rng::AbstractVector,  # values ranges
+    )
+
+Construct a piece-wise linear 1d trajectory
+with `T` many frames, and `n_intervals` values
+drawn from an iterable `rgn`.
+"""
+function piecewise_linear(
+    T::Int,  # total number of frames
+    n_intervals::Int,  # number of different liear segments
+    rng::AbstractVector,  # values ranges
+)
+    # get values and switches timepoints
+    vals = rand(rng, n_intervals)
+    switches = (1:n_intervals) .* (T/n_intervals ) .- (T/n_intervals ) |> collect
+
+    function x(t)
+        idx = findlast(switches .<= t)
+        idx = isnothing(idx) ? 1 : idx
+        return vals[idx]
+    end
 
 
+    # get value at each step
+    t = 1:T |> collect
+    return x.(t)
+end
+
+
+"""
+Prepend an initial stationary pahse to a trajectory. 
+Used to let the network settle in into a selected
+state before starting a simulation with velocity inputs.
+"""
+function add_initial_still_phase(X::Matrix, V::Matrix, still, x₀)
+    standing = zeros(still, length(x₀))
+    for i in 1:length(x₀)
+        standing[:, i] .= x₀[i]
+    end
+
+    X = vcat(standing, X)
+    V = vcat(zeros(still, length(x₀)), V)
+    return X, V
+end
+
+
+
+# ---------------------------------------------------------------------------- #
+#                                  TRAJECTORY                                  #
+# ---------------------------------------------------------------------------- #
 """
 struct Trajectory
 
@@ -12,6 +65,7 @@ struct Trajectory
     M::AbstractManifold
     X::Matrix
     V::Matrix
+    still::Int # number of warmup frames at the start
 end
 
 
@@ -30,76 +84,117 @@ given angular velocity (randomy drawn) reflecting a change in orientation
 function Trajectory(
     M::Manifoldℝ²;
     T::Int = 250,
-    σv = 0.5,
-    μ = 0.1,
+    dt::Float64=0.5,
+    σv = 0.25,
+    μv = 0.05,
+    vmax = 0.1,
     σθ = 0.5,
     θ₀ = nothing,
     x₀ = nothing,
     y₀ = nothing,
-)
-    v = rand(T) .* σv .+ μ
-    v[v .< 0] .= 0
+    still = 100,
+)   
+    # get speed and orientation
+    v = rand(T) .* σv .+ μv
+    v[v.<vmax] .= vmax
+    v[v.<0] .= 0
 
     θ₀ = isnothing(θ₀) ? rand(0:0.2:2π) : θ₀
     θ̇ = moving_average(rand(T), 11) .- 0.5
     θ̇ = cumsum(θ̇ .* σθ) .+ θ₀ # orientation
 
+    # get velocity at each component
     vx = v .* cos.(θ̇)
     vy = v .* sin.(θ̇)
 
+    # get random initial position
     x₀ = isnothing(x₀) ? rand(-20:2:20) : x₀
     y₀ = isnothing(y₀) ? rand(-20:2:20) : y₀
-    x = cumsum(vx) .+ x₀
-    y = cumsum(vy) .+ y₀
+    
+    # Get trajectory
+    X, V = zeros(T, 2), zeros(T, 2)
+    X[1, :] = [x₀, y₀]
+    V[:, 1] = vx
+    V[:, 2] = vy
+    for t in 2:T
+        X[t, :] = X[t-1, :] + V[t, :]*dt
+    end
 
-    return Trajectory(M, hcat(x, y), hcat(vx, vy))
+    # finalize
+    still > 0 && begin
+        X, V = add_initial_still_phase(X, V, still, X[1, :])
+    end
+    return Trajectory(M, X, V, still)
 end
 
 
+
+
+"""
+Define random trajectories on the sphere (in ℝ³) by:
+i. defining three smooth 1-d random functions
+ii. use these to take linear combinations of killing fields of the unit sphere
+"""
 function Trajectory(
-    M::Sphere; 
+    M::Sphere;
     T::Int = 250,
-    σv = 0.25,
-    σθ = 0.15,
-    μv  = 0.5, # average speed
-    θ₀ = nothing,
-    vmax = 0.3
-)   
-    x₀min, x₀max = M.xmin[1], M.xmax[1]
-    x₁min, x₁max = M.xmin[2], M.xmax[2]
+    σ = [1, 1, 1],
+    x₀=nothing,
+    still=0,
+    vmax=0.075,
+    modality=:piecewise,
+    n_piecewise_segments=3,
+)
 
-
-    X = zeros(T, 2)
-
-    # get velocity vector at each frame
-    v = (rand(T) .- 0.5) .* σv .+ μv
-    v[v .< 0] .= 0.0
-    for i in 1:T
-        abs(v[1]) > vmax && (v[i] = vmax * sign(v[i]))
+    # get starting point
+    x₀ = !isnothing(x₀) ? x₀ : begin
+        p = rand(-1:.1:1, 3)
+        p ./= norm(p)
     end
 
-    θ₀ = isnothing(θ₀) ? rand(0:0.2:2π) : θ₀
-    θ̇ = moving_average(rand(T), 11) .- 0.5
-    θ̇ = cumsum(θ̇ .* σθ) .+ θ₀ # orientation
+    # get vfield "activation" at each frame
+    if modality == :piecewise
+        vx = piecewise_linear(T, n_piecewise_segments, -vmax:(vmax/100):vmax)
+        vy = piecewise_linear(T, n_piecewise_segments, -vmax:(vmax/100):vmax)
+        vz = piecewise_linear(T, n_piecewise_segments, -vmax:(vmax/100):vmax)
+    elseif modality == :constant
+        vx = ones(T) .* σ[1]
+        vy = ones(T) .* σ[2]
+        vz = ones(T) .* σ[3]
+    else
+        vx = moving_average((rand(T).-0.5) .* σ[1], 20dt) |> cumsum
+        vy = moving_average((rand(T).-0.5) .* σ[2], 20dt) |> cumsum
+        vz = moving_average((rand(T).-0.5) .* σ[3], 20dt) |> cumsum
+    end
+    
+    clamp!(vx, -vmax, vmax)
+    clamp!(vy, -vmax, vmax)
+    clamp!(vz, -vmax, vmax)
 
-    v[abs.(v) .> vmax] .= (rand()-0.5)*vmax
-    vx = v .* cos.(θ̇)
-    vy = v .* sin.(θ̇) .* 0.5
-
-    # get position at each frame
-    x = [0.0, 0.0]
+    # get position and velocity vectors
+    ∑ψ(p, i) = vx[i]*ψx(p...) + vy[i]*ψy(p...) + vz[i]*ψz(p...)
+    X, V = zeros(T, 3), zeros(T, 3)
+    X[1, :] = x₀
     for t in 1:T
-        v = [vx[t], vy[t]]
-        x = x .+ 0.1v
+        x = t == 1 ? x₀ : X[t-1, :]
+        v = ∑ψ(x, t)
 
-        # ensure position is "on the manifold"
-        x[1] < x₀min && (x[1] = x₀max - (x₀min - x[1]))
-        x[1] > x₀max && (x[1] = x₀min + (x[1] - x₀max))
-        x[2] < x₁min && (x[2] = x₁max - (x₁min - x[2]))
-        x[2] > x₁max && (x[2] = x₁min + (x[2] - x₁max))
+        #! REMOVE
+        v = v ./ norm(v) .* vmax
+        # if t < 100*dt
+        #     v .*= t/(100*dt)
+        # end
 
-        X[t, :] = x
+        x̂ =  x + v
+        X[t, :] = x̂
+        V[t, :] = v
     end
 
-    return Trajectory(M, X,  hcat(vx, vy))
+
+    # add a still phase
+    still > 0 && begin
+        X, V = add_initial_still_phase(X, V, still, x₀)
+    end
+    return Trajectory(M, X, V, still)
 end
+

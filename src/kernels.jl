@@ -67,8 +67,8 @@ struct MexicanHatKernel <: AbstractKernel
     σ::Float64
     k::Function
 
-    function MexicanHatKernel(; α = 0.33, σ = 0.25)
-        k(t) = α * 2 / (√(3σ) * π^(1 / 4)) * (1 - (t / σ)^2) * exp(-t^2 / (2σ))
+    function MexicanHatKernel(; α = 0.33, σ = 0.25, β=0)
+        k(t) = α * 2 / (√(3σ) * π^(1 / 4)) * (1 - (t / σ)^2) * exp(-t^2 / (2σ)) - β
         new(α, σ, k)
     end
 end
@@ -99,11 +99,12 @@ struct DiffOfExpKernel <: AbstractKernel
         λ::Float64 = 5 / 2π,
         β::Float64 = 3 / (λ^2),
         γ::Float64 = 1.05 * β,
+        δ::Float64 = 0.0,  # offset
     )
 
         k(x) = begin
             _x = abs(x)^2
-            a * exp(-γ * _x) - exp(-β * _x)
+            a * exp(-γ * _x) - exp(-β * _x) + δ
         end
         new(a, λ, β, γ, k)
     end
@@ -130,7 +131,7 @@ struct LocalGlobalKernel <: AbstractKernel
 
     function LocalGlobalKernel(; α = 1.0, σ = 1.0, β = 0.25)
 
-        k(x) = α * exp(-x^2 / 2σ) - β
+        k(x) = α * exp(-(x^2 / 2σ*2)) - β
         new(α, σ, β, k)
     end
 end

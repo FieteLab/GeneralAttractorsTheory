@@ -7,40 +7,48 @@ using GeneralAttractors.ManifoldUtils
 using GeneralAttractors: lerp
 import GeneralAttractors.ManifoldUtils: sphere_embedding
 using Distances
-
-# --------------------------------- make net --------------------------------- #
-n = (64, 64)
-function ξ_s(i::Int, j::Int)::Vector
-    [lerp(i, n[1], -π, π), lerp(j, n[2], -π / 2, π / 2)]
-end
-d_s = SphericalAngle()
-# k_s = DiffOfExpKernel(; λ = 0.75)
-k_s = MexicanHatKernel(; α = 0.1, σ = 0.5)
-
-cover = CoverSpace(S², S², (x, y) -> [x, y])
-
-can = CAN("sphere", cover, n, ξ_s, d_s, k_s; 
-        offset_size=1.15,
-        φ=sphere_embedding,
-        # offsets=O,
-        # Ω=Ω
-        )
+import LinearAlgebra: norm
+import GeneralAttractors.Simulations: plot_trajectory_and_decoded
 
 
+
+# include("../networks/sphere.jl") 
 
 # --------------------------------- simulate --------------------------------- #
 dt = 0.5
-duration = 250  # ms   
+duration = 500  # ms   
+x₀ = [1, -1, 0]
+x₀ /= norm(x₀)
+still = 50  # initialization period                                                                             
+dmin = 0.5  # minimal distance from x₀ for state intialization
+
 
 nframes = (Int ∘ round)(duration / dt)
-trajectory = Trajectory(can; T = nframes, 
-        σθ=0.0, θ₀=deg2rad(0), σv=0.0, μv=.1 
+trajectory = Trajectory(
+    spherecan; 
+    T = nframes, 
+    x₀=x₀,
+    vmax=0.0035,
+    still=still,
+    modality=:piecewise,
+    n_piecewise_segments=3,
+    σ=[1, 1, 1]
 )
-simulation = Simulation(can, trajectory; b₀=1.0, η=0.0)
 
-# h = run_simulation(
-#     simulation,
-#     frame_every_n = 20,
-#     discard_first_ms = 0,
-#     average_over_ms = 1,
-# )
+# get activation to initialize bump
+activate = map(p -> euclidean(x₀, p) < dmin, eachcol(spherecan.X)) .* 1
+
+# simulate
+simulation = Simulation(spherecan, trajectory; b₀ = 0.2, η = 0.0, )
+h, X̄ = @time run_simulation(
+    simulation,
+    frame_every_n = 20,
+    discard_first_ms = 0,
+    average_over_ms = 2,
+    fps=5,
+    s₀=activate,
+);
+
+
+# plot_trajectory_and_decoded(trajectory, X̄) |> display
+nothing

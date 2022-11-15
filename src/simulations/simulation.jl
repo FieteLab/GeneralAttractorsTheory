@@ -41,7 +41,7 @@ Base.show(io::IO, ::MIME"text/plain", sim::Simulation) = print(io, string(sim))
 
 function Simulation(can::AbstractCAN, trajectory::Trajectory; kwargs...)
     n_pops = length(can.offsets)
-    
+
     # initialize activity matrices
     N = *(can.n...)
     S = spzeros(Float64, N, n_pops)
@@ -66,7 +66,7 @@ end
 Step the simulation dynamics given that the "particle" is at `x`
 and moving with velocity vector `x`.
 """
-function step!(simulation::Simulation, x::Vector, v::Vector)
+function step!(simulation::Simulation, x::Vector, v::Vector; s₀=nothing)
     can = simulation.can
     b₀ = simulation.b₀
     S, W = simulation.S, simulation.W
@@ -74,17 +74,23 @@ function step!(simulation::Simulation, x::Vector, v::Vector)
 
     # get effect of recurrent connectivity & external input
     d = size(S, 2)
-    B = b₀ .+ vec(map(ωᵢ -> ωᵢ(x, v) / norm(ωᵢ(x)), simulation.can.Ω))  # inputs vector of size 2d
-    S̄ = ∑ⱼ(S)  # get the sum of all current activations
+    V = vec(
+        map(
+            ωᵢ -> ωᵢ(x, v), 
+            simulation.can.Ω
+            )
+    )  # inputs vector of size 2d
 
-    if simulation.η > 0
-        η = rand(Float64, size(S, 1), d) .* simulation.η  # get noise input
-        for i = 1:d 
-            Ṡ[:, i] .= W[i] * S̄ .+ B[i] .+ η[i]
-        end
-    else
-        for i = 1:d
-            Ṡ[:, i] .= W[i] * S̄ .+ B[i]
+
+    S̄ = ∑ⱼ(S)  # get the sum of all current activations
+    !isnothing(s₀) && (S̄ .*= s₀)
+
+    for i = 1:d
+        if simulation.η > 0
+            η = rand(Float64, size(S, 1), d) .* simulation.η  # get noise input
+            Ṡ[:, i] .= W[i] * S̄ .+ V[i] .+ η[i] .+ b₀
+        else
+            Ṡ[:, i] .= W[i] * S̄ .+ V[i] .+ b₀
         end
     end
 
@@ -94,6 +100,7 @@ function step!(simulation::Simulation, x::Vector, v::Vector)
 
     # update activity
     simulation.S += (can.σ.(Ṡ) - S) / (simulation.τ)
+    return S̄
 end
 
 
@@ -111,6 +118,7 @@ function run_simulation(
     frame_every_n::Union{Nothing,Int} = 20,   # how frequently to save an animation frame
     fps = 20,
     discard_first_ms = 0,
+    s₀ = nothing,
     kwargs...,
 )
 
@@ -122,17 +130,46 @@ function run_simulation(
     anim = Animation()
 
     # get history to track data
-    history = History(simulation, N; discard_first_ms=discard_first_ms, kwargs...)
+    history = History(simulation, N; discard_first_ms = discard_first_ms, kwargs...)
 
-    # do simulation steps and visualize
+    # prep some variables
+    X̄ = zeros(size(simulation.trajectory.X))
+    X̄[1, :] = simulation.trajectory.X[1, :]
+    decoder_initialized = false
+    decoder = nothing
+
+    # do simulation steps and visualize   
     pbar = ProgressBar()
     Progress.with(pbar) do
         job = addjob!(pbar, description = "Simulation", N = N)
         for i = 1:N
+            # get activation for bump initialization
+            if i > simulation.trajectory.still
+                s₀ = nothing
+            end
+
+            # get trajectory data
             x = simulation.trajectory.X[i, :]
             v = simulation.trajectory.V[i, :]
-            step!(simulation, x, v)
-            # framen > 50 && break
+
+            # decode manifold bump position
+            decoder_initialized && (X̄[i, :] = decoder(∑ⱼ(simulation.S), simulation.can))
+            decoder_initialized || (X̄[i, :] = x)
+
+            # step simulation
+            # x̂ = decoder_initialized ? decoder.x : x
+            x̂ = simulation.trajectory.X[i, :]
+            S̄ = step!(simulation, x̂, v; s₀=s₀)
+
+            # initialize decoder if necessary
+            if i >= simulation.trajectory.still && !decoder_initialized
+                # prep decoder
+                decoder = Decoder(
+                        simulation.trajectory.X[i, :],
+                        decode_peak_location(S̄, simulation.can)
+                )
+                decoder_initialized = true
+            end
 
             # add data to history
             add!(history, framen, simulation, v)
@@ -141,14 +178,15 @@ function run_simulation(
             isnothing(frame_every_n) || begin
                 (i % frame_every_n == 0 || i == 1) &&
                     (time[framen] > discard_first_ms) &&
+                    # (framen > simulation.trajectory.still) &&
                     begin
-                        plot(simulation, time[framen], framen, x, v)
+                        plot(simulation, time[framen], framen, x, v, X̄)
                         frame(anim)
                     end
             end
 
             framen += 1
-            update!(job)
+        update!(job)
         end
     end
 
@@ -156,9 +194,9 @@ function run_simulation(
         gif(anim, savepath(savename, savename, "gif"), fps = fps)
     end
 
-    save_simulation_history(history, savename, savename)
-    save_model(simulation.can, savename, "sim_CAN_model", :CAN)
-    save_data(simulation.trajectory.X, savename, "sim_trajectory_X")
-    save_data(simulation.trajectory.V, savename, "sim_trajectory_V")
-    return history
+    # save_simulation_history(history, savename, savename)
+    # save_model(simulation.can, savename, "sim_CAN_model", :CAN)
+    # save_data(simulation.trajectory.X, savename, "sim_trajectory_X")
+    # save_data(simulation.trajectory.V, savename, "sim_trajectory_V")
+    return history, X̄
 end
