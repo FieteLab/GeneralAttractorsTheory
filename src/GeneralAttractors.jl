@@ -9,6 +9,7 @@ include("io.jl")
 include("utils.jl")
 
 include("kernels.jl")
+include("metrics.jl")
 include("manifolds.jl")
 include("can.jl")
 
@@ -22,7 +23,6 @@ using .Kernels
 using .ManifoldUtils
 using .Can: CAN, OneForm, offset_for_visual
 
-include("metrics.jl")
 include("viz.jl")
 include("simulations/Simulations.jl")
 include("analysis/Analysis.jl")

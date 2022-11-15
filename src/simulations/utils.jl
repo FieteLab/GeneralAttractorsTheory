@@ -121,8 +121,8 @@ function simulation_frame_2dcan(simulation::Simulation, timems, v::Vector; kwarg
 
     # plot input vector direction 
     x0, y0 = maximum(can.X; dims = 2) ./ 2.1
-    plot!([x0, x0 + v̂[1]], [y0, y0 + v̂[2]], lw = 6, color = :green, label = nothing)
-    scatter!([x0], [y0], ms = 8, color = :green, label = nothing)
+    plot!([x0, x0 + v̂[1]], [y0, y0 + v̂[2]], lw = 6, color = :green, alpha=.5, label = nothing)
+    scatter!([x0], [y0], ms = 8, color = :green, label = nothing, alpha=.5, )
 
     plt
 end

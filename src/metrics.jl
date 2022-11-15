@@ -4,8 +4,6 @@ import LinearAlgebra: ⋅
 import Manifolds: Sphere as 𝕊
 import Manifolds: distance as mdist
 
-import .ManifoldUtils: sphere_embedding
-
 """
 Sperical distance on the unit sphere by Manifolds.jl
 """

@@ -37,19 +37,43 @@ inverse of the cover space map in `M` and finding the spots
 that are closest to it. 
 """
 function (dec::Decoder)(s::Vector, can::AbstractCAN)
+    # get the position of activity bump in neural mfld coordinates
     peak = decode_peak_location(s, can)
     can.C.M == can.C.N && return peak
 
-    shift = peak .- dec.n
+    # get Δn relative to previous bump coordinates
+    Δn = peak .- dec.n
 
-    if norm(shift) < 5
-        dec.x += shift
+    if norm(Δn) < 5
+        # for small on-mfld movement, just look at the change in coordinates
+        dec.x += Δn
         dec.n = peak
     else
-        # ? triggered by a large shift -> wrapping around a periodic manifold
-        candidates = can.C.ρⁱ(dec.x...)
+        # for large Δn look at the pre-image of n in the variable manifold given cover map
+        candidates = can.C.ρⁱ(peak...) # shape d × N
 
-        @info "decoding got candidates" dec.x peak shift candidates
+        # get the point closest to the latest decoded location
+        d = map(i -> can.C.M.metric(dec.x, candidates[:, i]'), 1:size(candidates, 2))
+        selected = argmin(
+            d
+        )
+
+        # @info "decoding" dec.x selected candidates[:, selected]
+        # plt = scatter(eachrow(candidates)..., marker_z=d)
+        # scatter!([dec.x[1]], [dec.x[2]], color=:green)
+        # scatter!([dec.n[1]], [dec.n[2]], color=:blue, ms=5)
+        # # scatter!([candidates[1, selected]], [candidates[2, selected]], color=:black, ms=5)
+
+        # scatter!([peak[1]], [peak[2]], color=:red)
+        # display(plt)
+        
+        # set it as the new "decoded" position
+        dec.x = candidates[:, selected]
+        
+        # update stored representation of peak location on neural manifold
+        dec.n = peak
+
+        
     end
     return dec.x
 end

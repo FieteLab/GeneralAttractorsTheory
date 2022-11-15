@@ -41,7 +41,6 @@ h, X̄ = @time run_simulation(
     average_over_ms = 2,
     fps=5,
     s₀=1.0 .* activate,
-    activation_steps=still
 );
 nothing
 

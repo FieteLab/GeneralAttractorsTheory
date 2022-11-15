@@ -84,8 +84,10 @@ given angular velocity (randomy drawn) reflecting a change in orientation
 function Trajectory(
     M::Manifoldℝ²;
     T::Int = 250,
+    dt::Float64=0.5,
     σv = 0.25,
-    μ = 0.05,
+    μv = 0.05,
+    vmax = 0.1,
     σθ = 0.5,
     θ₀ = nothing,
     x₀ = nothing,
@@ -93,25 +95,35 @@ function Trajectory(
     still = 100,
 )   
     # get speed and orientation
-    v = rand(T) .* σv .+ μ
+    v = rand(T) .* σv .+ μv
+    v[v.<vmax] .= vmax
     v[v.<0] .= 0
 
     θ₀ = isnothing(θ₀) ? rand(0:0.2:2π) : θ₀
     θ̇ = moving_average(rand(T), 11) .- 0.5
     θ̇ = cumsum(θ̇ .* σθ) .+ θ₀ # orientation
 
-    # get velocity at each component and trajectory
+    # get velocity at each component
     vx = v .* cos.(θ̇)
     vy = v .* sin.(θ̇)
 
+    # get random initial position
     x₀ = isnothing(x₀) ? rand(-20:2:20) : x₀
     y₀ = isnothing(y₀) ? rand(-20:2:20) : y₀
-    x = cumsum(vx) .+ x₀
-    y = cumsum(vy) .+ y₀
+    
+    # Get trajectory
+    X, V = zeros(T, 2), zeros(T, 2)
+    X[1, :] = [x₀, y₀]
+    V[:, 1] = vx
+    V[:, 2] = vy
+    for t in 2:T
+        X[t, :] = X[t-1, :] + V[t, :]*dt
+    end
 
     # finalize
-    X, V = hcat(x, y), hcat(vx, vy)
-    still > 0 && (X, V = add_initial_still_phase(X, V, still, [y₀, x₀]))
+    still > 0 && begin
+        X, V = add_initial_still_phase(X, V, still, X[1, :])
+    end
     return Trajectory(M, X, V, still)
 end
 

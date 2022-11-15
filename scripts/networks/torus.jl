@@ -6,6 +6,7 @@ using GeneralAttractors
 using GeneralAttractors.Kernels
 using GeneralAttractors: lerp
 using GeneralAttractors.ManifoldUtils
+import GeneralAttractors.ManifoldUtils: Manifoldℝ², Torus
 
 
 println(Panel("Creating torus attractor", style="green", justify=:center))

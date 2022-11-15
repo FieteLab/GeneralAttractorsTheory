@@ -81,8 +81,7 @@ function step!(simulation::Simulation, x::Vector, v::Vector; s₀=nothing)
             simulation.can.Ω
             )
     )  # inputs vector of size 2d
-    # r(x) = round(x, digits=2)
-    # rand() > .75 && println(r.(100 .* v), " "^10, r.(V))
+
 
     S̄ = ∑ⱼ(S)  # get the sum of all current activations
     !isnothing(s₀) && (S̄ .*= s₀)
@@ -121,7 +120,6 @@ function run_simulation(
     fps = 20,
     discard_first_ms = 0,
     s₀ = nothing,
-    activation_steps=20,
     kwargs...,
 )
 
@@ -135,19 +133,21 @@ function run_simulation(
     # get history to track data
     history = History(simulation, N; discard_first_ms = discard_first_ms, kwargs...)
 
-    # do simulation steps and visualize
-    pbar = ProgressBar()
+    # prep some variables
     X̄ = zeros(size(simulation.trajectory.X))
     X̄[1, :] = simulation.trajectory.X[1, :]
     decoder_initialized = false
+    decoder = nothing
+
+    # do simulation steps and visualize   
+    pbar = ProgressBar()
     Progress.with(pbar) do
         job = addjob!(pbar, description = "Simulation", N = N)
         for i = 1:N
             # get activation for bump initialization
-            if i > activation_steps
+            if i > simulation.trajectory.still
                 s₀ = nothing
             end
-
 
             # get trajectory data
             x = simulation.trajectory.X[i, :]
@@ -165,6 +165,7 @@ function run_simulation(
                         decode_peak_location(S̄, simulation.can)
                 )
                 decoder_initialized = true
+                @info "Initializing decoder at frame $i"
             end
 
             # decode manifold bump position
@@ -177,6 +178,7 @@ function run_simulation(
             isnothing(frame_every_n) || begin
                 (i % frame_every_n == 0 || i == 1) &&
                     (time[framen] > discard_first_ms) &&
+                    (framen > simulation.trajectory.still) &&
                     begin
                         plot(simulation, time[framen], framen, x, v, X̄)
                         frame(anim)
@@ -184,7 +186,6 @@ function run_simulation(
             end
 
             framen += 1
-            break
         update!(job)
         end
     end
