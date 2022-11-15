@@ -16,7 +16,7 @@ import GeneralAttractors.Simulations: plot_trajectory_and_decoded
 
 # --------------------------------- simulate --------------------------------- #
 dt = 0.5
-duration = 2500  # ms   
+duration = 500  # ms   
 x₀ = [1, -1, 0]
 x₀ /= norm(x₀)
 still = 50  # initialization period                                                                             
@@ -28,20 +28,18 @@ trajectory = Trajectory(
     spherecan; 
     T = nframes, 
     x₀=x₀,
-    vmax=0.005,
+    vmax=0.0035,
     still=still,
-    modality=:constant,
-    σ=[0, 0, 1]
+    modality=:piecewise,
+    n_piecewise_segments=3,
+    σ=[1, 1, 1]
 )
-
-plot(trajectory.V[:,1])
-plot!(trajectory.V[:,2])
 
 # get activation to initialize bump
 activate = map(p -> euclidean(x₀, p) < dmin, eachcol(spherecan.X)) .* 1
 
 # simulate
-simulation = Simulation(spherecan, trajectory; b₀ = 0.21, η = 0.0, )
+simulation = Simulation(spherecan, trajectory; b₀ = 0.2, η = 0.0, )
 h, X̄ = @time run_simulation(
     simulation,
     frame_every_n = 20,

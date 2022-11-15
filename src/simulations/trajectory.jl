@@ -145,8 +145,6 @@ function Trajectory(
     modality=:piecewise,
     n_piecewise_segments=3,
 )
-    dt = 100
-    T2 = T*dt
 
     # get starting point
     x₀ = !isnothing(x₀) ? x₀ : begin
@@ -156,17 +154,17 @@ function Trajectory(
 
     # get vfield "activation" at each frame
     if modality == :piecewise
-        vx = piecewise_linear(T2, n_piecewise_segments, -vmax:(vmax/100):vmax)
-        vy = piecewise_linear(T2, n_piecewise_segments, -vmax:(vmax/100):vmax)
-        vz = piecewise_linear(T2, n_piecewise_segments, -vmax:(vmax/100):vmax)
+        vx = piecewise_linear(T, n_piecewise_segments, -vmax:(vmax/100):vmax)
+        vy = piecewise_linear(T, n_piecewise_segments, -vmax:(vmax/100):vmax)
+        vz = piecewise_linear(T, n_piecewise_segments, -vmax:(vmax/100):vmax)
     elseif modality == :constant
-        vx = ones(T2) .* σ[1]
-        vy = ones(T2) .* σ[2]
-        vz = ones(T2) .* σ[3]
+        vx = ones(T) .* σ[1]
+        vy = ones(T) .* σ[2]
+        vz = ones(T) .* σ[3]
     else
-        vx = moving_average((rand(T2).-0.5) .* σ[1], 20dt) |> cumsum
-        vy = moving_average((rand(T2).-0.5) .* σ[2], 20dt) |> cumsum
-        vz = moving_average((rand(T2).-0.5) .* σ[3], 20dt) |> cumsum
+        vx = moving_average((rand(T).-0.5) .* σ[1], 20dt) |> cumsum
+        vy = moving_average((rand(T).-0.5) .* σ[2], 20dt) |> cumsum
+        vz = moving_average((rand(T).-0.5) .* σ[3], 20dt) |> cumsum
     end
     
     clamp!(vx, -vmax, vmax)
@@ -175,10 +173,10 @@ function Trajectory(
 
     # get position and velocity vectors
     ∑ψ(p, i) = vx[i]*ψx(p...) + vy[i]*ψy(p...) + vz[i]*ψz(p...)
-    X, V = zeros(T2, 3), zeros(T2, 3)
+    X, V = zeros(T, 3), zeros(T, 3)
     X[1, :] = x₀
-    for t in 2:T2
-        x = X[t-1, :]
+    for t in 1:T
+        x = t == 1 ? x₀ : X[t-1, :]
         v = ∑ψ(x, t)
 
         #! REMOVE
@@ -187,16 +185,13 @@ function Trajectory(
         #     v .*= t/(100*dt)
         # end
 
-        x̂ =  X[t-1, :] + v/dt
-        x̂ ./= norm(x̂)
-
+        x̂ =  x + v
         X[t, :] = x̂
         V[t, :] = v
     end
 
-    # add a still phase at the beginning
-    X, V = X[1:dt:end, :], V[1:dt:end, :]
 
+    # add a still phase
     still > 0 && begin
         X, V = add_initial_still_phase(X, V, still, x₀)
     end
