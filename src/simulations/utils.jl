@@ -215,13 +215,18 @@ end
 #                               END OF SIMULATION                              #
 # ---------------------------------------------------------------------------- #
 function plot_trajectory_and_decoded(trajectory::Trajectory, X̄::Matrix)
-    plt = plot(eachcol(trajectory.X)..., lw=3, color=:black, label="traj.",
+    d = size(X̄, 2)
+    plt = plot(eachcol(trajectory.X)..., lw=5, color=:black, label="traj.",
         grid=false, aspect_ratio=:equal, title="Decoded trajectory"
     )
 
     scatter!([[x] for x in trajectory.X[1, :]]..., ms=5, color=:black, label=nothing)
 
-    plot!(eachcol(X̄)..., lw=3, color=:red, label="decoded")
+    if d == 2
+        plot!(eachcol(X̄)..., lw=3, color=:red, label="decoded")
+    elseif d == 3
+        plot3d!(eachcol(X̄)..., lw=3, color=:red, label="decoded")
+    end
     return plt
 end
 

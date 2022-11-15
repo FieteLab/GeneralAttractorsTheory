@@ -139,11 +139,11 @@ function Trajectory(
     M::Sphere;
     T::Int = 250,
     σ = [1, 1, 1],
-    scale=0.01, 
     x₀=nothing,
     still=0,
     vmax=0.075,
-    modality=:piecewise
+    modality=:piecewise,
+    n_piecewise_segments=3,
 )
     dt = 100
     T2 = T*dt
@@ -156,9 +156,13 @@ function Trajectory(
 
     # get vfield "activation" at each frame
     if modality == :piecewise
-        vx = piecewise_linear(T2, 6, -0.075:0.01:0.075)
-        vy = piecewise_linear(T2, 6, -0.075:0.01:0.075)
-        vz = piecewise_linear(T2, 6, -0.075:0.01:0.075)
+        vx = piecewise_linear(T2, n_piecewise_segments, -vmax:(vmax/100):vmax)
+        vy = piecewise_linear(T2, n_piecewise_segments, -vmax:(vmax/100):vmax)
+        vz = piecewise_linear(T2, n_piecewise_segments, -vmax:(vmax/100):vmax)
+    elseif modality == :constant
+        vx = ones(T2) .* σ[1]
+        vy = ones(T2) .* σ[2]
+        vz = ones(T2) .* σ[3]
     else
         vx = moving_average((rand(T2).-0.5) .* σ[1], 20dt) |> cumsum
         vy = moving_average((rand(T2).-0.5) .* σ[2], 20dt) |> cumsum
@@ -170,12 +174,19 @@ function Trajectory(
     clamp!(vz, -vmax, vmax)
 
     # get position and velocity vectors
-    ∑ψ(p, i) = scale .* (vx[i]*ψx(p...) + vy[i]*ψy(p...) + vz[i]*ψz(p...))
+    ∑ψ(p, i) = vx[i]*ψx(p...) + vy[i]*ψy(p...) + vz[i]*ψz(p...)
     X, V = zeros(T2, 3), zeros(T2, 3)
     X[1, :] = x₀
     for t in 2:T2
         x = X[t-1, :]
         v = ∑ψ(x, t)
+
+        #! REMOVE
+        v = v ./ norm(v) .* vmax
+        # if t < 100*dt
+        #     v .*= t/(100*dt)
+        # end
+
         x̂ =  X[t-1, :] + v/dt
         x̂ ./= norm(x̂)
 
@@ -186,7 +197,9 @@ function Trajectory(
     # add a still phase at the beginning
     X, V = X[1:dt:end, :], V[1:dt:end, :]
 
-    still > 0 && (X, V = add_initial_still_phase(X, V, still, x₀))
+    still > 0 && begin
+        X, V = add_initial_still_phase(X, V, still, x₀)
+    end
     return Trajectory(M, X, V, still)
 end
 

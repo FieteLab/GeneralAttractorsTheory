@@ -38,7 +38,7 @@ end
 
 
 # number of neurons
-m = 32
+m =32
 n = m^2
 
 # get neurons on S² ⊂ ℝ³
@@ -70,7 +70,7 @@ offsets = [
 offset_size = .15
 
 # define one forms
-α = 1/offset_size .* 1
+α = 1/offset_size .* 2
 Ω = [
     OneForm(1, (x, y, z) -> α * ψx(x,y,z)),
     OneForm(2, (x, y, z) -> -α * ψx(x,y,z)),

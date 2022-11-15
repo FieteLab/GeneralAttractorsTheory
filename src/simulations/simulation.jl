@@ -76,7 +76,6 @@ function step!(simulation::Simulation, x::Vector, v::Vector; s₀=nothing)
     d = size(S, 2)
     V = vec(
         map(
-            # ωᵢ -> ωᵢ(x, v) / norm(ωᵢ(x)), 
             ωᵢ -> ωᵢ(x, v), 
             simulation.can.Ω
             )
@@ -154,7 +153,8 @@ function run_simulation(
             v = simulation.trajectory.V[i, :]
 
             # step simulation
-            x̂ = decoder_initialized ? decoder.x : x
+            # x̂ = decoder_initialized ? decoder.x : x
+            x̂ = simulation.trajectory.X[i, :]
             S̄ = step!(simulation, x̂, v; s₀=s₀)
 
             # initialize decoder if necessary
