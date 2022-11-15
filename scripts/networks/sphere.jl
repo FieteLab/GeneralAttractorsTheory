@@ -56,7 +56,7 @@ d_s = SphericalDistance()
 k_s = LocalGlobalKernel(α = 0.5, σ = 1.0, β = 0.5)
 
 # cover space
-cover = CoverSpace(S², S², (x, y) -> [x, y])
+cover = CoverSpace(S²)  # trivial cover space
 
 # define offset vector fields
 offsets = [

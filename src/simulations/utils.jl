@@ -35,8 +35,8 @@ function Plots.plot(traj::Trajectory, i::Int; xmin=nothing, xmax=nothing)
             grid = false,
             aspect_ratio = :equal,
             label = nothing,
-            xlim = [xmin[1], xmax[1]],
-            ylim = [xmin[2], xmax[2]],
+            # xlim = [xmin[1], xmax[1]],
+            # ylim = [xmin[2], xmax[2]],
             camera=(.075*i, 20)
         )
     else
@@ -201,7 +201,7 @@ function Plots.plot(
         # main figure
         plot(traj, pop_activity, b, b2, size = (1000, 800), layout = (2, 2))
     else
-        traj = Plots.plot(tj, framen, xmin=[-300, -300], xmax=[300, 300])
+        traj = Plots.plot(tj, framen)
         
         # plot decoded trajectory
         framen > (100+2) && plot!(traj, ϕ(X̄[100:framen, 1]), ϕ(X̄[100:framen, 2]), color=:red, label=nothing, alpha=.6)

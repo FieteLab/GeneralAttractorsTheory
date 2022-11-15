@@ -139,6 +139,7 @@ function run_simulation(
     pbar = ProgressBar()
     X̄ = zeros(size(simulation.trajectory.X))
     X̄[1, :] = simulation.trajectory.X[1, :]
+    decoder_initialized = false
     Progress.with(pbar) do
         job = addjob!(pbar, description = "Simulation", N = N)
         for i = 1:N
@@ -147,16 +148,27 @@ function run_simulation(
                 s₀ = nothing
             end
 
-            # step simulation
+
+            # get trajectory data
             x = simulation.trajectory.X[i, :]
             v = simulation.trajectory.V[i, :]
-            # S̄ = step!(simulation, X̄[i, :], v; s₀=s₀)
 
-            x̂ = i < 10 ? simulation.trajectory.X[i, :] : X̄[i-1, :]
+            # step simulation
+            x̂ = decoder_initialized ? decoder.x : x
             S̄ = step!(simulation, x̂, v; s₀=s₀)
 
+            # initialize decoder if necessary
+            if i > simulation.trajectory.still && !decoder_initialized
+                # prep decoder
+                decoder = Decoder(
+                        simulation.trajectory.X[i, :],
+                        decode_peak_location(S̄, simulation.can)
+                )
+                decoder_initialized = true
+            end
+
             # decode manifold bump position
-            X̄[i, :] = decode_peak_location(S̄, simulation.can)
+            decoder_initialized && (X̄[i, :] = decoder(S̄, simulation.can))
 
             # add data to history
             add!(history, framen, simulation, v)
@@ -172,6 +184,7 @@ function run_simulation(
             end
 
             framen += 1
+            break
         update!(job)
         end
     end

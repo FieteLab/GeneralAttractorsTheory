@@ -1,5 +1,58 @@
+# ----------------------------------- utils ---------------------------------- #
+"""
+    function piecewise_linear(
+        T::Int,  # total number of frames
+        n_intervals::Int,  # number of different liear segments
+        rng::AbstractVector,  # values ranges
+    )
+
+Construct a piece-wise linear 1d trajectory
+with `T` many frames, and `n_intervals` values
+drawn from an iterable `rgn`.
+"""
+function piecewise_linear(
+    T::Int,  # total number of frames
+    n_intervals::Int,  # number of different liear segments
+    rng::AbstractVector,  # values ranges
+)
+    # get values and switches timepoints
+    vals = rand(rng, n_intervals)
+    switches = (1:n_intervals) .* (T/n_intervals ) .- (T/n_intervals ) |> collect
+
+    function x(t)
+        idx = findlast(switches .<= t)
+        idx = isnothing(idx) ? 1 : idx
+        return vals[idx]
+    end
 
 
+    # get value at each step
+    t = 1:T |> collect
+    return x.(t)
+end
+
+
+"""
+Prepend an initial stationary pahse to a trajectory. 
+Used to let the network settle in into a selected
+state before starting a simulation with velocity inputs.
+"""
+function add_initial_still_phase(X::Matrix, V::Matrix, still, x₀)
+    standing = zeros(still, length(x₀))
+    for i in 1:length(x₀)
+        standing[:, i] .= x₀[i]
+    end
+
+    X = vcat(standing, X)
+    V = vcat(zeros(still, length(x₀)), V)
+    return X, V
+end
+
+
+
+# ---------------------------------------------------------------------------- #
+#                                  TRAJECTORY                                  #
+# ---------------------------------------------------------------------------- #
 """
 struct Trajectory
 
@@ -12,6 +65,7 @@ struct Trajectory
     M::AbstractManifold
     X::Matrix
     V::Matrix
+    still::Int # number of warmup frames at the start
 end
 
 
@@ -36,6 +90,7 @@ function Trajectory(
     θ₀ = nothing,
     x₀ = nothing,
     y₀ = nothing,
+    still = 100,
 )   
     # get speed and orientation
     v = rand(T) .* σv .+ μ
@@ -54,29 +109,12 @@ function Trajectory(
     x = cumsum(vx) .+ x₀
     y = cumsum(vy) .+ y₀
 
-    return Trajectory(M, hcat(x, y), hcat(vx, vy))
+    # finalize
+    X, V = hcat(x, y), hcat(vx, vy)
+    still > 0 && (X, V = add_initial_still_phase(X, V, still, [y₀, x₀]))
+    return Trajectory(M, X, V, still)
 end
 
-function piecewise_linear(
-    T::Int,  # total number of frames
-    n_intervals::Int,  # number of different liear segments
-    rng::AbstractVector,  # values ranges
-)
-    # get values and switches timepoints
-    vals = rand(rng, n_intervals)
-    switches = (1:n_intervals) .* (T/n_intervals ) .- (T/n_intervals ) |> collect
-
-    function x(t)
-        idx = findlast(switches .<= t)
-        idx = isnothing(idx) ? 1 : idx
-        return vals[idx]
-    end
-
-
-    # get value at each step
-    t = 1:T |> collect
-    return x.(t)
-end
 
 
 
@@ -136,15 +174,7 @@ function Trajectory(
     # add a still phase at the beginning
     X, V = X[1:dt:end, :], V[1:dt:end, :]
 
-    if still > 0
-        standing = zeros(still, 3)
-        standing[:, 1] .= x₀[1]
-        standing[:, 2] .= x₀[2]
-        standing[:, 3] .= x₀[3]
-        X = vcat(standing, X)
-        V = vcat(zeros(still, 3), V)
-    end
-
-
-    return Trajectory(M, X, V)
+    still > 0 && (X, V = add_initial_still_phase(X, V, still, x₀))
+    return Trajectory(M, X, V, still)
 end
+
