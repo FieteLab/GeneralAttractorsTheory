@@ -12,7 +12,7 @@ import GeneralAttractors: MobiusEuclidean, mobius_embedding, area_deformation
 println(Panel("Creating Mobius attractor", style="green", justify=:center))
 
 # number of neurons
-n = ((Int ∘ round)(1/0.05), (Int ∘ round)(2π/0.1))
+n = ((Int ∘ round)(1/0.005), (Int ∘ round)(2π/0.1))
 println(n)
 
 # cover space
@@ -30,7 +30,7 @@ d_m = MobiusEuclidean()
 
 # connectivity kernel
 # k_m = DiffOfExpKernel(; λ = 1.5)
-k_m = LocalGlobalKernel(α = 0.25, σ = 0.25, β = 0.25)
+k_m = LocalGlobalKernel(α = 0.25, σ = 0.1, β = 0.25)
 
 
 # define offset vector fields
