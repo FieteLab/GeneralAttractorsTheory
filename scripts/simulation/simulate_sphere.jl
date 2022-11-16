@@ -12,7 +12,7 @@ import GeneralAttractors.Simulations: plot_trajectory_and_decoded
 
 
 
-# include("../networks/sphere.jl") 
+include("../networks/sphere.jl") 
 
 # --------------------------------- simulate --------------------------------- #
 dt = 0.5
@@ -31,7 +31,7 @@ trajectory = Trajectory(
     vmax=0.0035,
     still=still,
     modality=:piecewise,
-    n_piecewise_segments=3,
+    n_piecewise_segments=2,
     σ=[1, 1, 1]
 )
 
@@ -39,7 +39,7 @@ trajectory = Trajectory(
 activate = map(p -> euclidean(x₀, p) < dmin, eachcol(spherecan.X)) .* 1
 
 # simulate
-simulation = Simulation(spherecan, trajectory; b₀ = 0.2, η = 0.0, )
+simulation = Simulation(spherecan, trajectory; b₀ = 0.27, η = 0.0, )
 h, X̄ = @time run_simulation(
     simulation,
     frame_every_n = 20,
