@@ -53,7 +53,7 @@ I = [(i, ) for i in 1:size(X, 2)]
 d_s = SphericalDistance()
 
 # kernel  
-k_s = LocalGlobalKernel(α = 0.5, σ = 1.0, β = 0.5)
+k_s = LocalGlobalKernel(α = 0.5, σ = 0.2, β = 0.5)
 
 # cover space
 cover = CoverSpace(S²)  # trivial cover space

@@ -59,12 +59,12 @@ d_t = PeriodicEuclidean([n...])  # distance function over a torus manifold
 k_t = LocalGlobalKernel(α = 0.25, σ = 25.0, β = 0.25)
 
 # one forms
-Ω = OneForm[
-    OneForm(1, x -> sin(2x / n[1]) + 1.25),
-    OneForm(1, x -> -(sin(2x / n[1]) + 1.25)),
-    OneForm(2, x -> sin(2x / n[2]) + 1.25),
-    OneForm(2, x -> -(sin(2x / n[2]) + 1.25)),
-]
+# Ω = OneForm[
+#     OneForm(1, x -> sin(2x / n[1]) + 1.25),
+#     OneForm(1, x -> -(sin(2x / n[1]) + 1.25)),
+#     OneForm(2, x -> sin(2x / n[2]) + 1.25),
+#     OneForm(2, x -> -(sin(2x / n[2]) + 1.25)),
+# ]
 
 # make network
 toruscan = CAN("torus", cover, n, ξ_t, d_t, k_t; 

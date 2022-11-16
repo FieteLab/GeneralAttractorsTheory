@@ -7,6 +7,7 @@ import Base.Iterators: product as ×  # cartesian product
 
 include("io.jl")
 include("utils.jl")
+include("embeddings.jl")
 
 include("kernels.jl")
 include("metrics.jl")

@@ -84,7 +84,7 @@ function simulation_frame_1dcan(simulation::Simulation, timems, v::Vector; kwarg
 end
 
 
-function simulation_frame_2dcan(simulation::Simulation, timems, v::Vector; kwargs...)
+function simulation_frame_2dcan(simulation::Simulation, timems, v::Vector, ::Nothing; kwargs...)
     can = simulation.can
     s̄ = sum(simulation.S, dims = 2) |> vec
 
@@ -98,35 +98,62 @@ function simulation_frame_2dcan(simulation::Simulation, timems, v::Vector; kwarg
 
     h = maximum(can.X) / 2.5
     v̂ = v ./ norm(v) .* h
-    x̄ = range(0, maximum(can.X[1, :]), length = can.n[1])
-    ȳ = range(0, maximum(can.X[2, :]), length = can.n[2])
+    x̄ = range(minimum(can.X[1, :]), maximum(can.X[1, :]), length = can.n[1])
+    ȳ = range(minimum(can.X[2, :]), maximum(can.X[2, :]), length = can.n[2])
 
-    offsets = map(offset_for_visual, can.offsets)
-    for (i, offset) in enumerate(offsets)
-        S = simulation.S[:, i]
+    # offsets = map(offset_for_visual, can.offsets)
+    # for (i, offset) in enumerate(offsets)
+    #     S = simulation.S[:, i]
 
-        # get offset position for plotting
-        offset = offset .* vec(maximum(can.X; dims = 2))
+    #     # get offset position for plotting
+    #     offset = offset .* vec(maximum(can.X; dims = 2))
 
-        # plot activity heatmap
-        x = offset[1] .+ x̄
-        y = offset[2] .+ ȳ
-        contourf!(x, y, reshape(S, can.n)', levels = 3)
-    end
+    #     # plot activity heatmap
+    #     x = offset[1] .+ x̄
+    #     y = offset[2] .+ ȳ
+    #     contourf!(x, y, reshape(S, can.n)', levels = 3)
+    # end
 
     # plot the sum of all activations
     contourf!(x̄, ȳ, reshape(s̄, can.n)', levels = 3)
 
     # plot input vector direction 
-    x0, y0 = maximum(can.X; dims = 2) ./ 2.1
-    plot!([x0, x0 + v̂[1]], [y0, y0 + v̂[2]], lw = 6, color = :green, alpha=.5, label = nothing)
-    scatter!([x0], [y0], ms = 8, color = :green, label = nothing, alpha=.5, )
+    # x0, y0 = maximum(can.X; dims = 2) ./ 2.1
+    # plot!([x0, x0 + v̂[1]], [y0, y0 + v̂[2]], lw = 6, color = :green, alpha=.5, label = nothing)
+    # scatter!([x0], [y0], ms = 8, color = :green, label = nothing, alpha=.5, )
 
     plt
 end
 
 
-function simulation_frame_2dcan_3dviz(simulation::Simulation, timems, v::Vector; kwargs...)
+function simulation_frame_2dcan(simulation::Simulation, timems, v::Vector, φ::Function; kwargs...)
+    can = simulation.can
+    s = sum(simulation.S, dims = 2) |> vec
+    M = by_column(φ, can.X)
+
+    th = maximum(s) .* 0.5
+    active = s .>= th
+    inactive = s .< th
+
+    plt = scatter3d(
+        eachrow(M[:, inactive])..., marker_z=s[inactive],
+        title = "elapsed: $(round(timems)) ms", grid=false,
+        msa=0, msw=0, clims=(0, maximum(s)*0.95), 
+        ms=6, alpha=.1,
+        label=nothing, colorbar=nothing,
+    )
+
+    scatter3d!(
+            eachrow(M[:, active])..., marker_z=s[active],
+            title = "elapsed: $(round(timems)) ms", grid=false,
+            msa=0, msw=0, clims=(0, maximum(s)*0.95), ms=8,
+            label=nothing, colorbar=nothing,
+    )   
+
+    return plt
+end
+
+function custom_sphere_viz(simulation::Simulation, timems, v::Vector, φ::Function; kwargs...)
     can = simulation.can
     s = sum(simulation.S, dims = 2) |> vec
 
@@ -159,18 +186,16 @@ function Plots.plot(
     framen,
     x::Vector,   # trajectory's position
     v::Vector,
-    X̄;           # decoded position
+    X̄,
+    φ::Union{Nothing, Function}
+    ;           # decoded position
     kwargs...,
 )
     # plot populatiuon actvitiy
     if simulation.can.d == 1
         pop_activity = simulation_frame_1dcan(simulation, timems, v; kwargs...)
     elseif simulation.can.d == 2
-        if simulation.can.name == "sphere"
-            pop_activity = simulation_frame_2dcan_3dviz(simulation, timems, v; kwargs...)
-        else
-            pop_activity = simulation_frame_2dcan(simulation, timems, v; kwargs...)
-        end
+        pop_activity = simulation_frame_2dcan(simulation, timems, v, φ; kwargs...)
     else
         error("Simulation plot for d>2 not implemented")
     end
@@ -206,7 +231,7 @@ function Plots.plot(
         scatter!(traj, [X̄[framen, 1]], [X̄[framen, 2]], ms = 7, color = :red, label = "decoded")
 
         # main figure
-        plot(traj, pop_activity,  size = (1000, 800), layout = (2, 1))
+        plot(traj, pop_activity,  size = (1000, 800), layout = (1, 2))
     end
 end
 
