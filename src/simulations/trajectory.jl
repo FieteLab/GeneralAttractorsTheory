@@ -198,3 +198,69 @@ function Trajectory(
     return Trajectory(M, X, V, still)
 end
 
+
+
+
+function Trajectory(
+    M::Mobius;
+    T=250,
+    σ = [1, 1, 1],
+    x₀=nothing,
+    still=0,
+    vmax=0.075,
+    modality=:piecewise,
+    n_piecewise_segments=3,
+)
+    # get initial condition
+    x₀ = isnothing(x₀) ? [rand(-1/2:.02:1/2),  rand(0:.02:2π)] : x₀
+
+    # get vfield "activation" at each frame
+    if modality == :piecewise
+        vx = piecewise_linear(T, n_piecewise_segments, -vmax:(vmax/100):vmax)
+        vy = piecewise_linear(T, n_piecewise_segments, -vmax:(vmax/100):vmax)
+        vz = piecewise_linear(T, n_piecewise_segments, -vmax:(vmax/100):vmax)
+    elseif modality == :constant
+        vx = ones(T) .* σ[1]
+        vy = ones(T) .* σ[2]
+        vz = ones(T) .* σ[3]
+    else
+        vx = moving_average((rand(T).-0.5) .* σ[1], 20dt) |> cumsum
+        vy = moving_average((rand(T).-0.5) .* σ[2], 20dt) |> cumsum
+        vz = moving_average((rand(T).-0.5) .* σ[3], 20dt) |> cumsum
+    end
+    
+    clamp!(vx, -vmax, vmax)
+    clamp!(vy, -vmax, vmax)
+    clamp!(vz, -vmax, vmax)
+
+    # get position and velocity vectors
+    ∑ψ(p, i) = vx[i]*ψ_t(p...) + vy[i]*ψ_θ1(p...) + vz[i]*ψ_θ2(p...)
+    X, V = zeros(T, 2), zeros(T, 2)
+    X[1, :] = x₀
+    for t in 1:T
+        x = t == 1 ? x₀ : X[t-1, :]
+        v = ∑ψ(x, t)
+
+        #! REMOVE
+        v = v ./ norm(v) .* vmax
+
+        x̂ =  x + v
+
+        if x̂[2] > 2π
+            x̂[2] -= 2π
+            x̂[1] = -x̂[1]
+        elseif  x̂[2] < 0
+            x̂[2] = 2π + x̂[2]
+            x̂[1] = -x̂[1]
+        end
+
+        X[t, :] = x̂
+        V[t, :] = v
+    end
+
+    # add a still phase
+    still > 0 && begin
+        X, V = add_initial_still_phase(X, V, still, x₀)
+    end
+    return Trajectory(M, X, V, still)
+end
