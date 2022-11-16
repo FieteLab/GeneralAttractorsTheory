@@ -126,10 +126,10 @@ function simulation_frame_2dcan(simulation::Simulation, timems, v::Vector, ::Not
 end
 
 
-function simulation_frame_2dcan_3dviz(simulation::Simulation, timems, v::Vector, φ::Function; kwargs...)
+function simulation_frame_2dcan(simulation::Simulation, timems, v::Vector, φ::Function; kwargs...)
     can = simulation.can
     s = sum(simulation.S, dims = 2) |> vec
-    M = by_column(φ, can>X)
+    M = by_column(φ, can.X)
 
     th = maximum(s) .* 0.5
     active = s .>= th

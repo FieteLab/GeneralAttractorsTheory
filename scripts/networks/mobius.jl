@@ -22,7 +22,7 @@ cover = CoverSpace(mfld)
 # coordinates function (from neurons index to lattice coordintes)
 ξ_m(i::Int, j::Int)::Vector = [
     lerp(i, n[1], -1/2, 1/2), 
-    lerp(j, n[2], 0.0, 2π)
+    lerp(j, n[2], 0.0, 2π-2π/n[2])
 ]  # ∈ [-1/2, 1/2] × [0, 2π]
 
 # metric

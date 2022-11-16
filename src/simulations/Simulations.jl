@@ -8,7 +8,7 @@ using SparseArrays
 import ForwardDiff: jacobian
 
 import GeneralAttractors:
-    save_simulation_history, moving_average, savepath, save_model, save_data
+    save_simulation_history, moving_average, savepath, save_model, save_data, by_column
 import GeneralAttractors: show_oneforms, show_oneforms!
 import ..Can: AbstractCAN, offset_for_visual
 import ..ManifoldUtils: AbstractManifold,

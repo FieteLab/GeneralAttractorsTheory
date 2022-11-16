@@ -4,16 +4,20 @@ using GeneralAttractors.ManifoldUtils: Mobius, ψ_t, ψ_θ1
 using Plots
 
 
-t = Trajectory(Mobius(); T=500,     
-    # modality=:constant, σ=[0, -.1, 0], 
+t = Trajectory(Mobius(); T=500,  
+    σθ=0.0,   
+    θ₀ = π/2,
+    μv = 0.01,
     vmax=0.01)
 
 
 p = plot(
-    xlim=[-0.75, 0.75], ylim=[-0.5, 2π+0.5], 
+    # xlim=[-0.75, 0.75], ylim=[-0.5, 2π+0.5], 
     aspect_ratio=:equal, size=(400, 800), grid=false
 )
-# plot!(t.X[:, 1], t.X[:, 2], lw=2, color=:black, label="traj")
+
+# plot traj
+plot!(t.X[1:10:end, 1], t.X[1:10:end, 2], lw=2, color=:black, label="traj")
 
 
 for t in -1/2:.2:1/2, θ in 0:.25:2π

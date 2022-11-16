@@ -203,64 +203,67 @@ end
 
 function Trajectory(
     M::Mobius;
-    T=250,
-    σ = [1, 1, 1],
-    x₀=nothing,
-    still=0,
-    vmax=0.075,
-    modality=:piecewise,
-    n_piecewise_segments=3,
-)
-    # get initial condition
-    x₀ = isnothing(x₀) ? [rand(-1/2:.02:1/2),  rand(0:.02:2π)] : x₀
+    T::Int = 250,
+    dt::Float64=0.5,
+    σv = 0.0,
+    μv = 0.05,
+    vmax = 0.01,
+    σθ = 0.0,
+    θ₀ = nothing,
+    x₀ = nothing,
+    y₀ = nothing,
+    still = 100,
+)   
+    # get speed and orientation
+    v = rand(T) .* σv .+ μv
+    v[v.<vmax] .= vmax
+    v[v.<0] .= 0
 
-    # get vfield "activation" at each frame
-    if modality == :piecewise
-        vx = piecewise_linear(T, n_piecewise_segments, -vmax:(vmax/100):vmax)
-        vy = piecewise_linear(T, n_piecewise_segments, -vmax:(vmax/100):vmax)
-        vz = piecewise_linear(T, n_piecewise_segments, -vmax:(vmax/100):vmax)
-    elseif modality == :constant
-        vx = ones(T) .* σ[1]
-        vy = ones(T) .* σ[2]
-        vz = ones(T) .* σ[3]
-    else
-        vx = moving_average((rand(T).-0.5) .* σ[1], 20dt) |> cumsum
-        vy = moving_average((rand(T).-0.5) .* σ[2], 20dt) |> cumsum
-        vz = moving_average((rand(T).-0.5) .* σ[3], 20dt) |> cumsum
-    end
+    θ₀ = isnothing(θ₀) ? rand(0:0.2:2π) : θ₀
+    θ̇ = moving_average(rand(T), 11) .- 0.5
+    θ̇ = cumsum(θ̇ .* σθ) .+ θ₀ # orientation
+
+    # get velocity at each component
+    vx = v .* cos.(θ̇)
+    vy = v .* sin.(θ̇)
+
+    # get random initial position
+    x₀ = isnothing(x₀) ? rand(-1/2:.1:1/2) : x₀
+    y₀ = isnothing(y₀) ? rand(0:.1:2π) : y₀
     
-    clamp!(vx, -vmax, vmax)
-    clamp!(vy, -vmax, vmax)
-    clamp!(vz, -vmax, vmax)
-
-    # get position and velocity vectors
-    ∑ψ(p, i) = vx[i]*ψ_t(p...) + vy[i]*ψ_θ1(p...) + vz[i]*ψ_θ2(p...)
+    # Get trajectory
     X, V = zeros(T, 2), zeros(T, 2)
-    X[1, :] = x₀
-    for t in 1:T
-        x = t == 1 ? x₀ : X[t-1, :]
-        v = ∑ψ(x, t)
+    X[1, :] = [x₀, y₀]
+    V[:, 1] = vx
+    V[:, 2] = vy
+    for t in 2:T
+        v = V[t, :]*dt
+        x = X[t-1, :] + v
 
-        #! REMOVE
-        v = v ./ norm(v) .* vmax
-
-        x̂ =  x + v
-
-        if x̂[2] > 2π
-            x̂[2] -= 2π
-            x̂[1] = -x̂[1]
-        elseif  x̂[2] < 0
-            x̂[2] = 2π + x̂[2]
-            x̂[1] = -x̂[1]
+        # correct for boundary conditions
+        if x[1] <= -0.5
+            x[1] = -0.5
+            v[1] = 0
+        elseif x[1] >= 0.5
+            x[1] = 0.5
+            x[1] = 0
         end
 
-        X[t, :] = x̂
-        V[t, :] = v
+        if x[2] >= 2π
+            x[2] = x[2]-2π
+            x[1] = -x[1]
+        elseif x[2] <= 0
+            x[2] = 2π+x[2]
+            x[1] = -x[1]
+        end
+
+        # store
+        X[t, :] = x
     end
 
-    # add a still phase
+    # finalize
     still > 0 && begin
-        X, V = add_initial_still_phase(X, V, still, x₀)
+        X, V = add_initial_still_phase(X, V, still, X[1, :])
     end
     return Trajectory(M, X, V, still)
 end
