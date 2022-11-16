@@ -6,9 +6,9 @@ using Plots
 
 t = Trajectory(Mobius(); T=500,  
     σθ=0.0,   
-    θ₀ = π/2,
-    μv = 0.01,
-    vmax=0.01)
+    θ₀ = π/4,
+    μv = 0.02,
+    vmax=0.02)
 
 
 p = plot(

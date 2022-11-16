@@ -41,10 +41,10 @@ offsets = [
     p -> -ψ_t(p),
     p -> ψ_θ1(p),
     p -> -ψ_θ1(p),
-    # p -> ψ_θ2(p),
-    # p -> -ψ_θ2(p),
+    p -> ψ_θ2(p),
+    p -> -ψ_θ2(p),
 ]
-offset_size = .15
+offset_size = 0.15
 
 # define one forms
 α = 1/offset_size .* 2
@@ -53,8 +53,8 @@ offset_size = .15
     OneForm(2, (t, θ) -> -α * ψ_t(t, θ)),
     OneForm(3, (t, θ) -> α * ψ_θ1(t, θ)),
     OneForm(4, (t, θ) -> -α * ψ_θ1(t, θ)),
-    # OneForm(5, (t, θ) -> α * ψ_θ2(t, θ)),
-    # OneForm(6, (t, θ) -> -α * ψ_θ2(t, θ)),
+    OneForm(5, (t, θ) -> α * ψ_θ2(t, θ)),
+    OneForm(6, (t, θ) -> -α * ψ_θ2(t, θ)),
 ]
 
 

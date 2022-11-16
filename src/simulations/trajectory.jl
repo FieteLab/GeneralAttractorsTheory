@@ -246,7 +246,7 @@ function Trajectory(
             v[1] = 0
         elseif x[1] >= 0.5
             x[1] = 0.5
-            x[1] = 0
+            v[1] = 0
         end
 
         if x[2] >= 2π

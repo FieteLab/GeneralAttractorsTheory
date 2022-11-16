@@ -11,18 +11,19 @@ using GeneralAttractors: lerp
 using GeneralAttractors.ManifoldUtils
 import GeneralAttractors.Simulations: plot_trajectory_and_decoded
 
-include("../networks/mobius.jl")
+# include("../networks/mobius.jl")
 
 # --------------------------------- simulate --------------------------------- #
 dt = 0.5
-duration = 1000
-still = 100  # initialization period        
+duration = 500
+still = 100  # initialization period  
+dmin = 0.25  # minimal distance from x₀ for state intialization  
 
 # select neurons to initialize
-x₀ = [-0.25, 1]
-d = map(i -> mobiuscan.metric(x₀ .* [-1, 1], mobiuscan.X[:, i]), 1:size(mobiuscan.X, 2))
+x₀ = [-0.25, 0]
+d = map(i -> mobiuscan.metric(x₀, mobiuscan.X[:, i]), 1:size(mobiuscan.X, 2))
 activate = zeros(length(d))
-activate[d.<2] .= .005
+activate[d.<dmin] .= 1
 
 # initialize trajectory and simulation
 nframes = (Int ∘ round)(duration / dt)
@@ -32,9 +33,10 @@ trajectory = Trajectory(
     x₀=x₀[1], y₀=x₀[2],
     σθ=0.0,   
     θ₀ = π/2,
-    μv = 0.01,
-    vmax=0.01)
-simulation = Simulation(mobiuscan, trajectory; η = 0.0, b₀=0.4)
+    μv = 0.025,
+    vmax=0.025
+)
+simulation = Simulation(mobiuscan, trajectory; η = 0.0, b₀=0.2)
 
 # run
 h, X̄ = @time run_simulation(
