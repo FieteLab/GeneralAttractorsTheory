@@ -5,6 +5,7 @@ module ManifoldUtils
 using Distances
 
 import ..GeneralAttractors: SphericalDistance, MobiusEuclidean
+import ..GeneralAttractors: sphere_embedding, mobius_embedding
 
 export AbstractManifold, CoverSpace
 export ℝ², T, S²
@@ -48,7 +49,7 @@ struct Mobius <: AbstractManifold
     xmax::Vector
     metric::Metric
 end
-Mobius(m) = Mobius([0, 0], [m, m], MobiusEuclidean(m))
+Mobius() = Mobius([-1/2, 1/2], [0, 2π], MobiusEuclidean())
 
 # ---------------------------------------------------------------------------- #
 #                                 COVER SPACES                                 #

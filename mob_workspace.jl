@@ -1,6 +1,7 @@
 using GLMakie
 import ForwardDiff: jacobian
 import GeneralAttractors: MobiusEuclidean
+import GeneralAttractors.ManifoldUtils: area_deformation
 
 t = range(-1/2, 1/2, length=20)
 θ = range(0, 2π-.1, length=50)
@@ -22,9 +23,12 @@ x = [1/2, 0]
 d = map(
     i -> dist(x, M[:, i]), 1:size(M, 2)
 )
+def = map(
+    i -> area_deformation(f, M[:, i]), 1:size(M, 2)
+)
 
 
-fig = scatter(eachrow(N)..., color=:black)
+fig = scatter(eachrow(N)..., color=def)
 
 # TODO define other vfields
 
@@ -35,13 +39,15 @@ J(t, θ) = jacobian(f, [t, θ])
 
 tovec(x) = [[x] for x in x]
 for t in -1/2:.1:1/2, θ in 0:.75:(2π-.75)
-    v = J(t, θ) * Δx .* 0.1
+    λ = area_deformation(f, [t, θ])
+
+    v = J(t, θ) * Δx .* 0.1 .* 1/λ
     arrows!(tovec(f(t, θ))..., tovec(v)..., color=:green, arrowsize=.05)
 
-    v = J(t, θ) * Δy(t, θ) .* 0.1
+    v = J(t, θ) * Δy(t, θ) .* 0.1 .* 1/λ
     arrows!(tovec(f(t, θ))..., tovec(v)..., color=:red, arrowsize=.05)
 
-    v = J(t, θ-.05) * Δy2(t, θ-.05) .* 0.1
+    v = J(t, θ-.05) * Δy2(t, θ-.05) .* 0.1 .* 1/λ
     arrows!(tovec(f(t, θ-.05))..., tovec(v)..., color=:blue, arrowsize=.05)
 end
 

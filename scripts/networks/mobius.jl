@@ -6,34 +6,72 @@ using GeneralAttractors
 using GeneralAttractors.Kernels
 using GeneralAttractors: lerp
 using GeneralAttractors.ManifoldUtils
-import GeneralAttractors.ManifoldUtils: Manifoldℝ², Mobius
+import GeneralAttractors.ManifoldUtils: Manifoldℝ², Mobius, ψ_t, ψ_θ1, ψ_θ2
 import GeneralAttractors: MobiusEuclidean
 
 println(Panel("Creating Mobius attractor", style="green", justify=:center))
 
 # number of neurons
-m = 32
-n = (m, m)
+n = ((Int ∘ round)(1/0.1), (Int ∘ round)(2π/0.1))
+println(n)
 
 # cover space
-mfld = Mobius(2π)
+mfld = Mobius()
 cover = CoverSpace(mfld)
 
 # coordinates function (from neurons index to lattice coordintes)
 ξ_m(i::Int, j::Int)::Vector = [
-    lerp(i, n[1], 0.0, 2π), 
+    lerp(i, n[1], -1/2, 1/2), 
     lerp(j, n[2], 0.0, 2π)
-]  # ∈ [0, 2π] × [0, 2π]
+]  # ∈ [-1/2, 1/2] × [0, 2π]
 
 # metric
-d_m = MobiusEuclidean(2π)
+d_m = MobiusEuclidean()
 
 # connectivity kernel
 # k_m = DiffOfExpKernel(; λ = 1.5)
 k_m = LocalGlobalKernel(α = 0.25, σ = 1.0, β = 0.25)
 
+
+# define offset vector fields
+offsets = [
+    p -> ψ_t(p),
+    p -> -ψ_t(p),
+    p -> ψ_θ1(p),
+    p -> -ψ_θ1(p),
+    p -> ψ_θ2(p),
+    p -> -ψ_θ2(p),
+]
+offset_size = .15
+
+# define one forms
+α = 1/offset_size .* 2
+Ω = [
+    OneForm(1, (t, θ) -> α * ψ_t),
+    OneForm(2, (t, θ) -> -α * ψ_t),
+    OneForm(3, (t, θ) -> α * ψ_θ1),
+    OneForm(4, (t, θ) -> -α * ψ_θ1),
+    OneForm(5, (t, θ) -> α * ψ_θ2),
+    OneForm(6, (t, θ) -> -α * ψ_θ2),
+]
+
+
+
 # construct network
-mobius_attractor = CAN("mobius", 
+mobiuscan = CAN("mobius", 
         cover, n, ξ_m, d_m, k_m;
-        offset_size=0.2,
+        offset_size = offset_size,
+        offsets = offsets,
+        Ω=Ω
 )
+
+
+# ------------------------------------ viz ----------------------------------- #
+using Plots
+x = [-0.5, 0]
+
+d = map(x̃ -> mobiuscan.metric(x, x̃), eachcol(mobiuscan.X))
+
+Plots.scatter(eachrow(mobiuscan.X)..., marker_z=d, 
+    aspect_ratio=:equal)
+Plots.scatter!([x[1]], [x[2]], ms=10, color=:red)

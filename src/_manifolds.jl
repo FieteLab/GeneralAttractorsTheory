@@ -1,20 +1,26 @@
 using ForwardDiff: jacobian
 using LinearAlgebra
 
+
+
+# ---------------------------------------------------------------------------- #
+#                                    MOBIUS                                    #
+# ---------------------------------------------------------------------------- #
+# -------------------- vector fields on the mobius domain -------------------- #
+ψ_t(t, θ) = [0, 1]
+ψ_t(p) = ψ_t(p...)
+
+ψ_θ1(t, θ) = [(-0.1)-t, 0]
+ψ_θ1(p) = ψ_θ1(p...)
+
+ψ_θ2(t, θ) = [0.1-t, 0]
+ψ_θ2(p) = ψ_θ2(p...)
+
+
+
 # ---------------------------------------------------------------------------- #
 #                                    SPHERE                                    #
 # ---------------------------------------------------------------------------- #
-"""
-Classic sphere embedding in ℝ³
-"""
-function sphere_embedding end
-
-sphere_embedding(p) = sphere_embedding(p...)
-function sphere_embedding(lon, lat)
-    ls = atan(tan(lat))
-    return [cos(ls) * cos(lon), cos(ls) * sin(lon), sin(ls)]
-end
-
 
 
 """

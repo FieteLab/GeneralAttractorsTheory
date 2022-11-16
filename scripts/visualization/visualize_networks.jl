@@ -10,5 +10,5 @@ using GeneralAttractors
 
 # ---------------------------------- mobius ---------------------------------- #
 include("../networks/mobius.jl")
-show_connectivity(mobius_attractor; plot_title = "Mobius attractor connectivity")
+show_connectivity(mobiuscan; plot_title = "Mobius attractor connectivity")
 

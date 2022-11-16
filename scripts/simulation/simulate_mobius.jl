@@ -1,16 +1,55 @@
+using Plots
+
+
 using GeneralAttractors
-import GeneralAttractors.Can: CAN
+using GeneralAttractors.Simulations
+
+
+using Distances
 using GeneralAttractors.Kernels
+using GeneralAttractors: lerp
+using GeneralAttractors.ManifoldUtils
+import GeneralAttractors.Simulations: plot_trajectory_and_decoded
 
-# using Distances
-simulation = Simulation(mobius_attractor; b₀ = 1.0)
+include("../networks/mobius.jl")
 
-chunks = ConstantChunk[
-    ConstantChunk([0.0, 0.0], simulation; duration = 250),
-    ConstantChunk([1.0, 0.0], simulation; duration = 1000),
-    ConstantChunk([0.0, 1.0], simulation; duration = 1000),
-    ConstantChunk([-1.0, 0.0], simulation; duration = 1000),
-    ConstantChunk([0.0, -1.0], simulation; duration = 1000),
-]
+# --------------------------------- simulate --------------------------------- #
+dt = 0.5
+duration = 2500
+still = 250  # initialization period        
 
-@time run_simulation(simulation, chunks; frame_every_n = 25)
+# select neurons to initialize
+x₀ = [0, 0]
+d = map(i -> toruscan.metric(x₀, toruscan.X[:, i]), 1:size(toruscan.X, 2))
+activate = zeros(length(d))
+activate[d.<2] .= 1
+
+# initialize trajectory and simulation
+nframes = (Int ∘ round)(duration / dt)
+trajectory = Trajectory(
+        toruscan; T = nframes, dt=dt,
+        # x₀=-4.0, y₀=0.0,
+        σv = 0.00, μv = 0.1, vmax=0.1,
+        σθ = 0.2, θ₀ = nothing, 
+        still=still
+)
+simulation = Simulation(toruscan, trajectory; η = 0.0, b₀=0.31)
+
+# run
+h, X̄ = @time run_simulation(
+    simulation;
+    frame_every_n = 20,
+    discard_first_ms = 0,
+    average_over_ms = 1,
+    fps = 10,
+    s₀=1.0 .* activate,
+);     
+
+plot_trajectory_and_decoded(trajectory, X̄) |> display
+
+nothing
+
+# TODO decoding has to be initialized at the end of the `still` phase with decoded peak position
+# TODO fix mess in simulation plotting to be more consisten
+
+
