@@ -15,28 +15,28 @@ include("../networks/mobius.jl")
 
 # --------------------------------- simulate --------------------------------- #
 dt = 0.5
-duration = 250
-still = 50  # initialization period        
+duration = 1000
+still = 100  # initialization period        
 
 # select neurons to initialize
-# x₀ = [0, 0]
-# d = map(i -> mobiuscan.metric(x₀, mobiuscan.X[:, i]), 1:size(mobiuscan.X, 2))
-# activate = zeros(length(d))
-# activate[d.<2] .= 1
+x₀ = [-0.25, 1]
+d = map(i -> mobiuscan.metric(x₀ .* [-1, 1], mobiuscan.X[:, i]), 1:size(mobiuscan.X, 2))
+activate = zeros(length(d))
+activate[d.<2] .= .01
 
 # initialize trajectory and simulation
 nframes = (Int ∘ round)(duration / dt)
 trajectory = Trajectory(
     mobiuscan; 
     T = nframes, 
-    # x₀=x₀,
+    x₀=x₀,
     vmax=0.0035,
     still=still,
-    modality=:piecewise,
+    modality=:constant,
     n_piecewise_segments=2,
-    σ=[1, 1, 1]
+    σ=[1, 0, 0]
 )
-simulation = Simulation(mobiuscan, trajectory; η = 0.0, b₀=0.31)
+simulation = Simulation(mobiuscan, trajectory; η = 0.0, b₀=0.4)
 
 # run
 h, X̄ = @time run_simulation(
@@ -45,10 +45,11 @@ h, X̄ = @time run_simulation(
     discard_first_ms = 0,
     average_over_ms = 1,
     fps = 10,
-    # s₀=1.0 .* activate,
+    s₀=1.0 .* activate,
+    φ=mobius_embedding,
 );     
 
-plot_trajectory_and_decoded(trajectory, X̄) |> display
+# plot_trajectory_and_decoded(trajectory, X̄) |> display
 
 nothing
 

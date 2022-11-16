@@ -7,12 +7,12 @@ using GeneralAttractors.Kernels
 using GeneralAttractors: lerp
 using GeneralAttractors.ManifoldUtils
 import GeneralAttractors.ManifoldUtils: Manifoldℝ², Mobius, ψ_t, ψ_θ1, ψ_θ2
-import GeneralAttractors: MobiusEuclidean
+import GeneralAttractors: MobiusEuclidean, mobius_embedding, area_deformation
 
 println(Panel("Creating Mobius attractor", style="green", justify=:center))
 
 # number of neurons
-n = ((Int ∘ round)(1/0.1), (Int ∘ round)(2π/0.1))
+n = ((Int ∘ round)(1/0.05), (Int ∘ round)(2π/0.1))
 println(n)
 
 # cover space
@@ -30,10 +30,12 @@ d_m = MobiusEuclidean()
 
 # connectivity kernel
 # k_m = DiffOfExpKernel(; λ = 1.5)
-k_m = LocalGlobalKernel(α = 0.25, σ = 1.0, β = 0.25)
+k_m = LocalGlobalKernel(α = 0.25, σ = 0.25, β = 0.25)
 
 
 # define offset vector fields
+λ(p) = 1/area_deformation(mobius_embedding, p)
+λ(t, θ) = λ([t, θ])
 offsets = [
     p -> ψ_t(p),
     p -> -ψ_t(p),
@@ -62,16 +64,6 @@ mobiuscan = CAN("mobius",
         cover, n, ξ_m, d_m, k_m;
         offset_size = offset_size,
         offsets = offsets,
-        Ω=Ω
+        Ω=Ω,
 )
 
-
-# ------------------------------------ viz ----------------------------------- #
-using Plots
-x = [-0.5, 0]
-
-d = map(x̃ -> mobiuscan.metric(x, x̃), eachcol(mobiuscan.X))
-
-Plots.scatter(eachrow(mobiuscan.X)..., marker_z=d, 
-    aspect_ratio=:equal)
-Plots.scatter!([x[1]], [x[2]], ms=10, color=:red)

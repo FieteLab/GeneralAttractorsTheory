@@ -119,6 +119,7 @@ function run_simulation(
     fps = 20,
     discard_first_ms = 0,
     s₀ = nothing,
+    φ::Union{Function, Nothing} = nothing,
     kwargs...,
 )
 
@@ -180,7 +181,7 @@ function run_simulation(
                     (time[framen] > discard_first_ms) &&
                     # (framen > simulation.trajectory.still) &&
                     begin
-                        plot(simulation, time[framen], framen, x, v, X̄)
+                        plot(simulation, time[framen], framen, x, v, X̄, φ)
                         frame(anim)
                     end
             end

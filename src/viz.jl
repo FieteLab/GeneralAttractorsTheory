@@ -118,12 +118,12 @@ plot_distance_function(d::MobiusEuclidean; kwargs...)
 Plot distance for metric of type MobiusEuclidean
 """
 function plot_distance_function(d::MobiusEuclidean; kwargs...)
-    x = 0:0.075:2π |> collect
-    y = 0:0.075:1 |> collect
+    x = -1/2:0.075:1.2 |> collect
+    y = 0:0.075:2π |> collect
     X = (x × y) |> collect
     X = [[x...] for x in vec(X)]
 
-    plot_distance_2d(d, x, y; points = [[0, 0], [3, 0], [0.2, 0.5], [2π, 0]], kwargs...)
+    plot_distance_2d(d, x, y; points = [[-1/2, 0], [0, 3], [0.5, 0.2], [0, 2π]], kwargs...)
 end
 
 """
