@@ -55,8 +55,8 @@ end
 d_t = PeriodicEuclidean([n...])  # distance function over a torus manifold
 
 # connectivity kernel 
-# k_t = DiffOfExpKernel(; λ = 13.0)
-k_t = LocalGlobalKernel(α = 0.25, σ = 50.0, β = 0.25)
+k_t = DiffOfExpKernel(; λ = 13.0)
+# k_t = LocalGlobalKernel(α = 0.25, σ = 50.0, β = 0.25)
 
 # one forms
 # Ω = OneForm[
