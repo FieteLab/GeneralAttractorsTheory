@@ -27,9 +27,8 @@ params = AnalysisParameters(
 sim_fld = "abstract"
 
 
-y0, y1 = minimum(toruscan.X[2, :]), maximum(toruscan.X[2, :])
 simulations = []
-for (i, y) in enumerate(range(y0, y1, length=10))
+for i in 1:20
     sim = "torus_$(i)_torus"
     history = load_simulation_history(sim_fld, sim*"_history")
     push!(simulations, population_average(history))
