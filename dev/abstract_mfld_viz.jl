@@ -20,16 +20,15 @@ params = AnalysisParameters(
     pca_pratio = 0.999999,       # fraction of variance explained
     n_isomap_dimensions = 3,
     isomap_k = 20,
-    debug = true,   # avoid re-running analysis steps
+    debug = false,   # avoid re-running analysis steps
 )
 
 
 sim_fld = "abstract"
 
 
-y0, y1 = minimum(toruscan.X[2, :]), maximum(toruscan.X[2, :])
 simulations = []
-for (i, y) in enumerate(range(y0, y1, length=10))
+for i in 1:20
     sim = "torus_$(i)_torus"
     history = load_simulation_history(sim_fld, sim*"_history")
     push!(simulations, population_average(history))
@@ -39,14 +38,15 @@ S = hcat(simulations...)
 
 # # ------------------------- dimensionality reduction ------------------------- #
 @info "PCA dimensionality reduction"
-pca_dimensionality_reduction(S,sim_fld, "torus",  params; visualize=true)
+# pca_dimensionality_reduction(S,sim_fld, "torus",  params; visualize=true)
 
-# @info "ISOMAP dimensionality reduction"
-isomap_dimensionality_reduction(sim_fld, "torus", params)
+@info "ISOMAP dimensionality reduction"
+# isomap_dimensionality_reduction(sim_fld, "torus", params)
 
 
 # # ----------------------------------- plot ----------------------------------- #
-# # X = load_data(sim_fld, sim*"_isomap_space")
+X = load_data(sim_fld, "torus_isomap_space")
 # X = load_data(sim_fld, sim*"_pca_space")
 
-# scatter(eachrow(X)...)
+import GLMakie
+GLMakia.scatter(eachrow(X)...)
