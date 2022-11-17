@@ -2,33 +2,51 @@ using GeneralAttractors.Analysis
 using Plots
 import GeneralAttractors: load_data
 using GeneralAttractors, Distances
+import GeneralAttractors.Analysis.ManifoldAnalysis: population_average
+
+
+ρ(x) = x
+ρⁱ(x) = x
 
 """
 Create a PCA or Isomap visualization of a pointcloud
 of neural activity from a simulation.
 """
-ρ(x) = x
-ρⁱ(x) = x
 
-sim_fld = "abstract"
-sim = "abstract_torus"
+
+
 params = AnalysisParameters(
-    max_nPC = 10,  # max num of PCs
+    max_nPC = 500,  # max num of PCs
     pca_pratio = 0.999999,       # fraction of variance explained
     n_isomap_dimensions = 3,
-    isomap_k = 100,
+    isomap_k = 20,
     debug = true,   # avoid re-running analysis steps
 )
 
 
-# ------------------------- dimensionality reduction ------------------------- #
+sim_fld = "abstract"
+
+
+y0, y1 = minimum(toruscan.X[2, :]), maximum(toruscan.X[2, :])
+simulations = []
+for (i, y) in enumerate(range(y0, y1, length=10))
+    sim = "torus_$(i)_torus"
+    history = load_simulation_history(sim_fld, sim*"_history")
+    push!(simulations, population_average(history))
+end
+S = hcat(simulations...)
+
+
+# # ------------------------- dimensionality reduction ------------------------- #
 @info "PCA dimensionality reduction"
-pca_dimensionality_reduction(sim_fld, sim, params)
+pca_dimensionality_reduction(S,sim_fld, "torus",  params; visualize=true)
 
-@info "ISOMAP dimensionality reduction"
-isomap_dimensionality_reduction(sim_fld, sim, params)
+# @info "ISOMAP dimensionality reduction"
+isomap_dimensionality_reduction(sim_fld, "torus", params)
 
 
-# ----------------------------------- plot ----------------------------------- #
-X = load_data(sim_fld, sim*"_isomap_space")
-scatter(eachrow(X)...)
+# # ----------------------------------- plot ----------------------------------- #
+# # X = load_data(sim_fld, sim*"_isomap_space")
+# X = load_data(sim_fld, sim*"_pca_space")
+
+# scatter(eachrow(X)...)

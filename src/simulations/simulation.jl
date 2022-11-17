@@ -114,6 +114,7 @@ include("history.jl")
 
 function run_simulation(
     simulation::Simulation;
+    savefolder::Union{String, Nothing} = nothing,
     savename::String = simulation.can.name * "_sim",
     frame_every_n::Union{Nothing,Int} = 20,   # how frequently to save an animation frame
     fps = 20,
@@ -122,6 +123,7 @@ function run_simulation(
     φ::Union{Function, Nothing} = nothing,
     kwargs...,
 )
+    savefolder = isnothing(savefolder) ? savename : savefolder
 
     # setup animation
     N = size(simulation.trajectory.X, 1)
@@ -192,12 +194,12 @@ function run_simulation(
     end
 
     isnothing(frame_every_n) || begin
-        gif(anim, savepath(savename, savename, "gif"), fps = fps)
+        gif(anim, savepath(savefolder, savename, "gif"), fps = fps)
     end
 
-    save_simulation_history(history, savename, savename*"_"*simulation.can.name*"_history")
-    save_model(simulation.can, savename, simulation.can.name * "_sim_CAN_model", :CAN)
-    save_data(simulation.trajectory.X, savename, simulation.can.name * "_sim_trajectory_X")
-    save_data(simulation.trajectory.V, savename, simulation.can.name * "_sim_trajectory_V")
+    save_simulation_history(history, savefolder, savename*"_"*simulation.can.name*"_history")
+    save_model(simulation.can, savefolder, simulation.can.name * "_sim_CAN_model", :CAN)
+    save_data(simulation.trajectory.X, savefolder, simulation.can.name * "_sim_trajectory_X")
+    save_data(simulation.trajectory.V, savefolder, simulation.can.name * "_sim_trajectory_V")
     return history, X̄
 end

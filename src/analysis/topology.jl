@@ -34,9 +34,7 @@ export pca_dimensionality_reduction,
     estimate_manifold_topology,
     estimate_intrinsic_dimensionality
 
-# ---------------------------------------------------------------------------- #
-#                                      PCA                                     #
-# ---------------------------------------------------------------------------- #
+# ----------------------------------- utils ---------------------------------- #
 """ compute fraction of variance explained by each PC """
 fraction_variance_explained(M::PCA) = principalvars(M) ./ tvar(M) * 100
 
@@ -72,6 +70,22 @@ function find_fraction_variance_explained_elbow(σ::Vector{Float64})::Int
     return argmax(Δ)
 end
 
+"""
+Take the average/sum of the population activity across
+copies of the network
+"""
+function population_average(history::History)::Matrix
+    n, _, m = size(history.S)
+    S = real.(reshape(mean(history.S, dims=2), (n, m)))
+    not_nan_cols = map(c -> !any(isnan.(c)), eachcol(S)) |> collect
+    S = S[:, not_nan_cols]
+    S = S[:, 10:end-10]
+    return S
+end
+
+# ---------------------------------------------------------------------------- #
+#                                      PCA                                     #
+# ---------------------------------------------------------------------------- #
 
 """
     pca_dimensionality_reduction(
@@ -96,16 +110,19 @@ function pca_dimensionality_reduction(
     history = load_simulation_history(simulation_folder, simulation_name*"_history")
     @info "loaded history" history.S history.v
 
-    # flatten out S by summing across copies of the population
-    N = size(history.S, 1) * size(history.S, 2)  # tot neurons
-    S = reshape(history.S, (N, size(history.S, 3)))[:, 2:end] # N×T | each column an observation
-    # n, _, m = size(history.S)
-    # S = real.(reshape(sum(history.S, dims=2), (n, m)))
-    # not_nan_cols = map(c -> !any(isnan.(c)), eachcol(S)) |> collect
-    # S = S[:, not_nan_cols]
-    # @info "S" size(S) sum(not_nan_cols) length(not_nan_cols) maximum(S) minimum(S) any(isnan.(S)) any(isinf.(S))
+    pca_dimensionality_reduction(population_average(history), simulation_folder, simulation_name, params, visualize=visualize)
+end
 
-    # get numnber of PCs
+
+
+function pca_dimensionality_reduction(
+        S::Matrix,
+        simulation_folder::String,
+        simulation_name::String,
+        params::AnalysisParameters = AnalysisParameters();
+        visualize=false,
+    )::Nothing
+    # get number of PCs
     nPC = if !isnothing(params.max_nPC)
         params.max_nPC
     else
@@ -128,6 +145,14 @@ function pca_dimensionality_reduction(
         color = :black,
         title = "Fraction of variance explained",
     ) |> display
+
+    visualize && nPC==3 && animate_3d_scatter(
+        S_pca_space,
+        simulation_name,
+        "PCA_projection";
+        alpha = 0.25,
+        title = simulation_name,
+    )
 
     # save results to file
     save_model(pca_model, simulation_folder, simulation_name * "_pca_model", :PCA)
