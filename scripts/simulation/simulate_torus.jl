@@ -15,7 +15,7 @@ include("../networks/torus.jl")
 
 # --------------------------------- simulate --------------------------------- #
 dt = 0.5
-duration = 10_000
+duration = 30_000
 still = 250  # initialization period        
 
 # select neurons to initialize
@@ -28,8 +28,8 @@ activate[d.<2] .= 1
 nframes = (Int ∘ round)(duration / dt)
 trajectory = Trajectory(
         toruscan; T = nframes, dt=dt,
-        σv = 0.00, μv = 0.4, vmax=0.4,
-        σθ = 0.2, θ₀ = nothing, 
+        σv = 0.00, μv = 0.1, vmax=0.1,
+        σθ = .4, θ₀ = nothing, 
         still=still
 )
 simulation = Simulation(toruscan, trajectory; η = 0.0, b₀=0.31)
@@ -37,8 +37,8 @@ simulation = Simulation(toruscan, trajectory; η = 0.0, b₀=0.31)
 # run
 h, X̄ = @time run_simulation(
     simulation;
-    frame_every_n = nothing,
-    discard_first_ms = 2*still,
+    frame_every_n = 100,
+    discard_first_ms = 1_000,
     average_over_ms = 20,
     fps = 10,
     s₀=1.0 .* activate,

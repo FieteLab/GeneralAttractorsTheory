@@ -158,8 +158,8 @@ function run_simulation(
             decoder_initialized || (X̄[i, :] = x)
 
             # step simulation
-            # x̂ = decoder_initialized ? decoder.x : x
-            x̂ = simulation.trajectory.X[i, :]
+            x̂ = decoder_initialized ? decoder.x : x
+            # x̂ = simulation.trajectory.X[i, :]
             S̄ = step!(simulation, x̂, v; s₀=s₀)
 
             # initialize decoder if necessary

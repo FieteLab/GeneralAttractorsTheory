@@ -156,7 +156,7 @@ function isomap_dimensionality_reduction(
     (checkpath(simulation_folder, simulation_name*"_isomap_space", "npz") && !params.debug) && return
 
     # load
-    X = load_data(simulation_folder, simulation_name*"_pca_space")
+    X = real.(load_data(simulation_folder, simulation_name*"_pca_space"))
 
     # fit
     @info "Performing ISOMAP" size(X) params.n_isomap_dimensions

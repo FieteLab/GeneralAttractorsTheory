@@ -16,7 +16,7 @@ params = AnalysisParameters(
     max_nPC = 10,  # max num of PCs
     pca_pratio = 0.999999,       # fraction of variance explained
     n_isomap_dimensions = 3,
-    isomap_k = 10,
+    isomap_k = 100,
     debug = true,   # avoid re-running analysis steps
 )
 
