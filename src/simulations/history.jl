@@ -35,13 +35,13 @@ function History(
     keep_frames = (Int ∘ floor)((nframes - n_discard) / average_over)
     keep_frames < 1 && error("Keep frames < 0, reduce discard or increase duration")
 
-    @debug "Creating history arrays" size(simulation.S) keep_frames average_over
+    @info "Creating history arrays" size(simulation.S) keep_frames average_over
 
     S = Array{Float64}(undef, (size(simulation.S)..., keep_frames))
     Ŝ = Array{Float64}(undef, (size(simulation.S)..., average_over))
     v = Array{Float64}(undef, (size(simulation.trajectory.V, 2), keep_frames))
     v̂ = Array{Float64}(undef, (size(simulation.trajectory.V, 2), average_over))
-    @debug "Done" size(S) size(Ŝ) size(v) size(v̂)
+    @info "Done" size(S) size(Ŝ) size(v) size(v̂)
     metadata = Dict{Symbol,Any}(
         :can => simulation.can.name,
         :cover => simulation.can.C,
@@ -55,7 +55,7 @@ function History(
         :average_over_ms => average_over_ms,
     )
 
-    @debug "Simulation history saving: $(size(S)[end]) frames" "($(round((nframes-n_discard)*simulation.dt; digits=3)) ms tot , averaging every $average_over_ms ms)" "Discarding first $n_discard frames ($discard_first_ms ms)"
+    @info "Simulation history saving: $(size(S)[end]) frames" "($(round((nframes-n_discard)*simulation.dt; digits=3)) ms tot , averaging every $average_over_ms ms)" "Discarding first $n_discard frames ($discard_first_ms ms)"
     return History(S, Ŝ, v, v̂, average_over, n_discard, metadata, 1)
 end
 
@@ -78,7 +78,7 @@ function add!(history::History, framen::Int, simulation::Simulation, v::Vector{F
     # update main registry
     if F == 0 || framen == 1
         history.entry_n > size(history.S, 3) && begin
-            @warn "Can't append to history, ran out of space"
+            @warn "Can't append to history, ran out of space" F framen
             return
         end
         history.S[:, :, history.entry_n] = mean(Ŝ; dims = 3)

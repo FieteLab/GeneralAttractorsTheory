@@ -16,7 +16,7 @@ include("../networks/sphere.jl")
 
 # --------------------------------- simulate --------------------------------- #
 dt = 0.5
-duration = 500  # ms   
+duration = 60_000  # ms   
 x₀ = [1, -1, 0]
 x₀ /= norm(x₀)
 still = 50  # initialization period                                                                             
@@ -39,14 +39,15 @@ trajectory = Trajectory(
 activate = map(p -> euclidean(x₀, p) < dmin, eachcol(spherecan.X)) .* 1
 
 # simulate
-simulation = Simulation(spherecan, trajectory; b₀ = 0.27, η = 0.0, )
+simulation = Simulation(spherecan, trajectory; b₀ = 0.20, η = 0.0, )
 h, X̄ = @time run_simulation(
     simulation,
-    frame_every_n = 20,
+    frame_every_n = nothing,
     discard_first_ms = 0,
-    average_over_ms = 2,
-    fps=5,
+    average_over_ms = 10,
+    fps=10,
     s₀=activate,
+    savename="abstract",
 );
 
 

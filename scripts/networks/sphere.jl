@@ -38,7 +38,7 @@ end
 
 
 # number of neurons
-m =48
+m =40
 n = m^2
 
 # get neurons on S² ⊂ ℝ³

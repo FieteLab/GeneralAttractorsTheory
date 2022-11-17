@@ -24,8 +24,8 @@ import GeneralAttractors:
     savepath,
     checkpath
 
-import GeneralAttractors.Simulations: History
-import GeneralAttractors.Analysis: AnalysisParameters
+import ...Simulations: History
+import ...Analysis: AnalysisParameters
 
 include("analysis_viz.jl")
 
@@ -86,16 +86,24 @@ end
     PCA projected data.
 """
 function pca_dimensionality_reduction(
+    simulation_folder::String,
     simulation_name::String,
-    params::AnalysisParameters = AnalysisParameters(),
+    params::AnalysisParameters = AnalysisParameters();
+    visualize=false,
 )::Nothing
-    (checkpath(simulation_name, "pca_space", "npz") && !params.debug) && return
+    (checkpath(simulation_folder, simulation_name*"_pca_space", "npz") && !params.debug) && return
 
-    history = load_simulation_history(simulation_name, simulation_name)
+    history = load_simulation_history(simulation_folder, simulation_name*"_history")
+    @info "loaded history" history.S history.v
 
-    # flatten out S
+    # flatten out S by summing across copies of the population
     N = size(history.S, 1) * size(history.S, 2)  # tot neurons
     S = reshape(history.S, (N, size(history.S, 3)))[:, 2:end] # N×T | each column an observation
+    # n, _, m = size(history.S)
+    # S = real.(reshape(sum(history.S, dims=2), (n, m)))
+    # not_nan_cols = map(c -> !any(isnan.(c)), eachcol(S)) |> collect
+    # S = S[:, not_nan_cols]
+    # @info "S" size(S) sum(not_nan_cols) length(not_nan_cols) maximum(S) minimum(S) any(isnan.(S)) any(isinf.(S))
 
     # get numnber of PCs
     nPC = if !isnothing(params.max_nPC)
@@ -111,7 +119,7 @@ function pca_dimensionality_reduction(
     @info "pca fitting completed $(length(principalvars(pca_model))) PCs" size(S_pca_space)
 
     # plot fraction of variance explained
-    plot(
+    visualize && plot(
         cumsum(fraction_variance_explained(pca_model)),
         legend = nothing,
         ylabel = "cum frac var",
@@ -122,8 +130,8 @@ function pca_dimensionality_reduction(
     ) |> display
 
     # save results to file
-    save_model(pca_model, simulation_name, "pca_model", :PCA)
-    save_data(S_pca_space, simulation_name, "pca_space")
+    save_model(pca_model, simulation_folder, simulation_name * "_pca_model", :PCA)
+    save_data(S_pca_space, simulation_folder, simulation_name * "_pca_space")
     nothing
 end
 
@@ -141,13 +149,14 @@ isomap_dimensionality_reduction(
     underwent PCA dimensionality reduction
 """
 function isomap_dimensionality_reduction(
+    simulation_folder::String,
     simulation_name::String,
     params::AnalysisParameters = AnalysisParameters(),
 )::Nothing
-    (checkpath(simulation_name, "isomap_space", "npz") && !params.debug) && return
+    (checkpath(simulation_folder, simulation_name*"_isomap_space", "npz") && !params.debug) && return
 
     # load
-    X = load_data(simulation_name, "pca_space")
+    X = load_data(simulation_folder, simulation_name*"_pca_space")
 
     # fit
     @info "Performing ISOMAP" size(X) params.n_isomap_dimensions
@@ -170,8 +179,8 @@ function isomap_dimensionality_reduction(
     )
 
     # save
-    save_model(iso, simulation_name, "isomap_model", :ISOMAP)
-    save_data(M, simulation_name, "isomap_space")
+    save_model(iso, simulation_folder, simulation_name*"_isomap_model", :ISOMAP)
+    save_data(M, simulation_folder, simulation_name*"_isomap_space")
     nothing
 end
 

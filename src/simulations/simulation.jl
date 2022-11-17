@@ -195,9 +195,9 @@ function run_simulation(
         gif(anim, savepath(savename, savename, "gif"), fps = fps)
     end
 
-    # save_simulation_history(history, savename, savename)
-    # save_model(simulation.can, savename, "sim_CAN_model", :CAN)
-    # save_data(simulation.trajectory.X, savename, "sim_trajectory_X")
-    # save_data(simulation.trajectory.V, savename, "sim_trajectory_V")
+    save_simulation_history(history, savename, savename*"_"*simulation.can.name*"_history")
+    save_model(simulation.can, savename, simulation.can.name * "_sim_CAN_model", :CAN)
+    save_data(simulation.trajectory.X, savename, simulation.can.name * "_sim_trajectory_X")
+    save_data(simulation.trajectory.V, savename, simulation.can.name * "_sim_trajectory_V")
     return history, X̄
 end
