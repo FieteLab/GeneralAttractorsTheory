@@ -49,4 +49,4 @@ X = load_data(sim_fld, "torus_isomap_space")
 # X = load_data(sim_fld, sim*"_pca_space")
 
 import GLMakie
-GLMakia.scatter(eachrow(X)...)
+GLMakie.scatter(eachrow(X)...)
