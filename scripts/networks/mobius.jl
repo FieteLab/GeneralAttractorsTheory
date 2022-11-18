@@ -7,12 +7,12 @@ using GeneralAttractors.Kernels
 using GeneralAttractors: lerp
 using GeneralAttractors.ManifoldUtils
 import GeneralAttractors.ManifoldUtils: Manifoldℝ², Mobius, ψ_t, ψ_θ1, ψ_θ2
-import GeneralAttractors: MobiusEuclidean, mobius_embedding, area_deformation
+import GeneralAttractors: MobiusEuclidean, mobius_embedding
 
 println(Panel("Creating Mobius attractor", style="green", justify=:center))
 
 # number of neurons
-n = ((Int ∘ round)(1/0.025), (Int ∘ round)(2π/0.1))
+n = ((Int ∘ round)(1/0.05), (Int ∘ round)(2π/0.1))
 println(n)
 
 # cover space

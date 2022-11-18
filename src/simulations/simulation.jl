@@ -199,7 +199,7 @@ function run_simulation(
 
     save_simulation_history(history, savefolder, savename*"_"*simulation.can.name*"_history")
     save_model(simulation.can, savefolder, savename*"_"*simulation.can.name * "_sim_CAN_model", :CAN)
-    save_data(simulation.trajectory.X, savefolder, savename*"_"*simulation.can.name * "_sim_trajectory_X")
-    save_data(simulation.trajectory.V, savefolder, savename*"_"*simulation.can.name * "_sim_trajectory_V")
+    # save_data(simulation.trajectory.X, savefolder, savename*"_"*simulation.can.name * "_sim_trajectory_X")
+    # save_data(simulation.trajectory.V, savefolder, savename*"_"*simulation.can.name * "_sim_trajectory_V")
     return history, X̄
 end

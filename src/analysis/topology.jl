@@ -227,17 +227,18 @@ end
     Ref: https://mtsch.github.io/Ripserer.jl/dev/
 """
 function tda_on_pointcloud(
+    simulation_folder::String,
     simulation_name::String,
     params::AnalysisParameters,
-)::Vector{PersistenceDiagram}
+)
     # load
-    X = load_data(simulation_name, "pca_space")
-    tda_on_pointcloud(X, params, simulation_name)
+    X = load_data(simulation_folder, "$(simulation_name)_pca_space")
+    tda_on_pointcloud(X, params, simulation_folder)
 end
 
 
-function tda_on_pointcloud(X::Matrix, params::AnalysisParameters, savename::String) #::Tuple{Vector{PersistenceDiagram}, Plot}
-    (checkpath(savename, "tda_results", "png") && !params.debug) && return
+function tda_on_pointcloud(X::Matrix, params::AnalysisParameters, simulation_folder::String)
+    (checkpath(simulation_folder, "tda_results", "png") && !params.debug) && return
 
     # convert M in a vector of tuples for TDA
     n = (Int ∘ round)(size(X, 2) / params.tda_downsample_factor)
@@ -255,8 +256,8 @@ function tda_on_pointcloud(X::Matrix, params::AnalysisParameters, savename::Stri
 
     # plot results
     plt = plot(plot(tda), barcode(tda), size = (1000, 800))
-    savefig(savepath(savename, "tda_results", "png"))
-    save_model(tda, savename, "tda_barcode", :TDA)
+    savefig(savepath(simulation_folder, "tda_results", "png"))
+    save_model(tda, simulation_folder, "tda_barcode", :TDA)
     return tda, plt
 end
 

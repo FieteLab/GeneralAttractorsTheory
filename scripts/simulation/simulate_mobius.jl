@@ -42,7 +42,7 @@ simulation = Simulation(mobiuscan, trajectory; η = 0.0, b₀=0.3)
 # run
 h, X̄ = @time run_simulation(
     simulation;
-    frame_every_n = 30,
+    frame_every_n = 10,
     discard_first_ms = 0,
     average_over_ms = 10,
     fps = 10,
@@ -52,4 +52,4 @@ h, X̄ = @time run_simulation(
     savename="decoding",
 );     
 
-plot_trajectory_and_decoded(trajectory, X̄) |> display
+# plot_trajectory_and_decoded(trajectory, X̄) |> display
