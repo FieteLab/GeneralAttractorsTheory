@@ -32,3 +32,13 @@ mobius_embedding(t, θ) = [
 mobius_embedding(p) = mobius_embedding(p...)
 
 mobius_embedding(x::Matrix) = hcat(map(mobius_embedding, eachcol(x))...)
+
+
+
+function torus_embedding end
+
+function torus_embedding(θ₁, θ₂)
+    R, r = 1.0, 0.7
+    return [(R + r * cos(θ₁)) * cos(θ₂), (R + r * cos(θ₁)) * sin(θ₂), r * sin(θ₁)]
+end
+torus_embedding(p) = torus_embedding(p...)

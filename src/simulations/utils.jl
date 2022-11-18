@@ -34,8 +34,6 @@ function Plots.plot(traj::Trajectory, i::Int; xmin=nothing, xmax=nothing)
             grid = false,
             aspect_ratio = :equal,
             label = "trajectory",
-            # xlim = [xmin[1], xmax[1]],
-            # ylim = [xmin[2], xmax[2]],
             camera=(.075*i, 20)
         )
     else

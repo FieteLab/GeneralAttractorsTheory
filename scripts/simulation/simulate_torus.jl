@@ -15,7 +15,7 @@ include("../networks/torus.jl")
 
 # --------------------------------- simulate --------------------------------- #
 dt = 0.5
-duration = 2000
+duration = 1000
 still = 50  # initialization period        
 
 

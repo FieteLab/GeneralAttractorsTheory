@@ -12,7 +12,7 @@ import GeneralAttractors: MobiusEuclidean, mobius_embedding
 println(Panel("Creating Mobius attractor", style="green", justify=:center))
 
 # number of neurons
-n = ((Int ∘ round)(1/0.05), (Int ∘ round)(2π/0.1))
+n = ((Int ∘ round)(1/0.025), (Int ∘ round)(2π/0.1))
 println(n)
 
 # cover space
@@ -42,7 +42,7 @@ offsets = [
     p -> ψ_θ2(p),
     p -> -ψ_θ2(p),
 ]
-offset_size = 0.1
+offset_size = 0.2
 
 # define one forms
 α = 1/offset_size .* 2
