@@ -40,7 +40,7 @@ for i in 1:n_sims
         still=still,
         vmax=0.0077,
         modality=:piecewise,
-        n_piecewise_segments=3,
+        n_piecewise_segments=3, 
     )
     simulation = Simulation(mobiuscan, trajectory; η = 0.0, b₀=0.3)
 
@@ -54,6 +54,6 @@ for i in 1:n_sims
         s₀=1.0 .* activate,
         φ=mobius_embedding,
         savefolder="abstract",
-        savename="mobius_$(i)",
+        savename="mobius_$(i+60)",
     );     
 end

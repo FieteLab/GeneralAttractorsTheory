@@ -18,18 +18,18 @@ of neural activity from a simulation.
 
 
 params = AnalysisParameters(
-    max_nPC = 400,  # max num of PCs
+    max_nPC = 300,  # max num of PCs
     pca_pratio = 0.999999,       # fraction of variance explained
     n_isomap_dimensions = 3,
-    isomap_k = 20,
-    isomap_downsample = 20,
+    isomap_k = 4,
+    isomap_downsample = 30,
     debug = true,   # avoid re-running analysis steps
 )
 
 # folder where stuff is saved and the manifold/simulation name
 sim_fld = "abstract"
 mfld_name = "mobius"
-n_sims = 7
+n_sims = 128
 
 # load data
 simulations = []
@@ -53,21 +53,23 @@ isomap_dimensionality_reduction(mfld_name, "mfld", params)
 X = load_data(mfld_name, "mfld_isomap_space")
 
 # ? interactive plot
-# import GLMakie
-# fig = GLMakie.Figure(resolution=(1000,1000)); 
-# ax = GLMakie.Axis3(fig[1,1]); 
-# GLMakie.scatter!(ax,    eachrow(X)..., markersize=30, alpha=.5, strokecolor="black", color=:black)
-# fig |> display
+import GLMakie
+fig = GLMakie.Figure(resolution=(1000,1000)); 
+ax = GLMakie.Axis3(fig[1,1]); 
+GLMakie.scatter!(ax,    eachrow(X)..., markersize=10, alpha=.5, strokecolor="black", color=:black)
+fig |> display
 
 
 # ? static plot
 scatter3d(
     eachrow(X)..., 
-    markersize=10, alpha=.015, strokecolor="black", 
-    camera=(40, 20), label=nothing, color=:black,
-    xticks=nothing, xlabel="PC1",
-    yticks=nothing, ylabel="PC2",
-    zticks=nothing, zlabel="PC3",
+    markersize=10, alpha=.03, strokecolor="black", 
+    # marker_z=X[3, :],
+    camera=(30,60), label=nothing, color=:black,
+    msa=0, msw=0,
+    xticks=nothing, xlabel="Iso 1",
+    yticks=nothing, ylabel="Iso 2",
+    zticks=nothing, zlabel="Iso 3",
     grid=false
 ) |> display
 
