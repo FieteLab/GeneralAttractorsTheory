@@ -40,6 +40,7 @@ export animate_3d_scatter
     pca_pratio::Float64 = 0.8       # fraction of variance explained
     n_isomap_dimensions::Int = 3
     isomap_k::Int = 10
+    isomap_downsample::Int = 10    # temporal downsample factor for fitting isomap
 
     # TDA
     tda_threshold = 10       # threshold to reduce TDA computation 

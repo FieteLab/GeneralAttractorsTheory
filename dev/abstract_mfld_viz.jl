@@ -16,37 +16,55 @@ of neural activity from a simulation.
 
 
 params = AnalysisParameters(
-    max_nPC = 500,  # max num of PCs
+    max_nPC = 200,  # max num of PCs
     pca_pratio = 0.999999,       # fraction of variance explained
     n_isomap_dimensions = 3,
     isomap_k = 20,
+    isomap_downsample = 10,
     debug = false,   # avoid re-running analysis steps
 )
 
-
+# folder where stuff is saved and the manifold/simulation name
 sim_fld = "abstract"
+mfld_name = "sphere"
 
-
+# load data
 simulations = []
-for i in 1:20
-    sim = "torus_$(i)_torus"
+for i in 1:50
+    sim = "$(mfld_name)_$(i)_$(mfld_name)"
     history = load_simulation_history(sim_fld, sim*"_history")
     push!(simulations, population_average(history))
 end
 S = hcat(simulations...)
 
 
-# # ------------------------- dimensionality reduction ------------------------- #
+# ------------------------- dimensionality reduction ------------------------- #
 @info "PCA dimensionality reduction"
-# pca_dimensionality_reduction(S,sim_fld, "torus",  params; visualize=true)
+pca_dimensionality_reduction(S, "torus", "$(mfld_name)_mfld",  params; visualize=true)
 
 @info "ISOMAP dimensionality reduction"
-# isomap_dimensionality_reduction(sim_fld, "torus", params)
+isomap_dimensionality_reduction("torus", "$(mfld_name)_mfld", params)
 
 
-# # ----------------------------------- plot ----------------------------------- #
-X = load_data(sim_fld, "torus_isomap_space")
-# X = load_data(sim_fld, sim*"_pca_space")
+# ----------------------------------- plot ----------------------------------- #
+X = load_data(mfld_name, "$(mfld_name)_mfld_isomap_space")
 
-import GLMakie
-GLMakie.scatter(eachrow(X)...)
+# ? interactive plot
+# import GLMakie
+# fig = GLMakie.Figure(resolution=(1000,1000)); 
+# ax = GLMakie.Axis3(fig[1,1]); 
+# GLMakie.scatter!(ax,    eachrow(X)..., markersize=30, alpha=.5, strokecolor="black", color=:black)
+# fig
+
+
+# ? static plot
+scatter3d(
+    eachrow(X)..., 
+    markersize=10, alpha=.01, strokecolor="black", 
+    camera=(45, 45), label=nothing, color=:black,
+    xticks=nothing, xlabel="PC1",
+    yticks=nothing, ylabel="PC2",
+    zticks=nothing, zlabel="PC3",
+    grid=false
+    )
+
