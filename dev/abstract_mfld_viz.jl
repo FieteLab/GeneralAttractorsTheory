@@ -3,6 +3,8 @@ using Plots
 import GeneralAttractors: load_data
 using GeneralAttractors, Distances
 import GeneralAttractors.Analysis.ManifoldAnalysis: population_average
+using Manifolds, Distances
+
 
 
 ρ(x) = x
@@ -39,22 +41,22 @@ S = hcat(simulations...)
 
 
 # ------------------------- dimensionality reduction ------------------------- #
-@info "PCA dimensionality reduction"
-pca_dimensionality_reduction(S, "torus", "$(mfld_name)_mfld",  params; visualize=true)
+# @info "PCA dimensionality reduction"
+# pca_dimensionality_reduction(S, mfld_name, "mfld",  params; visualize=true)
 
-@info "ISOMAP dimensionality reduction"
-isomap_dimensionality_reduction("torus", "$(mfld_name)_mfld", params)
+# @info "ISOMAP dimensionality reduction"
+# isomap_dimensionality_reduction(mfld_name, "mfld", params)
 
 
 # ----------------------------------- plot ----------------------------------- #
-X = load_data(mfld_name, "$(mfld_name)_mfld_isomap_space")
+X = load_data(mfld_name, "mfld_isomap_space")
 
 # ? interactive plot
-# import GLMakie
-# fig = GLMakie.Figure(resolution=(1000,1000)); 
-# ax = GLMakie.Axis3(fig[1,1]); 
-# GLMakie.scatter!(ax,    eachrow(X)..., markersize=30, alpha=.5, strokecolor="black", color=:black)
-# fig
+import GLMakie
+fig = GLMakie.Figure(resolution=(1000,1000)); 
+ax = GLMakie.Axis3(fig[1,1]); 
+GLMakie.scatter!(ax,    eachrow(X)..., markersize=30, alpha=.5, strokecolor="black", color=:black)
+fig
 
 
 # ? static plot

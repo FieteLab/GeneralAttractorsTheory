@@ -148,8 +148,8 @@ function pca_dimensionality_reduction(
 
     visualize && nPC==3 && animate_3d_scatter(
         S_pca_space,
-        simulation_name,
-        "PCA_projection";
+        simulation_folder,
+        "$(simulation_name)_PCA_projection";
         alpha = 0.25,
         title = simulation_name,
     )
@@ -197,8 +197,8 @@ function isomap_dimensionality_reduction(
     # make animation of Isomap embedding
     animate_3d_scatter(
         M,
-        simulation_name,
-        "isomap_projection";
+        simulation_folder,
+        "$(simulation_name)_ISOMAP_projection";
         alpha = 0.25,
         title = simulation_name,
     )
