@@ -34,8 +34,6 @@ k_m = LocalGlobalKernel(α = 0.25, σ = 0.1, β = 0.25)
 
 
 # define offset vector fields
-λ(p) = 1/area_deformation(mobius_embedding, p)
-λ(t, θ) = λ([t, θ])
 offsets = [
     p -> ψ_t(p),
     p -> -ψ_t(p),
@@ -44,7 +42,7 @@ offsets = [
     p -> ψ_θ2(p),
     p -> -ψ_θ2(p),
 ]
-offset_size = 0.15
+offset_size = 0.1
 
 # define one forms
 α = 1/offset_size .* 2

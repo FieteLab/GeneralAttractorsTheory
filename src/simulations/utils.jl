@@ -153,7 +153,7 @@ function simulation_frame_2dcan(simulation::Simulation, timems, v::Vector, φ::F
     return plt
 end
 
-function custom_sphere_viz(simulation::Simulation, timems, v::Vector, φ::Function; kwargs...)
+function custom_sphere_viz(simulation::Simulation, timems, v::Vector, φ; kwargs...)
     can = simulation.can
     s = sum(simulation.S, dims = 2) |> vec
 
@@ -195,7 +195,11 @@ function Plots.plot(
     if simulation.can.d == 1
         pop_activity = simulation_frame_1dcan(simulation, timems, v; kwargs...)
     elseif simulation.can.d == 2
-        pop_activity = simulation_frame_2dcan(simulation, timems, v, φ; kwargs...)
+        if simulation.can.name == "sphere"
+            pop_activity = custom_sphere_viz(simulation, timems, v, φ; kwargs...)
+        else
+            pop_activity = simulation_frame_2dcan(simulation, timems, v, φ; kwargs...)
+        end
     else
         error("Simulation plot for d>2 not implemented")
     end

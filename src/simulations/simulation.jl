@@ -160,8 +160,8 @@ function run_simulation(
             decoder_initialized || (X̄[i, :] = x)
 
             # step simulation
-            x̂ = decoder_initialized ? decoder.x : x
-            # x̂ = simulation.trajectory.X[i, :]
+            # x̂ = decoder_initialized ? decoder.x : x
+            x̂ = simulation.trajectory.X[i, :]
             S̄ = step!(simulation, x̂, v; s₀=s₀)
 
             # initialize decoder if necessary
@@ -198,8 +198,8 @@ function run_simulation(
     end
 
     save_simulation_history(history, savefolder, savename*"_"*simulation.can.name*"_history")
-    save_model(simulation.can, savefolder, simulation.can.name * "_sim_CAN_model", :CAN)
-    save_data(simulation.trajectory.X, savefolder, simulation.can.name * "_sim_trajectory_X")
-    save_data(simulation.trajectory.V, savefolder, simulation.can.name * "_sim_trajectory_V")
+    save_model(simulation.can, savefolder, savename*"_"*simulation.can.name * "_sim_CAN_model", :CAN)
+    save_data(simulation.trajectory.X, savefolder, savename*"_"*simulation.can.name * "_sim_trajectory_X")
+    save_data(simulation.trajectory.V, savefolder, savename*"_"*simulation.can.name * "_sim_trajectory_V")
     return history, X̄
 end

@@ -15,7 +15,7 @@ include("../networks/torus.jl")
 
 # --------------------------------- simulate --------------------------------- #
 dt = 0.5
-duration = 60_000
+duration = 2000
 still = 50  # initialization period        
 
 
@@ -28,7 +28,7 @@ activate[d.<2] .= 1
 nframes = (Int ∘ round)(duration / dt)
 trajectory = Trajectory(
         toruscan; T = nframes, dt=dt,
-        σv = 0.00, μv = 0.05, vmax=0.05,
+        σv = 0.00, μv = 0.1, vmax=0.1,
         σθ = 0.2, θ₀ = nothing, 
         still=still
 )
@@ -37,13 +37,13 @@ simulation = Simulation(toruscan, trajectory; η = 0.0, b₀=0.31)
 # run
 h, X̄ = @time run_simulation(
     simulation;
-    frame_every_n = nothing,
+    frame_every_n = 10,
     discard_first_ms = 100,
     average_over_ms = 10,
     fps = 10,
     s₀=1.0 .* activate,
     savefolder="torus",
-    savename="long",
+    savename="decoding",
 );     
 
-# plot_trajectory_and_decoded(trajectory, X̄) |> display
+plot_trajectory_and_decoded(trajectory, X̄) |> display

@@ -12,7 +12,7 @@ import GeneralAttractors.ManifoldUtils: Manifoldℝ², Torus
 println(Panel("Creating torus attractor", style="green", justify=:center))
 
 # number of neurons
-m = 40 # number of neurons in each dimension
+m = 50 # number of neurons in each dimension
 n = (m, m) # number of neurons per dimension
 
 # ℝ² → T cover map.
