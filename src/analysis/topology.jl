@@ -148,8 +148,8 @@ function pca_dimensionality_reduction(
 
     visualize && nPC==3 && animate_3d_scatter(
         S_pca_space,
-        simulation_name,
-        "PCA_projection";
+        simulation_folder,
+        "$(simulation_name)_PCA_projection";
         alpha = 0.25,
         title = simulation_name,
     )
@@ -184,10 +184,10 @@ function isomap_dimensionality_reduction(
     X = real.(load_data(simulation_folder, simulation_name*"_pca_space"))
 
     # fit
-    @info "Performing ISOMAP" size(X) params.n_isomap_dimensions
+    @info "Performing ISOMAP" size(X) params.n_isomap_dimensions params.isomap_downsample
     iso = ManifoldLearning.fit(
         Isomap,
-        X;
+        X[:, 1:params.isomap_downsample:end];
         k = params.isomap_k,
         maxoutdim = params.n_isomap_dimensions,
     )
@@ -197,8 +197,8 @@ function isomap_dimensionality_reduction(
     # make animation of Isomap embedding
     animate_3d_scatter(
         M,
-        simulation_name,
-        "isomap_projection";
+        simulation_folder,
+        "$(simulation_name)_ISOMAP_projection";
         alpha = 0.25,
         title = simulation_name,
     )

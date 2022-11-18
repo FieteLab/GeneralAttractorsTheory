@@ -22,6 +22,27 @@ using LinearAlgebra
 #                                    SPHERE                                    #
 # ---------------------------------------------------------------------------- #
 
+"""
+(almost) equally spaced points on the sphere.
+https://stackoverflow.com/questions/9600801/evenly-distributing-n-points-on-a-sphere
+"""
+function fibonacci_sphere(n=1000)
+    points = zeros(3 ,n)
+    ϕ = π * (3 - √5)  # golden angle in radians
+
+    for i in 1:n
+        y = 1 - (i / float(n - 1)) * 2  # y goes from 1 to -1
+        radius = √(Complex(1 - y * y)) |> real  # radius at y
+
+        θ = ϕ * i  # golden angle increment
+
+        x = cos(θ) * radius
+        z = sin(θ) * radius
+
+        points[:, i] = [x, y, z]
+    end
+    return points
+end
 
 """
 Killing fields on the unit sphere
