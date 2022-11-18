@@ -162,9 +162,9 @@ function Trajectory(
         vy = ones(T) .* σ[2]
         vz = ones(T) .* σ[3]
     else
-        vx = moving_average((rand(T).-0.5) .* σ[1], 20dt) |> cumsum
-        vy = moving_average((rand(T).-0.5) .* σ[2], 20dt) |> cumsum
-        vz = moving_average((rand(T).-0.5) .* σ[3], 20dt) |> cumsum
+        vx = moving_average((rand(T).-0.5) .* σ[1], 50) |> cumsum
+        vy = moving_average((rand(T).-0.5) .* σ[2], 50) |> cumsum
+        vz = moving_average((rand(T).-0.5) .* σ[3], 50) |> cumsum
     end
     
     clamp!(vx, -vmax, vmax)
@@ -224,9 +224,9 @@ function Trajectory(
         vy = ones(T) .* σ[2]
         vz = ones(T) .* σ[3]
     else
-        vx = moving_average((rand(T).-0.5) .* σ[1], 20dt) |> cumsum
-        vy = moving_average((rand(T).-0.5) .* σ[2], 20dt) |> cumsum
-        vz = moving_average((rand(T).-0.5) .* σ[3], 20dt) |> cumsum
+        vx = moving_average((rand(T).-0.5) .* σ[1], 20) |> cumsum
+        vy = moving_average((rand(T).-0.5) .* σ[2], 20) |> cumsum
+        vz = moving_average((rand(T).-0.5) .* σ[3], 20) |> cumsum
     end
     
     clamp!(vx, -vmax, vmax)

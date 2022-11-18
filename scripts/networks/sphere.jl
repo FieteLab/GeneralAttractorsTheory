@@ -16,7 +16,7 @@ println(Panel("Creating sphere attractor", style="green", justify=:center))
 
 
 # number of neurons
-m =48
+m =64
 n = m^2
 
 # get neurons on S² ⊂ ℝ³
@@ -31,7 +31,7 @@ I = [(i, ) for i in 1:size(X, 2)]
 d_s = SphericalDistance()
 
 # kernel  
-k_s = LocalGlobalKernel(α = 0.5, σ = 0.2, β = 0.5)
+k_s = LocalGlobalKernel(α = 0.5, σ = 0.5, β = 0.5)
 
 # cover space
 cover = CoverSpace(S²)  # trivial cover space

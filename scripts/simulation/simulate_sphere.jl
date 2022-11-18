@@ -16,7 +16,7 @@ include("../networks/sphere.jl")
 
 # --------------------------------- simulate --------------------------------- #
 dt = 0.5
-duration = 2000  # ms   
+duration = 600  # ms   
 x₀ = [1, -1, 0]
 x₀ /= norm(x₀)
 still = 50  # initialization period                                                                             
@@ -28,18 +28,18 @@ trajectory = Trajectory(
     spherecan; 
     T = nframes, 
     x₀=x₀,
-    vmax=0.00375,
+    vmax=0.0038,
     still=still,
-    modality=:piecewise,
-    n_piecewise_segments=5,
-    # σ=[1, 1, 1]
+    modality=:rando,
+    n_piecewise_segments=2,
+    σ=[1, 1, 1]
 )
 
 # get activation to initialize bump
 activate = map(p -> euclidean(x₀, p) < dmin, eachcol(spherecan.X)) .* 1
 
 # simulate
-simulation = Simulation(spherecan, trajectory; b₀ = 0.27, η = 0.0, )
+simulation = Simulation(spherecan, trajectory; b₀ = 0.25, η = 0.0, )
 h, X̄ = @time run_simulation(
     simulation,
     frame_every_n = 20,
