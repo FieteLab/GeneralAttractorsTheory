@@ -28,10 +28,10 @@ trajectory = Trajectory(
     spherecan; 
     T = nframes, 
     x₀=x₀,
-    vmax=0.0038,
+    vmax=0.004,
     still=still,
-    modality=:rando,
-    n_piecewise_segments=2,
+    modality=:piecewise,
+    n_piecewise_segments=4,
     σ=[1, 1, 1]
 )
 
