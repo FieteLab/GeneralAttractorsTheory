@@ -18,10 +18,10 @@ of neural activity from a simulation.
 
 
 params = AnalysisParameters(
-    max_nPC = 300,  # max num of PCs
+    max_nPC = 400,  # max num of PCs
     pca_pratio = 0.999999,       # fraction of variance explained
     n_isomap_dimensions = 3,
-    isomap_k = 4,
+    isomap_k = 8,
     isomap_downsample = 30,
     debug = true,   # avoid re-running analysis steps
 )
@@ -29,14 +29,14 @@ params = AnalysisParameters(
 # folder where stuff is saved and the manifold/simulation name
 sim_fld = "abstract"
 mfld_name = "mobius"
-n_sims = 128
+n_sims = 100
 
 # load data
 simulations = []
 for i in 1:n_sims
     sim = "$(mfld_name)_$(i)_$(mfld_name)"
     history = load_simulation_history(sim_fld, sim*"_history")
-    push!(simulations, population_average(history))
+    push!(simulations, real(population_average(history)))
 end
 S = hcat(simulations...)
 
@@ -63,9 +63,9 @@ fig |> display
 # ? static plot
 scatter3d(
     eachrow(X)..., 
-    markersize=10, alpha=.03, strokecolor="black", 
+    markersize=4, alpha=.04, #, strokecolor="black", 
     # marker_z=X[3, :],
-    camera=(30,60), label=nothing, color=:black,
+    camera=(0,10), label=nothing, color=:black,
     msa=0, msw=0,
     xticks=nothing, xlabel="Iso 1",
     yticks=nothing, ylabel="Iso 2",

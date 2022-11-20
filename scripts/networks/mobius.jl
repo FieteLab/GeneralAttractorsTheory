@@ -42,7 +42,7 @@ offsets = [
     p -> ψ_θ2(p),
     p -> -ψ_θ2(p),
 ]
-offset_size = 0.2
+offset_size = 0.1
 
 # define one forms
 α = 1/offset_size .* 2

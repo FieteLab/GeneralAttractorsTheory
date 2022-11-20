@@ -70,16 +70,17 @@ function find_fraction_variance_explained_elbow(σ::Vector{Float64})::Int
     return argmax(Δ)
 end
 
+
 """
 Take the average/sum of the population activity across
 copies of the network
 """
-function population_average(history::History)::Matrix
+function population_average(history::History; skip=10)::Matrix
     n, _, m = size(history.S)
     S = real.(reshape(mean(history.S, dims=2), (n, m)))
     not_nan_cols = map(c -> !any(isnan.(c)), eachcol(S)) |> collect
     S = S[:, not_nan_cols]
-    S = S[:, 10:end-10]
+    S = S[:, skip:end-skip]
     return S
 end
 
@@ -176,12 +177,16 @@ isomap_dimensionality_reduction(
 function isomap_dimensionality_reduction(
     simulation_folder::String,
     simulation_name::String,
-    params::AnalysisParameters = AnalysisParameters(),
+    params::AnalysisParameters = AnalysisParameters();
+    visualize=true
 )::Nothing
     (checkpath(simulation_folder, simulation_name*"_isomap_space", "npz") && !params.debug) && return
 
     # load
     X = real.(load_data(simulation_folder, simulation_name*"_pca_space"))
+
+    # remove duplicate columns
+    X = hcat(unique(eachcol(X))...)
 
     # fit
     @info "Performing ISOMAP" size(X) params.n_isomap_dimensions params.isomap_downsample
@@ -195,7 +200,7 @@ function isomap_dimensionality_reduction(
     @info "isomap fitting completed" size(M)
 
     # make animation of Isomap embedding
-    animate_3d_scatter(
+    visualize && animate_3d_scatter(
         M,
         simulation_folder,
         "$(simulation_name)_ISOMAP_projection";
@@ -230,9 +235,10 @@ function tda_on_pointcloud(
     simulation_folder::String,
     simulation_name::String,
     params::AnalysisParameters,
+    lower_dim_space::String="pca"
 )
     # load
-    X = load_data(simulation_folder, "$(simulation_name)_pca_space")
+    X = load_data(simulation_folder, "$(simulation_name)_$(lower_dim_space)_space")
     tda_on_pointcloud(X, params, simulation_folder)
 end
 
