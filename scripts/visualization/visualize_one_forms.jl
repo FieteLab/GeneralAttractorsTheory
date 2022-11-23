@@ -9,10 +9,10 @@ using GeneralAttractors.ManifoldUtils
 include("../networks/sphere.jl")
 
 # ----------------------------------- show ----------------------------------- #
-dx, scale = .5, 0.25
+dx, scale = 0.5, 0.25
 
 plots = []
-for i in 1:2:length(Ω)
+for i = 1:2:length(Ω)
     p = show_oneforms(
         spherecan.Ω[i],
         spherecan.C,

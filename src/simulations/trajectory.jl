@@ -17,7 +17,7 @@ function piecewise_linear(
 )
     # get values and switches timepoints
     vals = rand(rng, n_intervals)
-    switches = (1:n_intervals) .* (T/n_intervals ) .- (T/n_intervals ) |> collect
+    switches = (1:n_intervals) .* (T / n_intervals) .- (T / n_intervals) |> collect
 
     function x(t)
         idx = findlast(switches .<= t)
@@ -39,7 +39,7 @@ state before starting a simulation with velocity inputs.
 """
 function add_initial_still_phase(X::Matrix, V::Matrix, still, x₀)
     standing = zeros(still, length(x₀))
-    for i in 1:length(x₀)
+    for i = 1:length(x₀)
         standing[:, i] .= x₀[i]
     end
 
@@ -84,7 +84,7 @@ given angular velocity (randomy drawn) reflecting a change in orientation
 function Trajectory(
     M::Manifoldℝ²;
     T::Int = 250,
-    dt::Float64=0.5,
+    dt::Float64 = 0.5,
     σv = 0.25,
     μv = 0.05,
     vmax = 0.1,
@@ -93,7 +93,7 @@ function Trajectory(
     x₀ = nothing,
     y₀ = nothing,
     still = 100,
-)   
+)
     # get speed and orientation
     v = rand(T) .* σv .+ μv
     v[v.<vmax] .= vmax
@@ -110,14 +110,14 @@ function Trajectory(
     # get random initial position
     x₀ = isnothing(x₀) ? rand(-20:2:20) : x₀
     y₀ = isnothing(y₀) ? rand(-20:2:20) : y₀
-    
+
     # Get trajectory
     X, V = zeros(T, 2), zeros(T, 2)
     X[1, :] = [x₀, y₀]
     V[:, 1] = vx
     V[:, 2] = vy
-    for t in 2:T
-        X[t, :] = X[t-1, :] + V[t, :]*dt
+    for t = 2:T
+        X[t, :] = X[t-1, :] + V[t, :] * dt
     end
 
     # finalize
@@ -139,16 +139,16 @@ function Trajectory(
     M::Sphere;
     T::Int = 250,
     σ = [1, 1, 1],
-    x₀=nothing,
-    still=0,
-    vmax=0.075,
-    modality=:piecewise,
-    n_piecewise_segments=3,
+    x₀ = nothing,
+    still = 0,
+    vmax = 0.075,
+    modality = :piecewise,
+    n_piecewise_segments = 3,
 )
 
     # get starting point
     x₀ = !isnothing(x₀) ? x₀ : begin
-        p = rand(-1:.1:1, 3)
+        p = rand(-1:0.1:1, 3)
         p ./= norm(p)
     end
 
@@ -162,20 +162,20 @@ function Trajectory(
         vy = ones(T) .* σ[2]
         vz = ones(T) .* σ[3]
     else
-        vx = moving_average((rand(T).-0.5) .* σ[1], 50) |> cumsum
-        vy = moving_average((rand(T).-0.5) .* σ[2], 50) |> cumsum
-        vz = moving_average((rand(T).-0.5) .* σ[3], 50) |> cumsum
+        vx = moving_average((rand(T) .- 0.5) .* σ[1], 50) |> cumsum
+        vy = moving_average((rand(T) .- 0.5) .* σ[2], 50) |> cumsum
+        vz = moving_average((rand(T) .- 0.5) .* σ[3], 50) |> cumsum
     end
-    
+
     clamp!(vx, -vmax, vmax)
     clamp!(vy, -vmax, vmax)
     clamp!(vz, -vmax, vmax)
 
     # get position and velocity vectors
-    ∑ψ(p, i) = vx[i]*ψx(p...) + vy[i]*ψy(p...) + vz[i]*ψz(p...)
+    ∑ψ(p, i) = vx[i] * ψx(p...) + vy[i] * ψy(p...) + vz[i] * ψz(p...)
     X, V = zeros(T, 3), zeros(T, 3)
     X[1, :] = x₀
-    for t in 1:T
+    for t = 1:T
         x = t == 1 ? x₀ : X[t-1, :]
         v = ∑ψ(x, t)
 
@@ -185,7 +185,7 @@ function Trajectory(
         #     v .*= t/(100*dt)
         # end
 
-        x̂ =  x + v
+        x̂ = x + v
         X[t, :] = x̂
         V[t, :] = v
     end
@@ -204,15 +204,15 @@ function Trajectory(
     M::Mobius;
     T::Int = 250,
     σ = [1, 1, 1],
-    x₀=nothing,
-    still=0,
-    vmax=0.075,
-    modality=:piecewise,
-    n_piecewise_segments=3,
+    x₀ = nothing,
+    still = 0,
+    vmax = 0.075,
+    modality = :piecewise,
+    n_piecewise_segments = 3,
 )
 
     # get starting point
-    x₀ = !isnothing(x₀) ? x₀ : [rand(-1/2:.1:1/2), rand(0:0.1:2π)]
+    x₀ = !isnothing(x₀) ? x₀ : [rand(-1/2:0.1:1/2), rand(0:0.1:2π)]
 
     # get vfield "activation" at each frame
     if modality == :piecewise
@@ -224,26 +224,26 @@ function Trajectory(
         vy = ones(T) .* σ[2]
         vz = ones(T) .* σ[3]
     else
-        vx = moving_average((rand(T).-0.5) .* σ[1], 20) |> cumsum
-        vy = moving_average((rand(T).-0.5) .* σ[2], 20) |> cumsum
-        vz = moving_average((rand(T).-0.5) .* σ[3], 20) |> cumsum
+        vx = moving_average((rand(T) .- 0.5) .* σ[1], 20) |> cumsum
+        vy = moving_average((rand(T) .- 0.5) .* σ[2], 20) |> cumsum
+        vz = moving_average((rand(T) .- 0.5) .* σ[3], 20) |> cumsum
     end
-    
+
     clamp!(vx, -vmax, vmax)
     clamp!(vy, -vmax, vmax)
     clamp!(vz, -vmax, vmax)
 
     # get position and velocity vectors
-    ∑ψ(p, i) = vx[i]*ψ_t(p...) + vy[i]*ψ_θ1(p...) + vz[i]*ψ_θ2(p...)
+    ∑ψ(p, i) = vx[i] * ψ_t(p...) + vy[i] * ψ_θ1(p...) + vz[i] * ψ_θ2(p...)
     X, V = zeros(T, 2), zeros(T, 2)
     X[1, :] = x₀
-    for t in 1:T
+    for t = 1:T
         x = t == 1 ? x₀ : X[t-1, :]
         v = ∑ψ(x, t)
 
         #! REMOVE
         v = v ./ norm(v) .* vmax
-        x̂ =  x + v
+        x̂ = x + v
 
         # correct for boundary conditions
         if x̂[1] <= -0.475
@@ -255,10 +255,10 @@ function Trajectory(
         end
 
         if x̂[2] >= 2π
-            x̂[2] = x̂[2]-2π
+            x̂[2] = x̂[2] - 2π
             x̂[1] = -x̂[1]
         elseif x̂[2] <= 0
-            x̂[2] = 2π+x̂[2]
+            x̂[2] = 2π + x̂[2]
             x̂[1] = -x̂[1]
         end
 

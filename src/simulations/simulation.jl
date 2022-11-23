@@ -66,7 +66,7 @@ end
 Step the simulation dynamics given that the "particle" is at `x`
 and moving with velocity vector `x`.
 """
-function step!(simulation::Simulation, x::Vector, v::Vector; s₀=nothing)
+function step!(simulation::Simulation, x::Vector, v::Vector; s₀ = nothing)
     can = simulation.can
     b₀ = simulation.b₀
     S, W = simulation.S, simulation.W
@@ -74,13 +74,8 @@ function step!(simulation::Simulation, x::Vector, v::Vector; s₀=nothing)
 
     # get effect of recurrent connectivity & external input
     d = size(S, 2)
-    V = vec(
-        map(
-            ωᵢ -> ωᵢ(x, v), 
-            simulation.can.Ω
-            )
-    )  # inputs vector of size 2d
-    r(x) = round(x, digits=2)
+    V = vec(map(ωᵢ -> ωᵢ(x, v), simulation.can.Ω))  # inputs vector of size 2d
+    r(x) = round(x, digits = 2)
     # println(r.(v), " "^10, r.(V))
 
 
@@ -116,13 +111,13 @@ include("history.jl")
 
 function run_simulation(
     simulation::Simulation;
-    savefolder::Union{String, Nothing} = nothing,
+    savefolder::Union{String,Nothing} = nothing,
     savename::String = simulation.can.name * "_sim",
     frame_every_n::Union{Nothing,Int} = 20,   # how frequently to save an animation frame
     fps = 20,
     discard_first_ms = 0,
     s₀ = nothing,
-    φ::Union{Function, Nothing} = nothing,
+    φ::Union{Function,Nothing} = nothing,
     kwargs...,
 )
     savefolder = isnothing(savefolder) ? savename : savefolder
@@ -164,14 +159,14 @@ function run_simulation(
             # step simulation
             # x̂ = decoder_initialized ? decoder.x : x
             x̂ = simulation.trajectory.X[i, :]
-            S̄ = step!(simulation, x̂, v; s₀=s₀)
+            S̄ = step!(simulation, x̂, v; s₀ = s₀)
 
             # initialize decoder if necessary
             if i >= simulation.trajectory.still && !decoder_initialized
                 # prep decoder
                 decoder = Decoder(
-                        simulation.trajectory.X[i, :],
-                        decode_peak_location(S̄, simulation.can)
+                    simulation.trajectory.X[i, :],
+                    decode_peak_location(S̄, simulation.can),
                 )
                 decoder_initialized = true
             end
@@ -191,7 +186,7 @@ function run_simulation(
             end
 
             framen += 1
-        update!(job)
+            update!(job)
         end
     end
 
@@ -199,11 +194,28 @@ function run_simulation(
         gif(anim, savepath(savefolder, savename, "gif"), fps = fps)
     end
 
-    save_simulation_history(history, savefolder, savename*"_"*simulation.can.name*"_history")
-    save_model(simulation.can, savefolder, savename*"_"*simulation.can.name * "_sim_CAN_model", :CAN)
-    save_data(simulation.trajectory.X, savefolder, savename*"_"*simulation.can.name * "_sim_trajectory_X")
-    save_data(simulation.trajectory.V, savefolder, savename*"_"*simulation.can.name * "_sim_trajectory_V")
-    save_data(X̄, savefolder, savename*"_"*simulation.can.name * "_sim_decoded_X")
+    save_simulation_history(
+        history,
+        savefolder,
+        savename * "_" * simulation.can.name * "_history",
+    )
+    save_model(
+        simulation.can,
+        savefolder,
+        savename * "_" * simulation.can.name * "_sim_CAN_model",
+        :CAN,
+    )
+    save_data(
+        simulation.trajectory.X,
+        savefolder,
+        savename * "_" * simulation.can.name * "_sim_trajectory_X",
+    )
+    save_data(
+        simulation.trajectory.V,
+        savefolder,
+        savename * "_" * simulation.can.name * "_sim_trajectory_V",
+    )
+    save_data(X̄, savefolder, savename * "_" * simulation.can.name * "_sim_decoded_X")
 
     return history, X̄
 end

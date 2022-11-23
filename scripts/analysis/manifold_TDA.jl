@@ -17,7 +17,6 @@ params = AnalysisParameters(
     tda_threshold = 10,       # threshold to reduce TDA computation 
     tda_downsample_factor = 100,        # temporal downsampling of data for TDA
     tda_dim_max = 2,        # max feature dimension, starting at 0
-
     debug = true,   # avoid re-running analysis steps
 )
 
@@ -28,9 +27,9 @@ n_sims = 50
 
 # load data
 simulations = []
-for i in 1:n_sims
+for i = 1:n_sims
     sim = "$(mfld_name)_$(i)_$(mfld_name)"
-    history = load_simulation_history(sim_fld, sim*"_history")
+    history = load_simulation_history(sim_fld, sim * "_history")
     push!(simulations, population_average(history))
 end
 S = hcat(simulations...)
@@ -40,7 +39,7 @@ S = hcat(simulations...)
 
 # ------------------------- dimensionality reduction ------------------------- #
 @info "PCA dimensionality reduction"
-pca_dimensionality_reduction(S, mfld_name, "mfld",  params; visualize=true)
+pca_dimensionality_reduction(S, mfld_name, "mfld", params; visualize = true)
 
 
 # ------------------------------------ TDA ----------------------------------- #

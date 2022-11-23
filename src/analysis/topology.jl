@@ -76,7 +76,7 @@ copies of the network
 """
 function population_average(history::History)::Matrix
     n, _, m = size(history.S)
-    S = real.(reshape(mean(history.S, dims=2), (n, m)))
+    S = real.(reshape(mean(history.S, dims = 2), (n, m)))
     not_nan_cols = map(c -> !any(isnan.(c)), eachcol(S)) |> collect
     S = S[:, not_nan_cols]
     S = S[:, 10:end-10]
@@ -103,25 +103,34 @@ function pca_dimensionality_reduction(
     simulation_folder::String,
     simulation_name::String,
     params::AnalysisParameters = AnalysisParameters();
-    visualize=false,
+    visualize = false,
 )::Nothing
-    (checkpath(simulation_folder, simulation_name*"_pca_space", "npz") && !params.debug) && return
+    (
+        checkpath(simulation_folder, simulation_name * "_pca_space", "npz") &&
+        !params.debug
+    ) && return
 
-    history = load_simulation_history(simulation_folder, simulation_name*"_history")
+    history = load_simulation_history(simulation_folder, simulation_name * "_history")
     @info "loaded history" history.S history.v
 
-    pca_dimensionality_reduction(population_average(history), simulation_folder, simulation_name, params, visualize=visualize)
+    pca_dimensionality_reduction(
+        population_average(history),
+        simulation_folder,
+        simulation_name,
+        params,
+        visualize = visualize,
+    )
 end
 
 
 
 function pca_dimensionality_reduction(
-        S::Matrix,
-        simulation_folder::String,
-        simulation_name::String,
-        params::AnalysisParameters = AnalysisParameters();
-        visualize=false,
-    )::Nothing
+    S::Matrix,
+    simulation_folder::String,
+    simulation_name::String,
+    params::AnalysisParameters = AnalysisParameters();
+    visualize = false,
+)::Nothing
     # get number of PCs
     nPC = if !isnothing(params.max_nPC)
         params.max_nPC
@@ -136,23 +145,26 @@ function pca_dimensionality_reduction(
     @info "pca fitting completed $(length(principalvars(pca_model))) PCs" size(S_pca_space)
 
     # plot fraction of variance explained
-    visualize && plot(
-        cumsum(fraction_variance_explained(pca_model)),
-        legend = nothing,
-        ylabel = "cum frac var",
-        xlabel = "PC",
-        lw = 4,
-        color = :black,
-        title = "Fraction of variance explained",
-    ) |> display
+    visualize &&
+        plot(
+            cumsum(fraction_variance_explained(pca_model)),
+            legend = nothing,
+            ylabel = "cum frac var",
+            xlabel = "PC",
+            lw = 4,
+            color = :black,
+            title = "Fraction of variance explained",
+        ) |> display
 
-    visualize && nPC==3 && animate_3d_scatter(
-        S_pca_space,
-        simulation_folder,
-        "$(simulation_name)_PCA_projection";
-        alpha = 0.25,
-        title = simulation_name,
-    )
+    visualize &&
+        nPC == 3 &&
+        animate_3d_scatter(
+            S_pca_space,
+            simulation_folder,
+            "$(simulation_name)_PCA_projection";
+            alpha = 0.25,
+            title = simulation_name,
+        )
 
     # save results to file
     save_model(pca_model, simulation_folder, simulation_name * "_pca_model", :PCA)
@@ -178,10 +190,13 @@ function isomap_dimensionality_reduction(
     simulation_name::String,
     params::AnalysisParameters = AnalysisParameters(),
 )::Nothing
-    (checkpath(simulation_folder, simulation_name*"_isomap_space", "npz") && !params.debug) && return
+    (
+        checkpath(simulation_folder, simulation_name * "_isomap_space", "npz") &&
+        !params.debug
+    ) && return
 
     # load
-    X = real.(load_data(simulation_folder, simulation_name*"_pca_space"))
+    X = real.(load_data(simulation_folder, simulation_name * "_pca_space"))
 
     # fit
     @info "Performing ISOMAP" size(X) params.n_isomap_dimensions params.isomap_downsample
@@ -204,8 +219,8 @@ function isomap_dimensionality_reduction(
     )
 
     # save
-    save_model(iso, simulation_folder, simulation_name*"_isomap_model", :ISOMAP)
-    save_data(M, simulation_folder, simulation_name*"_isomap_space")
+    save_model(iso, simulation_folder, simulation_name * "_isomap_model", :ISOMAP)
+    save_data(M, simulation_folder, simulation_name * "_isomap_space")
     nothing
 end
 

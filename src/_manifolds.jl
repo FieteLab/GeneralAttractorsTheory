@@ -10,10 +10,10 @@ using LinearAlgebra
 ψ_t(t, θ) = [0, 1]
 ψ_t(p) = ψ_t(p...)
 
-ψ_θ1(t, θ) = [cos(θ), 0] 
+ψ_θ1(t, θ) = [cos(θ), 0]
 ψ_θ1(p) = ψ_θ1(p...)
 
-ψ_θ2(t, θ) = [sin(θ/2), 0] 
+ψ_θ2(t, θ) = [sin(θ / 2), 0]
 ψ_θ2(p) = ψ_θ2(p...)
 
 
@@ -26,11 +26,11 @@ using LinearAlgebra
 (almost) equally spaced points on the sphere.
 https://stackoverflow.com/questions/9600801/evenly-distributing-n-points-on-a-sphere
 """
-function fibonacci_sphere(n=1000)
-    points = zeros(3 ,n)
+function fibonacci_sphere(n = 1000)
+    points = zeros(3, n)
     ϕ = π * (3 - √5)  # golden angle in radians
 
-    for i in 1:n
+    for i = 1:n
         y = 1 - (i / float(n - 1)) * 2  # y goes from 1 to -1
         radius = √(Complex(1 - y * y)) |> real  # radius at y
 

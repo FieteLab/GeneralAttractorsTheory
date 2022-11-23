@@ -27,12 +27,17 @@ activate[d.<2] .= 1
 # initialize trajectory and simulation
 nframes = (Int ∘ round)(duration / dt)
 trajectory = Trajectory(
-        toruscan; T = nframes, dt=dt,
-        σv = 0.00, μv = 0.1, vmax=0.1,
-        σθ = 0.2, θ₀ = nothing, 
-        still=still
+    toruscan;
+    T = nframes,
+    dt = dt,
+    σv = 0.00,
+    μv = 0.1,
+    vmax = 0.1,
+    σθ = 0.2,
+    θ₀ = nothing,
+    still = still,
 )
-simulation = Simulation(toruscan, trajectory; η = 0.0, b₀=0.31)
+simulation = Simulation(toruscan, trajectory; η = 0.0, b₀ = 0.31)
 
 # run
 h, X̄ = @time run_simulation(
@@ -41,9 +46,9 @@ h, X̄ = @time run_simulation(
     discard_first_ms = 100,
     average_over_ms = 10,
     fps = 10,
-    s₀=1.0 .* activate,
-    savefolder="torus",
-    savename="decoding",
-);     
+    s₀ = 1.0 .* activate,
+    savefolder = "torus",
+    savename = "decoding",
+);
 
 plot_trajectory_and_decoded(trajectory, X̄) |> display

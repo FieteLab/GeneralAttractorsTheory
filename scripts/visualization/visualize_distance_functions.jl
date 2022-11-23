@@ -12,7 +12,12 @@ using Distances
 # plot_distance_function(d, plot_title = "Cylinder distance", layout = (4, 1))
 
 d = MobiusEuclidean()
-plot_distance_function(d, plot_title = "Mobius distance", layout = (1, 4), colorbar=nothing)
+plot_distance_function(
+    d,
+    plot_title = "Mobius distance",
+    layout = (1, 4),
+    colorbar = nothing,
+)
 
 # d = SphericalAngle()
 # plot_distance_function(

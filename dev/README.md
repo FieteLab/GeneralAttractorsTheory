@@ -1,1 +1,0 @@
-Scripts useful during development (e.g. to define appropriate vector fields on a manifold)

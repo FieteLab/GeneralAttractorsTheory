@@ -32,7 +32,7 @@ struct Torus <: AbstractManifold
     xmax::Vector
     metric::Metric
 end
-Torus(m) = Torus([-m/2, -m], [m/2, m/2], PeriodicEuclidean([m, m]))
+Torus(m) = Torus([-m / 2, -m], [m / 2, m / 2], PeriodicEuclidean([m, m]))
 T = Torus(32)
 
 
@@ -49,7 +49,7 @@ struct Mobius <: AbstractManifold
     xmax::Vector
     metric::Metric
 end
-Mobius() = Mobius([-1/2, 1/2], [0, 2π], MobiusEuclidean())
+Mobius() = Mobius([-1 / 2, 1 / 2], [0, 2π], MobiusEuclidean())
 
 # ---------------------------------------------------------------------------- #
 #                                 COVER SPACES                                 #

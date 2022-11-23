@@ -1,5 +1,5 @@
 # ---------------------------------- kernel ---------------------------------- #
-function Plots.plot(K::AbstractKernel; σ=4, kwargs...)
+function Plots.plot(K::AbstractKernel; σ = 4, kwargs...)
     x = -σ:0.001:σ |> collect
     y = K.(x)
     x̂ = x[argmin(y)]
@@ -10,7 +10,7 @@ function Plots.plot(K::AbstractKernel; σ=4, kwargs...)
         ylabel = "w",
         lw = 2,
         label = nothing,
-        grid=false,
+        grid = false,
         color = "black";
         kwargs...,
         # xlim = [-σ*abs(x̂), σ*abs(x̂)],
@@ -124,7 +124,13 @@ function plot_distance_function(d::MobiusEuclidean; kwargs...)
     X = (x × y) |> collect
     X = [[x...] for x in vec(X)]
 
-    plot_distance_2d(d, x, y; points = [[-1/2, 0], [0, 3], [0.5, 0.2], [0, 2π]], kwargs...)
+    plot_distance_2d(
+        d,
+        x,
+        y;
+        points = [[-1 / 2, 0], [0, 3], [0.5, 0.2], [0, 2π]],
+        kwargs...,
+    )
 end
 
 """

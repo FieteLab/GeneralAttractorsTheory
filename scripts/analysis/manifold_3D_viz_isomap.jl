@@ -33,9 +33,9 @@ n_sims = 7
 
 # load data
 simulations = []
-for i in 1:n_sims
+for i = 1:n_sims
     sim = "$(mfld_name)_$(i)_$(mfld_name)"
-    history = load_simulation_history(sim_fld, sim*"_history")
+    history = load_simulation_history(sim_fld, sim * "_history")
     push!(simulations, population_average(history))
 end
 S = hcat(simulations...)
@@ -43,7 +43,7 @@ S = hcat(simulations...)
 
 # ------------------------- dimensionality reduction ------------------------- #
 @info "PCA dimensionality reduction"
-pca_dimensionality_reduction(S, mfld_name, "mfld",  params; visualize=true)
+pca_dimensionality_reduction(S, mfld_name, "mfld", params; visualize = true)
 
 @info "ISOMAP dimensionality reduction"
 isomap_dimensionality_reduction(mfld_name, "mfld", params)
@@ -62,12 +62,18 @@ X = load_data(mfld_name, "mfld_isomap_space")
 
 # ? static plot
 scatter3d(
-    eachrow(X)..., 
-    markersize=10, alpha=.015, strokecolor="black", 
-    camera=(40, 20), label=nothing, color=:black,
-    xticks=nothing, xlabel="PC1",
-    yticks=nothing, ylabel="PC2",
-    zticks=nothing, zlabel="PC3",
-    grid=false
+    eachrow(X)...,
+    markersize = 10,
+    alpha = 0.015,
+    strokecolor = "black",
+    camera = (40, 20),
+    label = nothing,
+    color = :black,
+    xticks = nothing,
+    xlabel = "PC1",
+    yticks = nothing,
+    ylabel = "PC2",
+    zticks = nothing,
+    zlabel = "PC3",
+    grid = false,
 ) |> display
-

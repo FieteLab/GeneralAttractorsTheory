@@ -24,11 +24,8 @@ Assumes parameters:
 """
 function mobius_embedding end
 
-mobius_embedding(t, θ) = [
-    (1-t*sin(θ/2))*cos(θ),
-    (1-t*sin(θ/2))*sin(θ),
-    t*cos(θ/2)
-]
+mobius_embedding(t, θ) =
+    [(1 - t * sin(θ / 2)) * cos(θ), (1 - t * sin(θ / 2)) * sin(θ), t * cos(θ / 2)]
 mobius_embedding(p) = mobius_embedding(p...)
 
 mobius_embedding(x::Matrix) = hcat(map(mobius_embedding, eachcol(x))...)

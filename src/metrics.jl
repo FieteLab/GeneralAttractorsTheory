@@ -9,7 +9,7 @@ import Manifolds: distance as mdist
 """
 Sperical distance on the unit sphere by Manifolds.jl
 """
-struct SphericalDistance <: Metric 
+struct SphericalDistance <: Metric
     s::𝕊
 end
 
@@ -100,7 +100,7 @@ MobiusEuclidean() = MobiusEuclidean(1.0, π, PeriodicEuclidean([Inf, 2π]))
 #             t->line(p, [0, q[2]-2π], t), 0:.01:1
 #         )...
 #     )
-    
+
 #     stopper = findfirst(l2_a[2, :] .>= 0.0)
 #     l2_a = l2_a[:, stopper:end]
 #     l2_b = hcat(

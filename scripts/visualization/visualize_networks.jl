@@ -11,4 +11,3 @@ show_connectivity(toruscan; plot_title = "Torus attractor connectivity")
 # ---------------------------------- mobius ---------------------------------- #
 # include("../networks/mobius.jl")
 # show_connectivity(mobiuscan; plot_title = "Mobius attractor connectivity")
-

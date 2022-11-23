@@ -12,7 +12,7 @@ import GeneralAttractors.Simulations: plot_trajectory_and_decoded
 
 
 
-include("../networks/sphere.jl") 
+include("../networks/sphere.jl")
 
 # --------------------------------- simulate --------------------------------- #
 dt = 0.5
@@ -25,30 +25,30 @@ dmin = 0.5  # minimal distance from x₀ for state intialization
 
 nframes = (Int ∘ round)(duration / dt)
 trajectory = Trajectory(
-    spherecan; 
-    T = nframes, 
-    x₀=x₀,
-    vmax=0.004,
-    still=still,
-    modality=:piecewise,
-    n_piecewise_segments=4,
-    σ=[1, 1, 1]
+    spherecan;
+    T = nframes,
+    x₀ = x₀,
+    vmax = 0.004,
+    still = still,
+    modality = :piecewise,
+    n_piecewise_segments = 4,
+    σ = [1, 1, 1],
 )
 
 # get activation to initialize bump
 activate = map(p -> euclidean(x₀, p) < dmin, eachcol(spherecan.X)) .* 1
 
 # simulate
-simulation = Simulation(spherecan, trajectory; b₀ = 0.25, η = 0.0, )
+simulation = Simulation(spherecan, trajectory; b₀ = 0.25, η = 0.0)
 h, X̄ = @time run_simulation(
     simulation,
     frame_every_n = 20,
     discard_first_ms = 0,
     average_over_ms = 10,
-    fps=10,
-    s₀=activate,
-    savefolder="sphere",
-    savename="decoding",
+    fps = 10,
+    s₀ = activate,
+    savefolder = "sphere",
+    savename = "decoding",
 );
 
 

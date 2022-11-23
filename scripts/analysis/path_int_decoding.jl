@@ -15,6 +15,10 @@ using GeneralAttractors.Analysis.ManifoldAnalysis: population_average
 import GeneralAttractors: torus_embedding, sphere_embedding, mobius_embedding
 using ManifoldsBase, Manifolds
 
+"""
+Take the results of a previous simulation and compare trajectory to decoded.
+"""
+
 # include("../scripts/networks/torus.jl")
 # include("../scripts/networks/sphere.jl")
 # include("../scripts/networks/mobius.jl")
@@ -36,11 +40,11 @@ end
 
 
 sim = "$(sim_name)_$(sim_fld)"
-history = load_simulation_history(sim_fld, sim*"_history")
+history = load_simulation_history(sim_fld, sim * "_history")
 S = population_average(history)
 
-X̄ = load_data(sim_fld, sim_name*"_"*sim_fld*"_sim_decoded_X")
-X = load_data(sim_fld, sim_name*"_"*sim_fld*"_sim_trajectory_X")
+X̄ = load_data(sim_fld, sim_name * "_" * sim_fld * "_sim_decoded_X")
+X = load_data(sim_fld, sim_name * "_" * sim_fld * "_sim_trajectory_X")
 
 # ------------- plot bump trajectory on the maniold lattice in 3D ------------ #
 # TODO this doesn't actually show the bump but the bump through the decoder to fix in the future
@@ -61,23 +65,31 @@ embed_traj = by_column(φ, Matrix(X'))
 
 
 # embed_plt = scatter3d(eachrow(embed_position)..., ms=8, alpha=.2, color="#BABDD3",
-embed_plt = plot3d(eachrow(embed_position)..., lw=5, color="#9CA1C7",
-msa=0, msw=0,
-grid=false,
-label="decoded",
-xticks=nothing,
-yticks=nothing,
-zticks=nothing,
-xlim=[-1.5, 1.5],
-ylim=[-1.5, 1.5],
-zlim=[-1.5, 1.5],
-camera=(45, 25)
-) 
+embed_plt = plot3d(
+    eachrow(embed_position)...,
+    lw = 5,
+    color = "#9CA1C7",
+    msa = 0,
+    msw = 0,
+    grid = false,
+    label = "decoded",
+    xticks = nothing,
+    yticks = nothing,
+    zticks = nothing,
+    xlim = [-1.5, 1.5],
+    ylim = [-1.5, 1.5],
+    zlim = [-1.5, 1.5],
+    camera = (45, 25),
+)
 
-plot3d!(eachrow(embed_traj)..., lw=5, color="red",
-msa=0, msw=0,
-grid=false,
-label="actual",
+plot3d!(
+    eachrow(embed_traj)...,
+    lw = 5,
+    color = "red",
+    msa = 0,
+    msw = 0,
+    grid = false,
+    label = "actual",
 )
 
 display(embed_plt)

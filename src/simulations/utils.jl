@@ -20,11 +20,11 @@ function Plots.plot(traj::Trajectory)
 end
 
 
-function Plots.plot(traj::Trajectory, i::Int; xmin=nothing, xmax=nothing)
+function Plots.plot(traj::Trajectory, i::Int; xmin = nothing, xmax = nothing)
     d = size(traj.X, 2)
 
-    xmin = isnothing(xmin) ? minimum(traj.X, dims=1) : xmin
-    xmax = isnothing(xmax) ? maximum(traj.X, dims=1) : xmax
+    xmin = isnothing(xmin) ? minimum(traj.X, dims = 1) : xmin
+    xmax = isnothing(xmax) ? maximum(traj.X, dims = 1) : xmax
 
     if d == 2
         plt = plot(
@@ -34,7 +34,7 @@ function Plots.plot(traj::Trajectory, i::Int; xmin=nothing, xmax=nothing)
             grid = false,
             aspect_ratio = :equal,
             label = "trajectory",
-            camera=(.075*i, 20)
+            camera = (0.075 * i, 20),
         )
     else
         plt = plot(
@@ -47,20 +47,13 @@ function Plots.plot(traj::Trajectory, i::Int; xmin=nothing, xmax=nothing)
             xlim = [xmin[1], xmax[1]],
             ylim = [xmin[2], xmax[2]],
             zlim = [xmin[3], xmax[3]],
-            camera=(.075*i, 20)
+            camera = (0.075 * i, 20),
         )
     end
 
 
     # fain line
-    plot!(
-        plt,
-        eachcol(traj.X)...,
-        lw = 1.5,
-        color = :black,
-        label = nothing,
-        alpha=.5,
-    )
+    plot!(plt, eachcol(traj.X)..., lw = 1.5, color = :black, label = nothing, alpha = 0.5)
 
     plt
 end
@@ -82,13 +75,19 @@ function simulation_frame_1dcan(simulation::Simulation, timems, v::Vector; kwarg
 end
 
 
-function simulation_frame_2dcan(simulation::Simulation, timems, v::Vector, ::Nothing; kwargs...)
+function simulation_frame_2dcan(
+    simulation::Simulation,
+    timems,
+    v::Vector,
+    ::Nothing;
+    kwargs...,
+)
     can = simulation.can
     s̄ = sum(simulation.S, dims = 2) |> vec
 
     plt = plot(;
         title = "elapsed: $(round(timems)) ms",
-        clims = (min(0, minimum(s̄)), max(maximum(s̄)/2, 0.1)),
+        clims = (min(0, minimum(s̄)), max(maximum(s̄) / 2, 0.1)),
         aspect_ratio = :equal,
         grid = false,
         size = simulation.can.n .* 10,
@@ -124,7 +123,13 @@ function simulation_frame_2dcan(simulation::Simulation, timems, v::Vector, ::Not
 end
 
 
-function simulation_frame_2dcan(simulation::Simulation, timems, v::Vector, φ::Function; kwargs...)
+function simulation_frame_2dcan(
+    simulation::Simulation,
+    timems,
+    v::Vector,
+    φ::Function;
+    kwargs...,
+)
     can = simulation.can
     s = sum(simulation.S, dims = 2) |> vec
     M = by_column(φ, can.X)
@@ -134,19 +139,31 @@ function simulation_frame_2dcan(simulation::Simulation, timems, v::Vector, φ::F
     inactive = s .< th
 
     plt = scatter3d(
-        eachrow(M[:, inactive])..., marker_z=s[inactive],
-        title = "elapsed: $(round(timems)) ms", grid=false,
-        msa=0, msw=0, clims=(0, maximum(s)*0.95), 
-        ms=6, alpha=.1,
-        label=nothing, colorbar=nothing,
+        eachrow(M[:, inactive])...,
+        marker_z = s[inactive],
+        title = "elapsed: $(round(timems)) ms",
+        grid = false,
+        msa = 0,
+        msw = 0,
+        clims = (0, maximum(s) * 0.95),
+        ms = 6,
+        alpha = 0.1,
+        label = nothing,
+        colorbar = nothing,
     )
 
     scatter3d!(
-            eachrow(M[:, active])..., marker_z=s[active],
-            title = "elapsed: $(round(timems)) ms", grid=false,
-            msa=0, msw=0, clims=(0, maximum(s)*0.95), ms=8,
-            label=nothing, colorbar=nothing,
-    )   
+        eachrow(M[:, active])...,
+        marker_z = s[active],
+        title = "elapsed: $(round(timems)) ms",
+        grid = false,
+        msa = 0,
+        msw = 0,
+        clims = (0, maximum(s) * 0.95),
+        ms = 8,
+        label = nothing,
+        colorbar = nothing,
+    )
 
     return plt
 end
@@ -160,18 +177,30 @@ function custom_sphere_viz(simulation::Simulation, timems, v::Vector, φ; kwargs
     inactive = s .< th
 
     plt = scatter3d(
-        eachrow(can.X[:, inactive])..., marker_z=s[inactive],
-        title = "elapsed: $(round(timems)) ms", grid=false,
-        msa=0, msw=0, clims=(0, maximum(s)*0.95), 
-        ms=6, alpha=.1,
-        label=nothing, colorbar=nothing,
-        )
+        eachrow(can.X[:, inactive])...,
+        marker_z = s[inactive],
+        title = "elapsed: $(round(timems)) ms",
+        grid = false,
+        msa = 0,
+        msw = 0,
+        clims = (0, maximum(s) * 0.95),
+        ms = 6,
+        alpha = 0.1,
+        label = nothing,
+        colorbar = nothing,
+    )
     scatter3d!(
-            eachrow(can.X[:, active])..., marker_z=s[active],
-            title = "elapsed: $(round(timems)) ms", grid=false,
-            msa=0, msw=0, clims=(0, maximum(s)*0.95), ms=8,
-            label=nothing, colorbar=nothing,
-            )
+        eachrow(can.X[:, active])...,
+        marker_z = s[active],
+        title = "elapsed: $(round(timems)) ms",
+        grid = false,
+        msa = 0,
+        msw = 0,
+        clims = (0, maximum(s) * 0.95),
+        ms = 8,
+        label = nothing,
+        colorbar = nothing,
+    )
 
     return plt
 end
@@ -185,8 +214,7 @@ function Plots.plot(
     x::Vector,   # trajectory's position
     v::Vector,
     X̄,
-    φ::Union{Nothing, Function}
-    ;           # decoded position
+    φ::Union{Nothing,Function};           # decoded position
     kwargs...,
 )
     # plot populatiuon actvitiy
@@ -207,12 +235,29 @@ function Plots.plot(
     tj = simulation.trajectory
     ϕ(x) = moving_average(x, 31)
     if simulation.can.name == "sphere"
-        traj = Plots.plot(tj, framen; xmin=[-1.5, -1.5, -1.5], xmax=[1.5, 1.5, 1.5])
+        traj = Plots.plot(tj, framen; xmin = [-1.5, -1.5, -1.5], xmax = [1.5, 1.5, 1.5])
         scatter3d!(traj, [x[1]], [x[2]], [x[3]], ms = 5, color = :black, label = "actual")
 
         # plot decoded trajectory
-        plot3d!(traj, X̄[1:framen, 1], X̄[1:framen, 2], X̄[1:framen, 3], color=:red, label=nothing, alpha=1, lw=2)
-        scatter3d!(traj, [X̄[framen, 1]], [X̄[framen, 2]], [X̄[framen, 3]], ms = 7, color = :red, label = "decoded")
+        plot3d!(
+            traj,
+            X̄[1:framen, 1],
+            X̄[1:framen, 2],
+            X̄[1:framen, 3],
+            color = :red,
+            label = nothing,
+            alpha = 1,
+            lw = 2,
+        )
+        scatter3d!(
+            traj,
+            [X̄[framen, 1]],
+            [X̄[framen, 2]],
+            [X̄[framen, 3]],
+            ms = 7,
+            color = :red,
+            label = "decoded",
+        )
 
         # visualize activation of each individual population
         _x = 1:size(simulation.S, 2)
@@ -221,19 +266,33 @@ function Plots.plot(
 
         # visualize distance between decoded and real position
         d = simulation.can.metric(x, X̄[framen, :])
-        b2 = bar([0], [d], title="Dedoded distance", ylim=[0, 3])
+        b2 = bar([0], [d], title = "Dedoded distance", ylim = [0, 3])
 
         # main figure
         plot(traj, pop_activity, b, b2, size = (1000, 800), layout = (2, 2))
     else
         traj = Plots.plot(tj, framen)
-        
+
         # plot decoded trajectory
-        framen > (100+2) && plot!(traj, ϕ(X̄[100:framen, 1]), ϕ(X̄[100:framen, 2]), color=:red, label=nothing, alpha=.6)
-        scatter!(traj, [X̄[framen, 1]], [X̄[framen, 2]], ms = 7, color = :red, label = "decoded")
+        framen > (100 + 2) && plot!(
+            traj,
+            ϕ(X̄[100:framen, 1]),
+            ϕ(X̄[100:framen, 2]),
+            color = :red,
+            label = nothing,
+            alpha = 0.6,
+        )
+        scatter!(
+            traj,
+            [X̄[framen, 1]],
+            [X̄[framen, 2]],
+            ms = 7,
+            color = :red,
+            label = "decoded",
+        )
 
         # main figure
-        plot(traj, pop_activity,  size = (1000, 800), layout = (1, 2))
+        plot(traj, pop_activity, size = (1000, 800), layout = (1, 2))
     end
 end
 
@@ -243,16 +302,22 @@ end
 # ---------------------------------------------------------------------------- #
 function plot_trajectory_and_decoded(trajectory::Trajectory, X̄::Matrix)
     d = size(X̄, 2)
-    plt = plot(eachcol(trajectory.X)..., lw=5, color=:black, label="traj.",
-        grid=false, aspect_ratio=:equal, title="Decoded trajectory"
+    plt = plot(
+        eachcol(trajectory.X)...,
+        lw = 5,
+        color = :black,
+        label = "traj.",
+        grid = false,
+        aspect_ratio = :equal,
+        title = "Decoded trajectory",
     )
 
-    scatter!([[x] for x in trajectory.X[1, :]]..., ms=5, color=:black, label=nothing)
+    scatter!([[x] for x in trajectory.X[1, :]]..., ms = 5, color = :black, label = nothing)
 
     if d == 2
-        plot!(eachcol(X̄)..., lw=3, color=:red, label="decoded")
+        plot!(eachcol(X̄)..., lw = 3, color = :red, label = "decoded")
     elseif d == 3
-        plot3d!(eachcol(X̄)..., lw=3, color=:red, label="decoded")
+        plot3d!(eachcol(X̄)..., lw = 3, color = :red, label = "decoded")
     end
     return plt
 end
@@ -268,6 +333,3 @@ reset(simulation::Simulation) = begin
     simulation.Ṡ .*= 0.0
 end
 reset(Ṡ::Vector) = Ṡ * 0.0
-
-
-

@@ -122,7 +122,7 @@ mutable struct CAN <: AbstractCAN
     σ::Function                        # activation function
     Ω::Vector{OneForm}                 # vector of `OneForm`s representing input measuring forms
     offsets::Vector
-    offset_size
+    offset_size::Any
     metric::Metric
 end
 
@@ -149,7 +149,8 @@ function CAN(
     C::CoverSpace,
     n::NTuple{N,Int},
     ξ::Function,
-    args...; kwargs...
+    args...;
+    kwargs...,
 ) where {N}
     # check that ξ has the right form
     nargs = first(methods(ξ)).nargs - 1
@@ -166,7 +167,7 @@ function CAN(
     ξ̂(t::Tuple) = ξ(t...)
     X::Matrix = hcat(ξ̂.(lattice_idxs)...)  # matrix, size d × N
     @debug "X" size(X) typeof(X) eltype(X)
-    
+
     # finalize
     return CAN(name, C, n, lattice_idxs, X, args...; kwargs...)
 end
@@ -222,7 +223,21 @@ function CAN(
     Ω = get_one_forms(Ω, offsets)
 
     @debug "ready" n lattice_idxs eltype(lattice_idxs) X eltype(X) typeof(Ws) eltype(Ws)
-    return CAN(name, C, n, d, lattice_idxs, X, Ws, kernel, σ, Ω, offsets, offset_size, metric)
+    return CAN(
+        name,
+        C,
+        n,
+        d,
+        lattice_idxs,
+        X,
+        Ws,
+        kernel,
+        σ,
+        Ω,
+        offsets,
+        offset_size,
+        metric,
+    )
 end
 
 
@@ -355,7 +370,7 @@ end
 # ---------------------------- field based offsets --------------------------- #
 
 struct FieldOffset <: AbstractWeightOffset
-    displacement  # used in-place of the real offsets e.g. to display connectivity mtxs during visualization
+    displacement::Any  # used in-place of the real offsets e.g. to display connectivity mtxs during visualization
     ψ::Function
 end
 
@@ -372,9 +387,7 @@ function get_offsets(offsets::Vector{Function}, ::Int, n::Tuple)::Vector{FieldOf
 
     # get "base" offsets and use them as displacements for visuals
     k = length(offsets)
-    displacements = map(
-        i -> 1.5 .* [cos(i * 2π/k), sin(i * 2π/k)], 1:k
-    )
+    displacements = map(i -> 1.5 .* [cos(i * 2π / k), sin(i * 2π / k)], 1:k)
 
     return FieldOffset.(displacements, offsets)
 end
@@ -427,16 +440,13 @@ function get_pairwise_distance(
     """ 
     Get vector in the manifold domain. 
     x∈X, v∈V. 
-    
+
     w = Jᵀv ∈ ℝᵈ is a vector on the lattice of neurons
     """
-    φᵀ(x::Vector, v::Vector) = jacobian(φ, x)'*v
+    φᵀ(x::Vector, v::Vector) = jacobian(φ, x)' * v
 
     N = size(X, 2)
-    W = hcat(map(
-        i -> φᵀ(X[:, i], V[:, i]),
-        1:N
-    )...)
+    W = hcat(map(i -> φᵀ(X[:, i], V[:, i]), 1:N)...)
 
     # apply shifts to neurons coordinates in the lattice & get distance
     pairwise(metric, X .- (offset_size .* W), X)

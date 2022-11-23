@@ -15,8 +15,8 @@ mutable struct Decoder
     Δ::Vector # shift between x,n at time t=0 (they will be offset when decoding start)
 end
 
-Decoder(x::Vector, n::Vector) = Decoder(x, n, x-n)
-    
+Decoder(x::Vector, n::Vector) = Decoder(x, n, x - n)
+
 
 
 """
@@ -57,22 +57,22 @@ function (dec::Decoder)(s::Vector, can::AbstractCAN)
         candidates = can.C.ρⁱ(n̂...) # shape d × N
 
         # get the point closest to the latest decoded location (minus manifold shift)
-        d = map(i -> can.C.M.metric(dec.x-dec.Δ, candidates[:, i]), 1:size(candidates, 2))
+        d = map(i -> can.C.M.metric(dec.x - dec.Δ, candidates[:, i]), 1:size(candidates, 2))
         selected = argmin(d)
         @debug "decoding recalibration triggered" d[selected]
 
         if d[selected] > 2.5
-            r(x) = round(x; digits=2)
+            r(x) = round(x; digits = 2)
             @warn "Decoding problems" r.(dec.x) r.(dec.n) r.(n̂) dec.Δ
         end
 
         # set it as the new "decoded" position
         dec.x = candidates[:, selected] + dec.Δ
-        
+
         # update stored representation of n̂ location on neural manifold
         dec.n = n̂
 
-        
+
     end
     return dec.x
 end

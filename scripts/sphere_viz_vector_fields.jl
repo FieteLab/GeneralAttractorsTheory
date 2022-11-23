@@ -44,9 +44,42 @@ S = hcat(map(sphere_embedding, eachcol(M))...)  # 3 × n
 
 #? 2D viz
 px, py, pz = plot(), plot(), plot()
-scatter!(px, M[1, :], M[2, :], ms=3, msa=0, msw=0, grid=false, color=:black, label=nothing, title="X")
-scatter!(py, M[1, :], M[2, :], ms=3, msa=0, msw=0, grid=false, color=:red, label=nothing, title="Y")
-scatter!(pz, M[1, :], M[2, :], ms=3, msa=0, msw=0, grid=false, color=:green, label=nothing, title="Z")
+scatter!(
+    px,
+    M[1, :],
+    M[2, :],
+    ms = 3,
+    msa = 0,
+    msw = 0,
+    grid = false,
+    color = :black,
+    label = nothing,
+    title = "X",
+)
+scatter!(
+    py,
+    M[1, :],
+    M[2, :],
+    ms = 3,
+    msa = 0,
+    msw = 0,
+    grid = false,
+    color = :red,
+    label = nothing,
+    title = "Y",
+)
+scatter!(
+    pz,
+    M[1, :],
+    M[2, :],
+    ms = 3,
+    msa = 0,
+    msw = 0,
+    grid = false,
+    color = :green,
+    label = nothing,
+    title = "Z",
+)
 for i = 1:size(M, 2)
     p = M[:, i]
     point = sphere_embedding(p)
@@ -54,16 +87,46 @@ for i = 1:size(M, 2)
 
     J = jacobian(sphere_embedding, p)'
 
-    X = 0.15 * J*(z * ∂y - y * ∂z)
-    Y = 0.15 * J*(z * ∂x - x * ∂z)
-    Z = 0.15 * J*(x * ∂y - y * ∂x)
+    X = 0.15 * J * (z * ∂y - y * ∂z)
+    Y = 0.15 * J * (z * ∂x - x * ∂z)
+    Z = 0.15 * J * (x * ∂y - y * ∂x)
 
-    plot!(px, [p[1], p[1]+X[1]], [p[2], p[2]+X[2]], lw=2, color="black", label=nothing)
-    plot!(py, [p[1], p[1]+Y[1]], [p[2], p[2]+Y[2]], lw=2, color="red", label=nothing)
-    plot!(pz, [p[1], p[1]+Z[1]], [p[2], p[2]+Z[2]], lw=2, color="green", label=nothing)
+    plot!(
+        px,
+        [p[1], p[1] + X[1]],
+        [p[2], p[2] + X[2]],
+        lw = 2,
+        color = "black",
+        label = nothing,
+    )
+    plot!(
+        py,
+        [p[1], p[1] + Y[1]],
+        [p[2], p[2] + Y[2]],
+        lw = 2,
+        color = "red",
+        label = nothing,
+    )
+    plot!(
+        pz,
+        [p[1], p[1] + Z[1]],
+        [p[2], p[2] + Z[2]],
+        lw = 2,
+        color = "green",
+        label = nothing,
+    )
 
 end
-plot(px, py, pz, layout=(3, 1), size=(800, 1200), aspect_ratio=:equal, xlim=[-π-0.2, π+0.2], ylim=[-π/2-0.2, π/2+0.2])
+plot(
+    px,
+    py,
+    pz,
+    layout = (3, 1),
+    size = (800, 1200),
+    aspect_ratio = :equal,
+    xlim = [-π - 0.2, π + 0.2],
+    ylim = [-π / 2 - 0.2, π / 2 + 0.2],
+)
 
 
 #? 3D viz
