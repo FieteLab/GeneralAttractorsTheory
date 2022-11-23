@@ -217,8 +217,8 @@ function Trajectory(
     # get vfield "activation" at each frame
     if modality == :piecewise
         vx = piecewise_linear(T, n_piecewise_segments, -vmax:(vmax/100):vmax)
-        vy = piecewise_linear(T, n_piecewise_segments, -vmax:(vmax/100):vmax)
-        vz = piecewise_linear(T, n_piecewise_segments, -vmax:(vmax/100):vmax)
+        vy = piecewise_linear(T, n_piecewise_segments, -vmax*0.75:(vmax/100):vmax*0.75)
+        vz = piecewise_linear(T, n_piecewise_segments, -vmax*0.75:(vmax/100):vmax*0.75)
     elseif modality == :constant
         vx = ones(T) .* σ[1]
         vy = ones(T) .* σ[2]
@@ -243,15 +243,14 @@ function Trajectory(
 
         #! REMOVE
         v = v ./ norm(v) .* vmax
-
         x̂ =  x + v
 
         # correct for boundary conditions
-        if x̂[1] <= -0.5
-            x̂[1] = -0.5
+        if x̂[1] <= -0.475
+            x̂[1] = -0.475
             # v[1] = 0
-        elseif x̂[1] >= 0.5
-            x̂[1] = 0.5
+        elseif x̂[1] >= 0.475
+            x̂[1] = 0.475
             # v[1] = 0
         end
 

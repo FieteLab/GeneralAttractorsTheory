@@ -20,7 +20,7 @@ using ManifoldsBase, Manifolds
 # include("../scripts/networks/mobius.jl")
 
 
-sim_fld = "sphere"
+sim_fld = "mobius"
 sim_name = "decoding"
 
 if sim_fld == "torus"
@@ -45,41 +45,51 @@ X = load_data(sim_fld, sim_name*"_"*sim_fld*"_sim_trajectory_X")
 # ------------- plot bump trajectory on the maniold lattice in 3D ------------ #
 # TODO this doesn't actually show the bump but the bump through the decoder to fix in the future
 mfld_position = by_column(c -> decode_peak_location(c, can), S)
-t = 1:size(mfld_position, 2)
-fm = linear_interpolation(t, mfld_position[1, :])
-fn = linear_interpolation(t, mfld_position[2, :])
+# t = 1:size(mfld_position, 2)
+# fm = linear_interpolation(t, mfld_position[1, :])
+# fn = linear_interpolation(t, mfld_position[2, :])
 
-T = 1:.01:size(mfld_position, 2)
-m = fm.(T)
-n = fn.(T)
+# T = 1:.01:size(mfld_position, 2)
+# m = fm.(T)
+# n = fn.(T)
 
-mfld_position = Matrix(hcat(m, n)')
+# mfld_position = Matrix(hcat(m, n)')
 
 
 embed_position = by_column(φ, mfld_position)
+embed_traj = by_column(φ, Matrix(X'))
 
 
-# scatter3d(eachrow(embed_position)..., ms=8, alpha=.2, color="#BABDD3",
-# plot3d(eachrow(embed_position)..., lw=5, color="#9CA1C7",
-# msa=0, msw=0,
-# grid=false,
-# xticks=nothing,
-# yticks=nothing,
-# zticks=nothing,
-# xlim=[-1.5, 1.5],
-# ylim=[-1.5, 1.5],
-# zlim=[-1.5, 1.5],
-# camera=(45, 55)
-# )
+# embed_plt = scatter3d(eachrow(embed_position)..., ms=8, alpha=.2, color="#BABDD3",
+embed_plt = plot3d(eachrow(embed_position)..., lw=5, color="#9CA1C7",
+msa=0, msw=0,
+grid=false,
+label="decoded",
+xticks=nothing,
+yticks=nothing,
+zticks=nothing,
+xlim=[-1.5, 1.5],
+ylim=[-1.5, 1.5],
+zlim=[-1.5, 1.5],
+camera=(45, 25)
+) 
+
+plot3d!(eachrow(embed_traj)..., lw=5, color="red",
+msa=0, msw=0,
+grid=false,
+label="actual",
+)
+
+display(embed_plt)
 
 
 # -------------------- plot decoded and actual trajectory -------------------- #
-plt = plot(
-    xlabel="x₁",
-    ylabel="x₂",
-    grid=false,
-    camera=(90, 60)
-)
+# plt = plot(
+#     xlabel="x₁",
+#     ylabel="x₂",
+#     grid=false,
+#     camera=(90, 60)
+# )
 
-plot!(eachcol(X)..., lw=4, color=:red, label=nothing)
-plot!(eachcol(X̄)..., lw=3, color=:black, label=nothing)
+# plot!(eachcol(X)..., lw=4, color=:red, label="actual")
+# plot!(eachcol(X̄)..., lw=3, color=:black, label="decoded",)

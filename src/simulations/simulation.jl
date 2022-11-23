@@ -80,6 +80,8 @@ function step!(simulation::Simulation, x::Vector, v::Vector; s₀=nothing)
             simulation.can.Ω
             )
     )  # inputs vector of size 2d
+    r(x) = round(x, digits=2)
+    # println(r.(v), " "^10, r.(V))
 
 
     S̄ = ∑ⱼ(S)  # get the sum of all current activations
