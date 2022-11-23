@@ -96,7 +96,7 @@ function Trajectory(
 )
     # get speed and orientation
     v = rand(T) .* σv .+ μv
-    v[v.<vmax] .= vmax
+    v[v.>vmax] .= vmax
     v[v.<0] .= 0
 
     θ₀ = isnothing(θ₀) ? rand(0:0.2:2π) : θ₀

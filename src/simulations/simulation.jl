@@ -75,9 +75,8 @@ function step!(simulation::Simulation, x::Vector, v::Vector; s₀ = nothing)
     # get effect of recurrent connectivity & external input
     d = size(S, 2)
     V = vec(map(ωᵢ -> ωᵢ(x, v), simulation.can.Ω))  # inputs vector of size 2d
-    r(x) = round(x, digits = 2)
+    # r(x) = round(x, digits = 2)
     # println(r.(v), " "^10, r.(V))
-
 
     S̄ = ∑ⱼ(S)  # get the sum of all current activations
     !isnothing(s₀) && (S̄ .*= s₀)
@@ -157,8 +156,8 @@ function run_simulation(
             decoder_initialized || (X̄[i, :] = x)
 
             # step simulation
-            # x̂ = decoder_initialized ? decoder.x : x
-            x̂ = simulation.trajectory.X[i, :]
+            x̂ = decoder_initialized ? decoder.x : x
+            # x̂ = simulation.trajectory.X[i, :]
             S̄ = step!(simulation, x̂, v; s₀ = s₀)
 
             # initialize decoder if necessary
