@@ -55,7 +55,7 @@ for i = 1:n_sims
         fps = 10,
         s₀ = activate,
         savefolder = "abstract",
-        savename = "sphere_$(i+50)",
+        savename = "sphere_$(i)",
     )
 
 end

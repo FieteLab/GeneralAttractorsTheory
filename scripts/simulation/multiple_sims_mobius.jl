@@ -48,7 +48,7 @@ for i = 1:n_sims
     h, X̄ = @time run_simulation(
         simulation;
         frame_every_n = nothing,
-        discard_first_ms = 0,
+        discard_first_ms = 200,
         average_over_ms = 10,
         fps = 10,
         s₀ = 1.0 .* activate,
