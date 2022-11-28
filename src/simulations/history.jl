@@ -32,7 +32,7 @@ function History(
 
     # see over how many frames we average
     average_over = (Int ∘ round)(average_over_ms / simulation.dt)
-    keep_frames = (Int ∘ floor)((nframes - n_discard) / average_over)
+    keep_frames = (Int ∘ round)((nframes - n_discard) / average_over)
     keep_frames < 1 && error("Keep frames < 0, reduce discard or increase duration")
 
     @debug "Creating history arrays" size(simulation.S) keep_frames average_over

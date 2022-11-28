@@ -56,10 +56,10 @@ k_t = LocalGlobalKernel(α = 0.5, σ = 1.5, β = 0.5)
 
 # one forms
 # Ω = OneForm[
-#     OneForm(1, x -> sin(2x / n[1]) + 1.25),
-#     OneForm(1, x -> -(sin(2x / n[1]) + 1.25)),
-#     OneForm(2, x -> sin(2x / n[2]) + 1.25),
-#     OneForm(2, x -> -(sin(2x / n[2]) + 1.25)),
+#     OneForm(1, (x, y) -> [sin(x) + 2, 0]),
+#     OneForm(2, (x, y) -> -[sin(x) + 2, 0]),
+#     OneForm(3, (x, y) -> [0, sin(y) + 2]),
+#     OneForm(4, (x, y) -> -[0, sin(y) + 2]),
 # ]
 
 # make network

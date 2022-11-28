@@ -377,7 +377,9 @@ function show_oneforms!(
         o = ω([x̂, ŷ]) .* scale
 
         # vis
-        scatter!(plt, [x], [y], ms = 3, markercolor = color, label = nothing; kwargs...)
+        scatter!(plt, [x], [y], ms = 3, 
+                msa=0, msw=0,
+                markercolor = color, label = nothing; kwargs...)
         plot!(
             plt,
             [x, x + o[1]],

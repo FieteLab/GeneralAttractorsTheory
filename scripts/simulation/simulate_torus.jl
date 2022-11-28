@@ -11,18 +11,18 @@ using GeneralAttractors: lerp
 using GeneralAttractors.ManifoldUtils
 import GeneralAttractors.Simulations: plot_trajectory_and_decoded
 
-include("../networks/torus.jl")
+# include("../networks/torus.jl")
 
 # --------------------------------- simulate --------------------------------- #
 dt = 0.5
-duration = 1500
+duration = 500
 still = 50  # initialization period        
 
 
-x₀ = [0, 0] # initialize state at center of mfld
+x₀ = [3.14, 3.14] # initialize state at center of mfld
 d = map(i -> toruscan.metric(x₀, toruscan.X[:, i]), 1:size(toruscan.X, 2))
 activate = zeros(length(d))
-activate[d.<2] .= 1
+activate[d.<0.5] .= 1
 
 # initialize trajectory and simulation
 nframes = (Int ∘ round)(duration / dt)
@@ -31,7 +31,7 @@ trajectory = Trajectory(
     T = nframes,
     dt = dt,
     σv = 0.2,
-    μv = 0.2,
+    μv = 0.1,
     vmax = 0.2,
     σθ = 0.2,
     θ₀ = nothing,

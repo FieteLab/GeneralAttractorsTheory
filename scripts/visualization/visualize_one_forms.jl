@@ -6,22 +6,34 @@ using GeneralAttractors.Kernels
 using GeneralAttractors: lerp
 using GeneralAttractors.ManifoldUtils
 
-include("../networks/sphere.jl")
+include("../networks/torus.jl")
 
 # ----------------------------------- show ----------------------------------- #
-dx, scale = 0.5, 0.25
+dx, scale = 8, 2
 
-plots = []
-for i = 1:2:length(Ω)
-    p = show_oneforms(
-        spherecan.Ω[i],
-        spherecan.C,
+i = 3
+p = show_oneforms(
+        toruscan.Ω[3],
+        toruscan.C,
         cover.M.xmin,
         cover.M.xmax;
         dx = dx,
         scale = scale,
         color = :red,
     )
-    push!(plots, p)
-end
-plot(plots...)
+
+# plots = []
+# for i = 1:2:length(toruscan.Ω)
+#     p = show_oneforms(
+#         toruscan.Ω[i],
+#         toruscan.C,
+#         cover.M.xmin,
+#         cover.M.xmax;
+#         dx = dx,
+#         scale = scale,
+#         color = :red,
+#     ) |> display
+#     break
+#     # push!(plots, p)
+# end
+# # plot(plots...)
