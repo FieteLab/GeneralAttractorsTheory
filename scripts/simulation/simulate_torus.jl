@@ -11,11 +11,11 @@ using GeneralAttractors: lerp
 using GeneralAttractors.ManifoldUtils
 import GeneralAttractors.Simulations: plot_trajectory_and_decoded
 
-# include("../networks/torus.jl")
+include("../networks/torus.jl")
 
 # --------------------------------- simulate --------------------------------- #
 dt = 0.5
-duration = 1000
+duration = 1500
 still = 50  # initialization period        
 
 

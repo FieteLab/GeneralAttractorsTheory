@@ -11,11 +11,12 @@ end
 
 mutable struct Decoder
     x::Vector # last state in can.C.M, the cover space mfld coordinates
+    x̂::Vector # last state in a space homeomorphic to can.C.M but with no scaling compared to can.C.N
     n::Vector # last state in can.C.N, the neural lattice coordinates
     Δ::Vector # shift between x,n at time t=0 (they will be offset when decoding start)
 end
 
-Decoder(x::Vector, n::Vector) = Decoder(x, n, x - n)
+Decoder(x::Vector, n::Vector) = Decoder(x, x, n, x - n)
 
 
 
@@ -41,6 +42,8 @@ inverse of the cover space map in `M` and finding the spots
 that are closest to it. 
 """
 function (dec::Decoder)(s::Vector, can::AbstractCAN)
+    α = 15 # scaling factor
+
     # get the position of activity bump in neural mfld coordinates
     n̂ = decode_peak_location(s, can)
     can.C.M == can.C.N && return n̂
@@ -48,16 +51,17 @@ function (dec::Decoder)(s::Vector, can::AbstractCAN)
     # get Δn relative to previous bump coordinates
     Δn = n̂ .- dec.n
 
-    if norm(Δn) < 5
+    if norm(Δn) < 2.5
         # for small on-mfld movement, just look at the change in coordinates
-        dec.x += Δn
+        dec.x += Δn * α
+        dec.x̂ += Δn
         dec.n = n̂
     else
         # for large Δn look at the pre-image of n in the variable manifold given cover map
         candidates = can.C.ρⁱ(n̂...) # shape d × N
 
         # get the point closest to the latest decoded location (minus manifold shift)
-        d = map(i -> can.C.M.metric(dec.x - dec.Δ, candidates[:, i]), 1:size(candidates, 2))
+        d = map(i -> can.C.M.metric(dec.x̂ - dec.Δ, candidates[:, i]), 1:size(candidates, 2))
         selected = argmin(d)
         @debug "decoding recalibration triggered" d[selected]
 
@@ -66,13 +70,16 @@ function (dec::Decoder)(s::Vector, can::AbstractCAN)
             @warn "Decoding problems" r.(dec.x) r.(dec.n) r.(n̂) dec.Δ
         end
 
-        # set it as the new "decoded" position
-        dec.x = candidates[:, selected] + dec.Δ
+        # get change in latent representation with no scaling
+        x̂ = candidates[:, selected] + dec.Δ
+        Δx̂ = x̂ .- dec.x̂
+        
+        # set it as the new "decoded" position using scaling
+        dec.x += Δx̂ * α
+        dec.x̂ = x̂
 
         # update stored representation of n̂ location on neural manifold
         dec.n = n̂
-
-
     end
     return dec.x
 end
