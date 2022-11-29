@@ -79,7 +79,7 @@ function add!(history::History, framen::Int, simulation::Simulation, v::Vector{F
     # update main registry
     if F == 0 || framen == 1
         history.entry_n > size(history.S, 3) && begin
-            @warn "Can't append to history, ran out of space" F framen
+            # @warn "Can't append to history, ran out of space" F framen
             return
         end
         history.S[:, :, history.entry_n] = mean(Ŝ; dims = 3)

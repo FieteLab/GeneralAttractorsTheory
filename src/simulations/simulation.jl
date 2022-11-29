@@ -68,7 +68,8 @@ velocity_input(
     x::Vector,
     α::Float64,
     J::Matrix,
-    ) = ωᵢ(x, J*v)/ (α * norm(oᵢ(x)))
+    # ) = ωᵢ(x, J*v)/ (α * norm(oᵢ(x)))
+    ) = ωᵢ(x, v)
 
 
 """
@@ -181,6 +182,7 @@ function run_simulation(
                 decoder = Decoder(
                     simulation.trajectory.X[i, :],
                     decode_peak_location(S̄, simulation.can),
+                    1/simulation.can.offset_size
                 )
                 decoder_initialized = true
             end

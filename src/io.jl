@@ -21,7 +21,7 @@ function savepath(fld::String, savename::String, extension = "bson")
     base = DATADIR / fld
     !exists(base) && mkdir(base)
     svp = base / "$savename.$extension"
-    exists(svp) && @warn "Saving $extension file at $(svp.path) - overwriting data"
+    exists(svp) && @debug "Saving $extension file at $(svp.path) - overwriting data"
     return svp.path
 end
 
