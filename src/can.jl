@@ -184,7 +184,7 @@ function CAN(
     kernel::AbstractKernel;
     σ::Union{Symbol,Function} = :relu,
     Ω::Union{Nothing,Vector{OneForm}} = nothing,      # one forms for input velocity
-    offsets::Union{Nothing,Vector} = nothing,           # offset directions, rows Aᵢ of A
+    offsets::Union{Nothing,Vector} = nothing,         # offset directions, rows Aᵢ of A
     offset_size::Number = 1.0,
     φ::Union{Function,Nothing} = nothing,          # an embedding function if the distance over M is computed on an embedding of M in ℝᵐ
 ) where {N}
@@ -194,9 +194,6 @@ function CAN(
     offsets::Vector{AbstractWeightOffset} = get_offsets(offsets, d, n)
     @debug "Got offsets" offsets eltype(offsets) offset_size
 
-    # get manifold deformation (if it gets embedded before computing distance)
-    G = isnothing(φ) ? nothing : map(p -> area_deformation(φ, p), eachcol(X))
-
     # construct connectivity matrices
     Ws::Vector{Matrix} = []
     for offset in offsets
@@ -205,12 +202,6 @@ function CAN(
 
         # get connectivity matrix with kernel
         W = kernel.k.(D)
-
-        # scale by area deformation due to the embedding for distance computation
-        isnothing(G) || begin
-            G[G.<1e-10] .= 0.0
-            W' .*= G
-        end
 
         # store connectivity matrix
         push!(Ws, W)
@@ -296,6 +287,8 @@ struct ConstantOffset <: AbstractWeightOffset
     θ::Vector
 end
 
+(o::ConstantOffset)(args...) = o.θ
+
 """ normalize shift for visualizations """
 function offset_for_visual(off::ConstantOffset)
     o = off.θ
@@ -373,6 +366,8 @@ struct FieldOffset <: AbstractWeightOffset
     displacement::Any  # used in-place of the real offsets e.g. to display connectivity mtxs during visualization
     ψ::Function
 end
+(o::FieldOffset)(p) = o.ψ(p)
+(o::FieldOffset)(args...) = o(vec(args))
 
 
 """ normalize shift for visualizations """

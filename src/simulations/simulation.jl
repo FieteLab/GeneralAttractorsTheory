@@ -60,6 +60,17 @@ end
 # ---------------------------------------------------------------------------- #
 ∑ⱼ(x) = sum(x, dims = 2) |> vec
 
+
+velocity_input(
+    oᵢ::AbstractWeightOffset,
+    ωᵢ::OneForm,
+    v::Vector,
+    x::Vector,
+    α::Float64,
+    J::Matrix,
+    ) = ωᵢ(x, J*v)/ (α * norm(oᵢ(x)))
+
+
 """
     step!(simulation::Simulation, x::Vector, v::Vector) 
 
@@ -73,14 +84,18 @@ function step!(simulation::Simulation, x::Vector, v::Vector; s₀ = nothing)
     Ṡ = simulation.Ṡ
 
     # get effect of recurrent connectivity & external input
-    d = size(S, 2)
-    V = vec(map(ωᵢ -> ωᵢ(x, v), simulation.can.Ω))  # inputs vector of size 2d
-    # r(x) = round(x, digits = 2)
-    # println(r.(v), " "^10, r.(V))
+    J = jacobian(can.C.ρ, x)
+    V = map(
+        oo -> velocity_input(oo..., v, x, can.offset_size, J),
+        zip(can.offsets, can.Ω)
+    ) |> vec  # inputs vector of size 2d
+    # r(x) = round(x; digits=2)
+    # @info "data" v r.(can.Ω[1](x, v)) r.(V) r.(J) (2can.offset_size * norm(can.offsets[1](x)))
+
 
     S̄ = ∑ⱼ(S)  # get the sum of all current activations
-    !isnothing(s₀) && (S̄ .*= s₀)
-
+    !isnothing(s₀) && (S̄ .*= s₀)  # force activation during net initialization
+    d = size(S, 2)
     for i = 1:d
         if simulation.η > 0
             η = rand(Float64, size(S, 1), d) .* simulation.η  # get noise input
@@ -132,7 +147,7 @@ function run_simulation(
     history = History(simulation, N; discard_first_ms = discard_first_ms, kwargs...)
 
     # prep some variables
-    X̄ = zeros(size(simulation.trajectory.X))
+    X̄ = zeros(size(simulation.trajectory.X)) # store decoded variable
     X̄[1, :] = simulation.trajectory.X[1, :]
     decoder_initialized = false
     decoder = nothing
@@ -179,7 +194,11 @@ function run_simulation(
                     (time[framen] > discard_first_ms) &&
                     # (framen > simulation.trajectory.still) &&
                     begin
-                        plot(simulation, time[framen], framen, x, v, X̄, φ)
+                        try
+                            plot(simulation, time[framen], framen, x, v, X̄, φ)
+                        catch e
+                            @warn "cacca" framen x v X̄ φ
+                        end
                         frame(anim)
                     end
             end

@@ -41,6 +41,7 @@ function History(
     Ŝ = Array{Float64}(undef, (size(simulation.S)..., average_over))
     v = Array{Float64}(undef, (size(simulation.trajectory.V, 2), keep_frames))
     v̂ = Array{Float64}(undef, (size(simulation.trajectory.V, 2), average_over))
+    
     @debug "Done" size(S) size(Ŝ) size(v) size(v̂)
     metadata = Dict{Symbol,Any}(
         :can => simulation.can.name,
