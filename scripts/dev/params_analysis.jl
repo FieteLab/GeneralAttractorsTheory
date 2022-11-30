@@ -14,12 +14,12 @@ parameters. Here we plot stuff
 
 LOAD = false
 
-B = range(0.01, 0.5, length=8)
-D = range(0.1, 0.3, length=3)
-V = range(0.01, 0.15, length=8)
+B = range(0.01, 0.5, length=5)
+D = range(0.1, 0.25, length=3)
+V = range(0.01, 0.3, length=30)
 params = product(B, D, V) |> collect
 @info "Setting up" length(params)
-fld_name = "params_sims"
+fld_name = "params_sims_lin"
 
 colors = getfield.(Palette(indigo, salmon_dark; N=length(B)).colors, :string)
 
@@ -95,9 +95,14 @@ end
 #                                     plot                                     #
 # ---------------------------------------------------------------------------- #
 
-plt = plot(xlabel="velocity input", ylabel="bump speed", legend=:bottomright, grid=false, ylim=[0, maximum(data.s)*1.2])
+plt = plot(xlabel="velocity input", ylabel="bump speed", 
+        legend=:topleft, 
+        grid=false, 
+        # ylim=[0, 0.1], xlim=[0, 0.1],
+        # aspect_ratio=:equal,
+        )
 for (b, color) in zip(B, colors)
-    _data = data[(data.b .== b) .& (data.δ .== D[4]), :]
+    _data = data[(data.b .== b) .& (data.δ .== D[3]), :]
 
     plot!(plt, _data.v, _data.s, lw=2, color=color, label="b₀ = $b")
     scatter!(plt, _data.v, _data.s, ms=3, color="white", msc=color, label=nothing)

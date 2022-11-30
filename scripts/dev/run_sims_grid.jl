@@ -10,9 +10,9 @@ Run a bunch of simulations varying constant speed (v), b₀ and δ
 """
 SIMULATE = true
 
-B = range(0.01, 0.5, length=8)
-D = range(0.1, 0.5, length=5)
-V = range(0.01, 0.15, length=10)
+B = range(0.1, 0.4, length=4)
+D = range(0.1, 0.7, length=7)
+V = range(0.1, 1.0, length=19)
 params = product(B, D, V) |> collect
 @info "Setting up" length(params)
 

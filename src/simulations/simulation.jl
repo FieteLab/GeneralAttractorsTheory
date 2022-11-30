@@ -61,16 +61,32 @@ end
 ∑ⱼ(x) = sum(x, dims = 2) |> vec
 
 
-velocity_input(
+function velocity_input(
     oᵢ::AbstractWeightOffset,
     ωᵢ::OneForm,
     v::Vector,
     x::Vector,
     α::Float64,
-    J::Matrix,
-    # ) = ωᵢ(x, J*v)/ (α * norm(oᵢ(x)))
-    ) = ωᵢ(x, v)
+    J::Matrix,     
+    ) 
+    if any(isnan.(J))
 
+    end
+
+    # ωᵢ(x, J*v)/ (α * norm(oᵢ(x)))
+    ωᵢ(x, J*v)
+end
+
+
+function pushforward(ρ::Function, x::Vector)::Matrix
+    J = jacobian(ρ, x)
+
+    # perturb `x` if jacobian has nans
+    while any(isnan.(J))
+        J = jacobian(ρ, x + rand(size(x)) .* 0.1)
+    end
+    return J
+end
 
 """
     step!(simulation::Simulation, x::Vector, v::Vector) 
@@ -85,7 +101,7 @@ function step!(simulation::Simulation, x::Vector, v::Vector; s₀ = nothing)
     Ṡ = simulation.Ṡ
 
     # get effect of recurrent connectivity & external input
-    J = jacobian(can.C.ρ, x)
+    J = pushforward(can.C.ρ, x)
     V = map(
         oo -> velocity_input(oo..., v, x, can.offset_size, J),
         zip(can.offsets, can.Ω)
