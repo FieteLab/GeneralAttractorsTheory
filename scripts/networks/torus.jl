@@ -71,6 +71,6 @@ toruscan = CAN(
     ξ_t,
     d_t,
     k_t;
-    offset_size = 0.5,
+    offset_size = 1.5,
     # Ω = Ω
 )

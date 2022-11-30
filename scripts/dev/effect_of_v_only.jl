@@ -23,7 +23,7 @@ and input velocities to see how it affects the bump speed
 SIMULATE = true
 fld_name = "torus_v_only"
 dt = 0.5
-V = range(0.001, 0.1, length=10) # speed stimuli
+V = range(0.001, 1.0, length=5) # speed stimuli
 
 
 # ------------------------------ run simulations ----------------------------- #
@@ -51,7 +51,7 @@ if SIMULATE
             ξ_t,
             d_t,
             k_t;
-            offset_size = 0.2,
+            offset_size = 1.5,
             # Ω = Ω
         )
         TJ = Trajectory(
@@ -68,7 +68,7 @@ if SIMULATE
         )
 
 
-        simulation = Simulation(can, TJ; η = 0.0, b₀ = 0.25)
+        simulation = Simulation(can, TJ; η = 0.0, b₀ = 7.0)
 
         # run
         h, X̄ = @time run_simulation(

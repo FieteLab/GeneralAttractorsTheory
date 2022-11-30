@@ -95,12 +95,14 @@ Step the simulation dynamics given that the "particle" is at `x`
 and moving with velocity vector `x`.
 """
 function step!(simulation::Simulation, x::Vector, v::Vector; s₀ = nothing)
+    # prep variables
     can = simulation.can
     b₀ = simulation.b₀
     S, W = simulation.S, simulation.W
-    Ṡ = simulation.Ṡ
+    Ṡ = simulation.Ṡ .* 0.0
+    d = size(S, 2)
 
-    # get effect of recurrent connectivity & external input
+    # get velocity input
     J = pushforward(can.C.ρ, x)
     V = map(
         oo -> velocity_input(oo..., v, x, can.offset_size, J),
@@ -109,17 +111,16 @@ function step!(simulation::Simulation, x::Vector, v::Vector; s₀ = nothing)
     # r(x) = round(x; digits=2)
     # @info "data" v r.(can.Ω[1](x, v)) r.(V) r.(J) (2can.offset_size * norm(can.offsets[1](x)))
 
+    # update each population with each population's input
+    for i = 1:d, j in 1:d
+        # get baseline and noise inputs
+        input = simulation.η > 0 ? rand(Float64, size(S, 1), d) .* simulation.η  + b₀ : b₀
 
-    S̄ = ∑ⱼ(S)  # get the sum of all current activations
-    !isnothing(s₀) && (S̄ .*= s₀)  # force activation during net initialization
-    d = size(S, 2)
-    for i = 1:d
-        if simulation.η > 0
-            η = rand(Float64, size(S, 1), d) .* simulation.η  # get noise input
-            Ṡ[:, i] .= W[i] * S̄ .+ V[i] .+ η[i] .+ b₀
-        else
-            Ṡ[:, i] .= W[i] * S̄ .+ V[i] .+ b₀
-        end
+        # enforce initial condition
+        isnothing(s₀) || (S[:, i] .*= s₀)
+
+        # get activation
+        Ṡ[:, i] .+= W[j] * S[:, j] .+ V[i] .+ input
     end
 
     # remove bad entries
@@ -128,7 +129,7 @@ function step!(simulation::Simulation, x::Vector, v::Vector; s₀ = nothing)
 
     # update activity
     simulation.S += (can.σ.(Ṡ) - S) / (simulation.τ)
-    return S̄
+    return ∑ⱼ(S)  # return the sum of all activations
 end
 
 
