@@ -168,10 +168,11 @@ function run_simulation(
                     decode_peak_location(S̄, simulation.can),
                 )
                 decoder_initialized = true
+                @info "decoder initialized"
             end
 
             # add data to history
-            add!(history, framen, simulation, v)
+            (time[framen] > discard_first_ms) && add!(history, framen, simulation, v)
 
             # add frame to animation
             isnothing(frame_every_n) || begin

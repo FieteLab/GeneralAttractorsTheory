@@ -18,6 +18,12 @@ include("_manifolds.jl")
 # ---------------------------------------------------------------------------- #
 abstract type AbstractManifold end
 
+struct Ring <: AbstractManifold
+    xmin::Vector
+    xmax::Vector
+    metric::Metric
+end
+Ring() = Ring([0,], [2π, ], PeriodicEuclidean([2π]))
 
 struct Manifoldℝ² <: AbstractManifold
     xmin::Vector

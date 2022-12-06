@@ -57,6 +57,9 @@ function (ω::OneForm)(x::Vector)::Vector
         o = zeros(length(x))
         o[ω.i] = ω.f(x[ω.i])
         return o
+    elseif length(x) == 1
+        # one dimensional CAN
+        return [ω.f(x...)]
     else
         return ω.f(x...)
     end

@@ -72,6 +72,33 @@ end
 Trajectory(can::AbstractCAN, args...; kwargs...) = Trajectory(can.C.M, args...; kwargs...)
 
 
+
+function Trajectory(
+    M::Ring;
+    T::Int = 250,
+    dt::Float64 = 0.5,
+    θ₀ = nothing,
+    σθ = 0.2,
+    still = 100,
+)
+
+    θ₀ = isnothing(θ₀) ? rand(0:0.2:2π) : θ₀
+    θ̇ = (moving_average(rand(T), 11) .- 0.5) .* σθ
+    θ = cumsum(θ̇)*dt .+ θ₀ # orientation
+    θ = mod.(θ, 2π)
+
+    # turn into matrices
+    θ = reshape(θ, length(θ), 1)
+    θ̇ = reshape(θ̇, length(θ̇), 1)
+
+    # finalize
+    still > 0 && begin
+        θ, θ̇ = add_initial_still_phase(θ, θ̇, still, θ[1])
+    end
+    return Trajectory(M, θ, θ̇, still)
+end
+
+
 """
     ComputeTrajectory(; T::Int=250, μ=0.1, θ=0.5)
 
