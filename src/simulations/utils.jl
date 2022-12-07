@@ -84,13 +84,12 @@ end
 function simulation_frame_1dcan(simulation::Simulation, timems, v::Vector; kwargs...)
     plt = plot(;
         title = "elapsed: $(round(timems)) ms",
-        clims = (0.0, 0.6),
-        ylim = [0, 5],
+        ylim = [min(0, minimum(simulation.S)), max(0.4, maximum(simulation.S))],
         grid = false,
     )
 
-    plot!(simulation.S[:, 1],label=nothing)
-    plot!(simulation.S[:, 2],label=nothing)
+    plot!(simulation.can.X[1, :], simulation.S[:, 1],label=nothing)
+    plot!(simulation.can.X[1, :], simulation.S[:, 2],label=nothing)
     plt
 end
 
@@ -313,29 +312,51 @@ function Plots.plot(
 
         # main figure
         plot(traj, pop_activity, size = (1000, 800), layout = (1, 2))
+    elseif simulation.can.d == 1
+        traj = Plots.plot(tj, framen)
+
+        # plot decoded trajectory
+        framen > (100 + 2) && plot!(
+            traj,
+            X̄[1:framen, 1],
+            color = :red,
+            label = nothing,
+            alpha = 0.6,
+        )
+        scatter!(
+            traj,
+            [framen],
+            [X̄[framen, 1]],
+            ms = 7,
+            color = :red,
+            label = "decoded",
+        )
+
+        # main figure
+        plot(traj, pop_activity, size = (1000, 800), layout = (2, 1))
     else
         traj = Plots.plot(tj, framen)
 
-        # # plot decoded trajectory
-        # framen > (100 + 2) && plot!(
-        #     traj,
-        #     ϕ(X̄[100:framen, 1]),
-        #     ϕ(X̄[100:framen, 2]),
-        #     color = :red,
-        #     label = nothing,
-        #     alpha = 0.6,
-        # )
-        # scatter!(
-        #     traj,
-        #     [X̄[framen, 1]],
-        #     [X̄[framen, 2]],
-        #     ms = 7,
-        #     color = :red,
-        #     label = "decoded",
-        # )
+        # plot decoded trajectory
+        framen > (100 + 2) && plot!(
+            traj,
+            ϕ(X̄[100:framen, 1]),
+            ϕ(X̄[100:framen, 2]),
+            color = :red,
+            label = nothing,
+            alpha = 0.6,
+        )
+        scatter!(
+            traj,
+            [X̄[framen, 1]],
+            [X̄[framen, 2]],
+            ms = 7,
+            color = :red,
+            label = "decoded",
+        )
 
-        # # main figure
-        # plot(traj, pop_activity, size = (1000, 800), layout = (1, 2))
+        # main figure
+        plot(traj, pop_activity, size = (1000, 800), layout = (1, 2))
     end
 end
 
@@ -361,6 +382,8 @@ function plot_trajectory_and_decoded(trajectory::Trajectory, X̄::Matrix)
         plot!(eachcol(X̄)..., lw = 3, color = :red, label = "decoded")
     elseif d == 3
         plot3d!(eachcol(X̄)..., lw = 3, color = :red, label = "decoded")
+    elseif d == 1
+        plot!(X̄, lw = 3, color = :red, label = "decoded")
     end
     return plt
 end

@@ -19,7 +19,8 @@ n = (256,)  # number of neurons in the ring
 d_r = PeriodicEuclidean([2π])  # distance function
 
 # kernel
-k_r = LocalGlobalKernel(α = 0.25, σ = 1.0, β = 0.25)
+# k_r = DiffOfExpKernel(; λ = 0.1, β=1.5)
+k_r = LocalGlobalKernel(α = 0.5, σ = 1.0, β = 0.5)
 
 # cover map
 cover = CoverSpace(Ring())
@@ -32,6 +33,7 @@ ringcan = CAN(
     ξ_r,
     d_r,
     k_r;
-    offset_size = 0.1,
+    offset_size = .275,
     # Ω = Ω
+    σ = :softrelu
 )

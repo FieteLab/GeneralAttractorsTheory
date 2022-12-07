@@ -1,3 +1,7 @@
+function softrelu(x)
+    return log(1 + exp(x))
+end
+
 by_column(fn::Function, X::Matrix)::Matrix = hcat(fn.(eachcol(X))...)
 
 

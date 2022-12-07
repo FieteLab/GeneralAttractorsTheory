@@ -7,7 +7,7 @@ import ForwardDiff: jacobian
 
 export AbstractCAN, CAN, offset_for_visual
 
-import ..GeneralAttractors: by_column
+import ..GeneralAttractors: by_column, softrelu
 using ..Kernels: AbstractKernel
 using ..ManifoldUtils: CoverSpace, area_deformation
 
@@ -81,7 +81,7 @@ end
 # --------------------------- activation functions --------------------------- #
 relu(x) = max(0, x)
 
-activations::Dict{Symbol,Function} = Dict(:relu => relu, :tanh => tanh)
+activations::Dict{Symbol,Function} = Dict(:relu => relu, :tanh => tanh, :softrelu=>softrelu)
 
 
 abstract type AbstractCAN end
