@@ -8,8 +8,7 @@ using GeneralAttractors: lerp
 using GeneralAttractors.ManifoldUtils
 import GeneralAttractors.ManifoldUtils: sphere_embedding, ψx, ψy, ψz, fibonacci_sphere
 import GeneralAttractors.Can: OneForm
-import Manifolds: Sphere as 𝕊
-import Manifolds: uniform_distribution
+
 
 println(Panel("Creating sphere attractor", style = "green", justify = :center))
 
@@ -20,8 +19,6 @@ m = 64
 n = m^2
 
 # get neurons on S² ⊂ ℝ³
-sphere = 𝕊(2)
-# X = hcat(rand(uniform_distribution(sphere), n)...)  # 3 × N neurons coordinate
 X = fibonacci_sphere(n)
 
 # get neurons indices

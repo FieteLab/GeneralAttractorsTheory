@@ -14,9 +14,11 @@ mutable struct Decoder
     x̂::Vector # last state in a space homeomorphic to can.C.M but with no scaling compared to can.C.N
     n::Vector # last state in can.C.N, the neural lattice coordinates
     Δ::Vector # shift between x,n at time t=0 (they will be offset when decoding start)
+    α::Float64  # scaling correction factor
 end
 
-Decoder(x::Vector, n::Vector) = Decoder(x, x, n, x - n)
+Decoder(x::Vector, n::Vector, α) = Decoder(x, x, n, x - n, α)
+Decoder(x::Vector, n::Vector) = Decoder(x, x, n, x - n, 1)
 
 
 
@@ -42,8 +44,6 @@ inverse of the cover space map in `M` and finding the spots
 that are closest to it. 
 """
 function (dec::Decoder)(s::Vector, can::AbstractCAN)
-    α = 15 # scaling factor
-
     # get the position of activity bump in neural mfld coordinates
     n̂ = decode_peak_location(s, can)
     can.C.M == can.C.N && return n̂
@@ -53,7 +53,7 @@ function (dec::Decoder)(s::Vector, can::AbstractCAN)
 
     if norm(Δn) < 2.5
         # for small on-mfld movement, just look at the change in coordinates
-        dec.x += Δn * α
+        dec.x += Δn * dec.α
         dec.x̂ += Δn
         dec.n = n̂
     else
@@ -75,7 +75,7 @@ function (dec::Decoder)(s::Vector, can::AbstractCAN)
         Δx̂ = x̂ .- dec.x̂
         
         # set it as the new "decoded" position using scaling
-        dec.x += Δx̂ * α
+        dec.x += Δx̂ * dec.α
         dec.x̂ = x̂
 
         # update stored representation of n̂ location on neural manifold

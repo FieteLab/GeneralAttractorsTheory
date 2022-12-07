@@ -15,27 +15,25 @@ import GeneralAttractors.Simulations: decode_peak_location, plot_trajectory_and_
 
 import MyterialColors: indigo, salmon_dark, Palette
 
-
 include("../networks/torus.jl")
 
 """
 Run multiple runs of torus simulations with different b₀
-inputs and look at the effect on network bump speed. 
+and input velocities to see how it affects the bump speed
 """
 
-SIMULATE = true
-fld_name = "torus_b0"
+SIMULATE = false
+fld_name = "torus_v"
 dt = 0.5
-D = range(0.1, 0.2, length=4) # wegihts offset size
-B = range(0.05, 0.5, length=5) # static input
-v_actual = 0.025  # actual speed stimulus
+V = range(0.01, 0.1, length=4) # speed stimuli
+B = range(0.05, 0.5, length=8) # static input
 
-colors = getfield.(Palette(indigo, salmon_dark; N=length(D)).colors, :string)
+colors = getfield.(Palette(indigo, salmon_dark; N=length(V)).colors, :string)
 
 # ------------------------------ run simulations ----------------------------- #
 if SIMULATE
     dt = 0.5
-    duration = 200
+    duration = 250
     still = 50  # initialization period        
 
     x₀ = [1, 3.14] # initialize state at center of mfld
@@ -45,7 +43,7 @@ if SIMULATE
 
     # initialize trajectory and simulation
     nframes = (Int ∘ round)(duration / dt)
-    for (j, δ) in enumerate(D)
+    for (j, v) in enumerate(V)
         can = CAN(
             "torus",
             cover,
@@ -53,15 +51,16 @@ if SIMULATE
             ξ_t,
             d_t,
             k_t;
-            offset_size = δ,
-            )
-        trajectory = Trajectory(
+            offset_size = 0.2,
+            # Ω = Ω
+        )
+        TJ = Trajectory(
             can;
             T = nframes,
             dt = dt,
-            σv = v_actual,
-            μv = v_actual,
-            vmax = v_actual,
+            σv = v,
+            μv = v,
+            vmax = v,
             σθ = 0.0,
             θ₀ = 0,
             x₀ = 1, y₀ = 1,
@@ -69,9 +68,9 @@ if SIMULATE
         )
 
         for (i, b₀) in enumerate(B)
-            println("\n"^5 / Panel("Running sim $i/$(length(B)) | CAN: $j/$(length(D))", style = "red", justify = :center))
+            println(Panel("Running sim $i/$(length(B)) | CAN: $j/$(length(V))", style = "red", justify = :center))
 
-            simulation = Simulation(can, trajectory; η = 0.0, b₀ = b₀)
+            simulation = Simulation(can, TJ; η = 0.0, b₀ = b₀)
 
             # run
             h, X̄ = @time run_simulation(
@@ -82,16 +81,17 @@ if SIMULATE
                 fps = 10,
                 s₀ = 1.0 .* activate,
                 savefolder = fld_name,
-                savename = "δ_$(δ)_run_$(i)",
+                savename = "v_$(v)_run_$(i)",
             );
-            # println(size(h.S))
-            # plot_trajectory_and_decoded(trajectory, X̄) |> display
+
+            # plot_trajectory_and_decoded(TJ, X̄) |> display
         end
     end
 end
 
 
 # ------------------------------- run analysis ------------------------------- #
+
 
 can = CAN(
     "torus",
@@ -103,19 +103,20 @@ can = CAN(
     offset_size = 0.1,
     )
 
-plt = plot(xlabel="b0", ylabel="on mfld speed", title="δ varies, v constant", grid=false)
+
+plt = plot(xlabel="b0", ylabel="on mfld speed", title="δ constant, v varies")
 
 function ∑(x)
     n, _, m = size(x)
     real.(reshape(mean(x, dims = 2), (n, m)))
 end
 
-for (δ, color) in zip(D, colors)
+for (v, color) in zip(V, colors)
     S = []
 
     for (i, b₀) in enumerate(B)
         # load state history
-        history = load_simulation_history(fld_name, "δ_$(δ)_run_$(i)_torus_history")
+        history = load_simulation_history(fld_name, "v_$(v)_run_$(i)_torus_history")
         s = ∑(history.S)[:, 10:end]
 
         # get peak location speed
@@ -127,23 +128,20 @@ for (δ, color) in zip(D, colors)
             )
 
         on_mfld_speed = map(
-            i -> toruscan.metric(
+            i -> can.metric(
                 peak_location[:, i], peak_location[:, i-1]
                 ), 
             2:size(peak_location, 2)
         )
-        average_speed = sum(on_mfld_speed)/(length(on_mfld_speed) * dt)
-        # plot(on_mfld_speed, ylim=[0, 5]) |> display
+        average_speed = sum(on_mfld_speed)/(length(on_mfld_speed)*dt)  # tot displacement over time
 
-        # push!(S, average_speed/δ - -(b₀/4))
         push!(S, average_speed)
-
-
     end
-    plot!(plt, B, S, lw=1, color=color, label="offset: $δ")
-    scatter!(plt, B, S, ms=3, color="white", msc=color, label=nothing)
+
+    plot!(plt, B, S, lw=2, color=color, label="actual v: $v")
+    scatter!(plt, B, S, ms=5, color="white", msc=color, label=nothing)
+    hline!(plt, [v], lw=1, color=color, label=nothing, linestyle=:dash, alpha=.5)
 end
 
 
-hline!(plt, [v_actual], lw=2, linestyle=:dash, alpha=.5, color=:black, label="V actual")
-plot(plt,  size=(800, 600))
+plot(plt,  size=(800, 600), grid=false)

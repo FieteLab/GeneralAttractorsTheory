@@ -41,6 +41,7 @@ function History(
     Ŝ = Array{Float64}(undef, (size(simulation.S)..., average_over))
     v = Array{Float64}(undef, (size(simulation.trajectory.V, 2), keep_frames))
     v̂ = Array{Float64}(undef, (size(simulation.trajectory.V, 2), average_over))
+    
     @debug "Done" size(S) size(Ŝ) size(v) size(v̂)
     metadata = Dict{Symbol,Any}(
         :can => simulation.can.name,
@@ -78,7 +79,7 @@ function add!(history::History, framen::Int, simulation::Simulation, v::Vector{F
     # update main registry
     if F == 0 || framen == 1
         history.entry_n > size(history.S, 3) && begin
-            @warn "Can't append to history, ran out of space" F framen
+            # @warn "Can't append to history, ran out of space" F framen
             return
         end
         history.S[:, :, history.entry_n] = mean(Ŝ; dims = 3)
