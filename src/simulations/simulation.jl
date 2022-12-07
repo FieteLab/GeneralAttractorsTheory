@@ -60,6 +60,34 @@ end
 # ---------------------------------------------------------------------------- #
 ∑ⱼ(x) = sum(x, dims = 2) |> vec
 
+
+function velocity_input(
+    oᵢ::AbstractWeightOffset,
+    ωᵢ::OneForm,
+    v::Vector,
+    x::Vector,
+    α::Float64,
+    J::Matrix,     
+    ) 
+    if any(isnan.(J))
+
+    end
+
+    # ωᵢ(x, J*v)/ (α * norm(oᵢ(x)))
+    ωᵢ(x, J*v)
+end
+
+
+function pushforward(ρ::Function, x::Vector)::Matrix
+    J = jacobian(ρ, x)
+
+    # perturb `x` if jacobian has nans
+    while any(isnan.(J))
+        J = jacobian(ρ, x + rand(size(x)) .* 0.1)
+    end
+    return J
+end
+
 """
     step!(simulation::Simulation, x::Vector, v::Vector) 
 
@@ -67,27 +95,32 @@ Step the simulation dynamics given that the "particle" is at `x`
 and moving with velocity vector `x`.
 """
 function step!(simulation::Simulation, x::Vector, v::Vector; s₀ = nothing)
+    # prep variables
     can = simulation.can
     b₀ = simulation.b₀
     S, W = simulation.S, simulation.W
-    Ṡ = simulation.Ṡ
-
-    # get effect of recurrent connectivity & external input
+    Ṡ = simulation.Ṡ .* 0.0
     d = size(S, 2)
-    V = 22 .* vec(map(ωᵢ -> ωᵢ(x, v), simulation.can.Ω))  # inputs vector of size 2d
-    # r(x) = round(x, digits = 2)
-    # println(r.(v), " "^10, r.(V))
 
-    S̄ = ∑ⱼ(S)  # get the sum of all current activations
-    !isnothing(s₀) && (S̄ .*= s₀)
+    # get velocity input
+    J = pushforward(can.C.ρ, x)
+    V = map(
+        oo -> velocity_input(oo..., v, x, can.offset_size, J),
+        zip(can.offsets, can.Ω)
+    ) |> vec  # inputs vector of size 2d
+    # r(x) = round(x; digits=2)
+    # @info "data" v r.(can.Ω[1](x, v)) r.(V) r.(J) (2can.offset_size * norm(can.offsets[1](x)))
 
-    for i = 1:d
-        if simulation.η > 0
-            η = rand(Float64, size(S, 1), d) .* simulation.η  # get noise input
-            Ṡ[:, i] .= W[i] * S̄ .+ V[i] .+ η[i] .+ b₀
-        else
-            Ṡ[:, i] .= W[i] * S̄ .+ V[i] .+ b₀
-        end
+    # update each population with each population's input
+    for i = 1:d, j in 1:d
+        # get baseline and noise inputs
+        input = simulation.η > 0 ? rand(Float64, size(S, 1), d) .* simulation.η  + b₀ : b₀
+
+        # enforce initial condition
+        isnothing(s₀) || (S[:, i] .*= s₀)
+
+        # get activation
+        Ṡ[:, i] .+= W[j] * S[:, j] .+ V[i] .+ input
     end
 
     # remove bad entries
@@ -96,7 +129,7 @@ function step!(simulation::Simulation, x::Vector, v::Vector; s₀ = nothing)
 
     # update activity
     simulation.S += (can.σ.(Ṡ) - S) / (simulation.τ)
-    return S̄
+    return ∑ⱼ(S)  # return the sum of all activations
 end
 
 
@@ -132,7 +165,7 @@ function run_simulation(
     history = History(simulation, N; discard_first_ms = discard_first_ms, kwargs...)
 
     # prep some variables
-    X̄ = zeros(size(simulation.trajectory.X))
+    X̄ = zeros(size(simulation.trajectory.X)) # store decoded variable
     X̄[1, :] = simulation.trajectory.X[1, :]
     decoder_initialized = false
     decoder = nothing
@@ -166,6 +199,7 @@ function run_simulation(
                 decoder = Decoder(
                     simulation.trajectory.X[i, :],
                     decode_peak_location(S̄, simulation.can),
+                    1/simulation.can.offset_size
                 )
                 decoder_initialized = true
             end
@@ -179,7 +213,11 @@ function run_simulation(
                     (time[framen] > discard_first_ms) &&
                     # (framen > simulation.trajectory.still) &&
                     begin
-                        plot(simulation, time[framen], framen, x, v, X̄, φ)
+                        try
+                            plot(simulation, time[framen], framen, x, v, X̄, φ)
+                        catch e
+                            @warn "cacca" framen x v X̄ φ
+                        end
                         frame(anim)
                     end
             end

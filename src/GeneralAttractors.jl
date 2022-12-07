@@ -1,7 +1,6 @@
 module GeneralAttractors
 using LinearAlgebra: norm
 using Plots
-using Measures
 using Distances: PeriodicEuclidean, evaluate, UnionMetric, SphericalAngle
 import Base.Iterators: product as ×  # cartesian product
 

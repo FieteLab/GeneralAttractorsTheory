@@ -21,6 +21,7 @@ n = (m, m) # number of neurons per dimension
     mod(x, 2π), 
     mod(y, 2π)
 ] # ρ: ℝ² → T
+ρ(v) = ρ(v...)
 
 """
     ρⁱ(x, y)
@@ -39,7 +40,7 @@ function ρⁱ(x, y; n = 6)
     return pts
 end
 
-cover = CoverSpace(Manifoldℝ²(100), Torus(m), ρ, ρⁱ)
+cover = CoverSpace(Manifoldℝ²(100), Torus(), ρ, ρⁱ)
 
 # define a function to get the coordinates of each neuron in the lattice
 function ξ_t(i::Int, j::Int)::Vector  # neurons coordinates function
@@ -51,15 +52,15 @@ end
 d_t = PeriodicEuclidean([2π, 2π])  # distance function over a torus manifold
 
 # connectivity kernel 
-# k_t = DiffOfExpKernel(; λ = 13.0)
-k_t = LocalGlobalKernel(α = 0.5, σ = 1.5, β = 0.5)
+# k_t = DiffOfExpKernel(; λ = 5.0)
+k_t = LocalGlobalKernel(α = 2, σ = 100.0, β = 2)
 
 # one forms
 # Ω = OneForm[
 #     OneForm(1, (x, y) -> [sin(x) + 2, 0]),
-#     OneForm(2, (x, y) -> -[sin(x) + 2, 0]),
-#     OneForm(3, (x, y) -> [0, sin(y) + 2]),
-#     OneForm(4, (x, y) -> -[0, sin(y) + 2]),
+#     OneForm(1, (x, y) -> -[sin(x) + 2, 0]),
+#     OneForm(2, (x, y) -> [0, sin(y) + 2]),
+#     OneForm(2, (x, y) -> -[0, sin(y) + 2]),
 # ]
 
 # make network
@@ -70,6 +71,6 @@ toruscan = CAN(
     ξ_t,
     d_t,
     k_t;
-    offset_size = 0.1,
+    offset_size = 1.5,
     # Ω = Ω
 )

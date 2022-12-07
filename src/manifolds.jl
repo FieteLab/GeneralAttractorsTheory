@@ -38,8 +38,8 @@ struct Torus <: AbstractManifold
     xmax::Vector
     metric::Metric
 end
-Torus(m) = Torus([-m / 2, -m], [m / 2, m / 2], PeriodicEuclidean([m, m]))
-T = Torus(32)
+Torus() = Torus([0, 2π], [0,  2π], PeriodicEuclidean([2π, 2π]))
+T = Torus()
 
 
 struct Sphere <: AbstractManifold
