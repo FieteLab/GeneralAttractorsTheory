@@ -10,13 +10,16 @@ Run a bunch of simulations varying constant speed v, b₀ and δ
 """
 SIMULATE = true
 
-fld_name = "params_grid_search_softrelu"
-B = range(.1, 10, length=10) |> collect
-D = range(.1, 1.7, length=20) |> collect
-V = range(0.05, 0.5, length=4) |> collect
+fld_name = "params_grid_search_softrelu_v"
+B = range(4, 6, length=2) |> collect
+D = range(0.8, 1.4, length=6) |> collect
+V = range(0.1, 0.7, length=20) |> collect
+
+
 params = product(B, D, V) |> collect
 @info "Setting up" length(params)
 
+σ = :softrelu
 duration = 150
 dt = 0.5
 still = 50  # initialization period    
@@ -41,7 +44,7 @@ function run_all_sims()
             d_t,
             k_t;
             offset_size = δ,
-            σ=:softrelu
+            σ=σ
         )
 
         for b in B
