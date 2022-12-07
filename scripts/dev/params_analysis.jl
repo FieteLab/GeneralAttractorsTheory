@@ -5,7 +5,7 @@ import GeneralAttractors.Analysis.ManifoldAnalysis: population_average
 import GeneralAttractors.Simulations: decode_peak_location
 using DataFrames
 import MyterialColors: indigo, salmon_dark, Palette
-
+using Statistics
 
 """
 run_sims_grid.jl runs lots of simulations with varying 
@@ -14,15 +14,13 @@ parameters. Here we plot stuff
 
 LOAD = false
 
-B = range(1, 10, length=10) |> collect
-D = range(1.1, 1.7, length=7) |> collect
-V = range(0.4, 1.0, length=4) |> collect
-params = product(B, D, V) |> collect
-@info "Setting up" length(params)
-fld_name = "params_sims_lin"
 
+fld_name = "params_grid_search_relu"
+B = range(.1, 10, length=10) |> collect
+D = range(.1, 1.7, length=20) |> collect
+V = range(0.05, 0.5, length=4) |> collect
 colors = getfield.(Palette(indigo, salmon_dark; N=length(B)).colors, :string)
-
+ms = 12
 
 # ----------------------------------- utils ---------------------------------- #
 can = CAN(
@@ -87,7 +85,6 @@ if LOAD
     end
 
     data = DataFrame(data)
-    println(data)
 end
 
 
@@ -147,8 +144,8 @@ for v in V
             msa=0, msw=0,
             clims=(0.0, 2.0),
             color=:bwr,
-            ms=20,  label=nothing,
+            ms=ms,  label=nothing,
         )
     push!(plots, plt)
 end
-plot(plots...; size=(1000, 1000)) |> display
+plot(plots...; size=(800, 800)) |> display

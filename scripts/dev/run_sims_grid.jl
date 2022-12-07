@@ -6,26 +6,25 @@ include("../networks/torus.jl")
 
 
 """
-Run a bunch of simulations varying constant speed (v), b₀ and δ
+Run a bunch of simulations varying constant speed v, b₀ and δ
 """
 SIMULATE = true
 
-B = range(1, 10, length=10) |> collect
-D = range(1.1, 1.7, length=7) |> collect
-V = range(0.4, 1.0, length=4) |> collect
+fld_name = "params_grid_search_softrelu"
+B = range(.1, 10, length=10) |> collect
+D = range(.1, 1.7, length=20) |> collect
+V = range(0.05, 0.5, length=4) |> collect
 params = product(B, D, V) |> collect
 @info "Setting up" length(params)
 
+duration = 150
+dt = 0.5
+still = 50  # initialization period    
+nframes = (Int ∘ round)(duration / dt) 
+
 
 function run_all_sims()
-    fld_name = "params_sims_lin"
-
     # ------------------------------- fixed params ------------------------------- #
-    dt = 0.5
-    duration = 250
-    still = 50  # initialization period    
-    nframes = (Int ∘ round)(duration / dt) 
-
     x₀ = [1, 3.14] # initialize state at center of mfld
     d = map(i -> toruscan.metric(x₀, toruscan.X[:, i]), 1:size(toruscan.X, 2))
     activate = zeros(length(d))
@@ -42,6 +41,7 @@ function run_all_sims()
             d_t,
             k_t;
             offset_size = δ,
+            σ=:softrelu
         )
 
         for b in B
@@ -67,7 +67,7 @@ function run_all_sims()
                 h, X̄ = @time run_simulation(
                     simulation;
                     frame_every_n = nothing,
-                    discard_first_ms = 50,
+                    discard_first_ms = still,
                     average_over_ms = 1,
                     fps = 10,
                     s₀ = 1.0 .* activate,
