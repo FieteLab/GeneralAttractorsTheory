@@ -11,7 +11,7 @@ import GeneralAttractors.Analysis: get_bump_speed
 
 include("../networks/ring.jl")
 
-SIMULATE = true
+SIMULATE = false
 fld_name = "calibrate_ring"
 
 dt = 0.5
@@ -130,7 +130,7 @@ plot!(
 )
 for (color, a) in zip(colors2, A)
     _data = data[data.a .== a, :]
-    plot!(_data.t, _data.s, label="a: "*string(a), lw=2, color=color) 
+    plot!(_data.t, _data.s, label="a: "*string(a), lw=2, color=color, "aa") 
 
 end
 display(plt)
