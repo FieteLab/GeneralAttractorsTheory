@@ -35,5 +35,5 @@ ringcan = CAN(
     k_r;
     offset_size = 1.0,
     σ = :softrelu,
-    α= 0.95
+    α= 0.9
 )

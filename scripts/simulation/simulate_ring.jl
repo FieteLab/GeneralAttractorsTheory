@@ -16,7 +16,7 @@ include("../networks/ring.jl")
 
 # --------------------------------- simulate --------------------------------- #
 dt = 0.5
-duration = 2500
+duration = 500
 still = 50  # initialization period        
 
 
@@ -37,7 +37,7 @@ trajectory = Trajectory(
     still = still,
     vmax=0.2,
 )
-simulation = Simulation(ringcan, trajectory; η = 0, b₀ = 1.0, τ=5.0)
+simulation = Simulation(ringcan, trajectory; η = 0, b₀ = 0.5, τ=5.0)
 
 
 h, X̄ = @time run_simulation(

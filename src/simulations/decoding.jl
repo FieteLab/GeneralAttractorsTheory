@@ -51,7 +51,7 @@ function (dec::Decoder)(s::Vector, can::AbstractCAN)
     # get Δn relative to previous bump coordinates
     Δn = n̂ .- dec.n
 
-    if norm(Δn) < 2.5
+    if norm(Δn) < 1
         # for small on-mfld movement, just look at the change in coordinates
         dec.x += Δn * dec.α
         dec.x̂ += Δn

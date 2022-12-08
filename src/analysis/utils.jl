@@ -10,7 +10,8 @@ function get_bump_speed(can, fld_name::String, sim_name::String)::Float64
     # load state history
     history = load_simulation_history(fld_name, sim_name)
     # @info "h" history history.S history.Δt
-    s = ∑(history.S)[:, 1:end]
+
+    s = ∑(history.S)[:, 10:end]
 
     # get peak location speed
     peak_location = hcat(

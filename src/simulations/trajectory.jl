@@ -123,11 +123,11 @@ function Trajectory(
     σθ = 0.5,
     θ₀ = nothing,
     x₀ = nothing,
-    y₀ = nothing,
     still = 100,
 )
     # get speed and orientation
-    v = rand(T) .* σv .+ μv
+    v = (rand(T) .- 0.5) .* σv .+ μv .|> abs
+    v = moving_average(v, 21)
     v[v.>vmax] .= vmax
     v[v.<0] .= 0
 
@@ -140,8 +140,8 @@ function Trajectory(
     vy = v .* sin.(θ̇)
 
     # get random initial position
-    x₀ = isnothing(x₀) ? rand(-20:2:20) : x₀
-    y₀ = isnothing(y₀) ? rand(-20:2:20) : y₀
+    x₀ = isnothing(x₀) ? [rand(-20:2:20), rand(-20:2:20)] : x₀
+    x₀, y₀ = x₀
 
     # Get trajectory
     X, V = zeros(T, 2), zeros(T, 2)

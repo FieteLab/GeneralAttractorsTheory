@@ -53,7 +53,7 @@ d_t = PeriodicEuclidean([2π, 2π])  # distance function over a torus manifold
 
 # connectivity kernel 
 # k_t = DiffOfExpKernel(; λ = 5.0)
-k_t = LocalGlobalKernel(α = 1, σ = 3.0, β = 1)
+k_t = LocalGlobalKernel(α = 0.5, σ = 5.0, β = 0.5)
 
 # one forms
 # Ω = OneForm[
@@ -71,7 +71,8 @@ toruscan = CAN(
     ξ_t,
     d_t,
     k_t;
-    offset_size = 0.1,
-    # σ = :softrelu
+    offset_size = 1.0,
+    σ = :softrelu,
+    α =1.2,
     # Ω = Ω
 )
