@@ -104,7 +104,7 @@ function step!(simulation::Simulation, x::Vector, v::Vector; s₀ = nothing)
 
     # get velocity input
     J = pushforward(can.C.ρ, x)
-    V = map(
+    V = can.α .* map(
         oo -> velocity_input(oo..., v, x, can.offset_size, J),
         zip(can.offsets, can.Ω)
     ) |> vec  # inputs vector of size 2d
@@ -114,7 +114,7 @@ function step!(simulation::Simulation, x::Vector, v::Vector; s₀ = nothing)
     # update each population with each population's input
     for i = 1:d, j in 1:d
         # get baseline and noise inputs
-        input = simulation.η > 0 ? rand(Float64, size(S, 1), d) .* simulation.η  + b₀ : b₀
+        input = simulation.η > 0 ? (rand(Float64, size(S, 1)) .* simulation.η)  .+ b₀ : b₀
 
         # enforce initial condition
         isnothing(s₀) || (S[:, i] .*= s₀)

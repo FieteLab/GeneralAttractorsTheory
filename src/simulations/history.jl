@@ -18,6 +18,7 @@ mutable struct History
     discard::Int                    # discard first N frames
     metadata::Dict                  # can info, sim params, timestamp...
     entry_n::Int                    # keep track of were we should be updating stuff
+    Δt::Number                      # time interval between saved frames. Depends on average over and dt
 end
 
 
@@ -31,9 +32,10 @@ function History(
     n_discard = (Int ∘ round)(discard_first_ms / simulation.dt)
 
     # see over how many frames we average
-    average_over = (Int ∘ round)(average_over_ms / simulation.dt)
+    average_over = average_over_ms > 0 ?  (Int ∘ round)(average_over_ms / simulation.dt) : 1
     keep_frames = (Int ∘ round)((nframes - n_discard) / average_over)
     keep_frames < 1 && error("Keep frames < 0, reduce discard or increase duration")
+    Δt = average_over_ms > 0 ? average_over_ms : simulation.dt
 
     @debug "Creating history arrays" size(simulation.S) keep_frames average_over
 
@@ -57,7 +59,7 @@ function History(
     )
 
     @debug "Simulation history saving: $(size(S)[end]) frames" "($(round((nframes-n_discard)*simulation.dt; digits=3)) ms tot , averaging every $average_over_ms ms)" "Discarding first $n_discard frames ($discard_first_ms ms)"
-    return History(S, Ŝ, v, v̂, average_over, n_discard, metadata, 1)
+    return History(S, Ŝ, v, v̂, average_over, n_discard, metadata, 1, Δt)
 end
 
 function add!(history::History, framen::Int, simulation::Simulation, v::Vector{Float64})

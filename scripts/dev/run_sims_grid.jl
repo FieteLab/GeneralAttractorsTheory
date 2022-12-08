@@ -71,7 +71,7 @@ function run_all_sims()
                     simulation;
                     frame_every_n = nothing,
                     discard_first_ms = still,
-                    average_over_ms = 1,
+                    average_over_ms = 0,
                     fps = 10,
                     s₀ = 1.0 .* activate,
                     savefolder = fld_name,

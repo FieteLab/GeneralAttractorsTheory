@@ -127,6 +127,7 @@ mutable struct CAN <: AbstractCAN
     offsets::Vector
     offset_size::Any
     metric::Metric
+    α::Number                           # scaling factor to make bump speed the same as input speed
 end
 
 Base.string(can::CAN) = "CAN (dim=$(length(can.n))) - n neurons: $(can.n)"
@@ -190,6 +191,7 @@ function CAN(
     offsets::Union{Nothing,Vector} = nothing,         # offset directions, rows Aᵢ of A
     offset_size::Number = 1.0,
     φ::Union{Function,Nothing} = nothing,          # an embedding function if the distance over M is computed on an embedding of M in ℝᵐ
+    α::Number = 1,
 ) where {N}
     d = length(n)
 
@@ -231,6 +233,7 @@ function CAN(
         offsets,
         offset_size,
         metric,
+        α
     )
 end
 

@@ -1,8 +1,7 @@
 using Plots
 
 using GeneralAttractors
-import GeneralAttractors.Analysis.ManifoldAnalysis: population_average
-import GeneralAttractors.Simulations: decode_peak_location
+import GeneralAttractors.Analysis: get_bump_speed
 using DataFrames
 import MyterialColors: indigo, salmon_dark, Palette
 using Statistics
@@ -40,37 +39,6 @@ can = CAN(
     k_t;
     offset_size = 0.1,
     )
-
-
-
-function ∑(x)
-    n, _, m = size(x)
-    real.(reshape(mean(x, dims = 2), (n, m)))
-end
-
-
-function get_bump_speed(sim_name::String)::Float64
-    # load state history
-    history = load_simulation_history(fld_name, sim_name)
-    s = ∑(history.S)[:, 30:end]
-
-    # get peak location speed
-    peak_location = hcat(
-        map(
-            st -> decode_peak_location(st, can), 
-            eachcol(s)
-            )...
-        )
-
-    on_mfld_speed = map(
-        i -> can.metric(
-            peak_location[:, i], peak_location[:, i-1]
-            ), 
-        2:size(peak_location, 2)
-    )
-    average_speed = sum(on_mfld_speed)/(length(on_mfld_speed)*dt)  # tot displacement over time
-    return average_speed
-end
 
 # --------------------------------- load data -------------------------------- #
 if LOAD

@@ -81,10 +81,14 @@ function Trajectory(
     σθ = 0.2,
     θ̇₀ = 0,
     still = 100,
+    vmax = 0.15,
 )
 
     θ₀ = isnothing(θ₀) ? rand(0:0.2:2π) : θ₀
     θ̇ = (moving_average(rand(T), 11) .- 0.5) .* σθ  .+ θ̇₀
+    θ̇[θ̇ .> vmax] .= vmax
+    θ̇[θ̇ .< 0vmax] .= -vmax
+
     θ = cumsum(θ̇) .* dt  .+ θ₀ # orientation
     θ = mod.(θ, 2π)
 

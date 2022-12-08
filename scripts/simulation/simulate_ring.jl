@@ -16,14 +16,14 @@ include("../networks/ring.jl")
 
 # --------------------------------- simulate --------------------------------- #
 dt = 0.5
-duration = 500
+duration = 2500
 still = 50  # initialization period        
 
 
 θ₀ = 3.14 # initialize state at center of mfld
 d = ringcan.metric.(θ₀, ringcan.X[1, :])
 activate = zeros(length(d))
-activate[d.<0.1] .= 1
+activate[d.<2.5] .= 1
 
 # initialize trajectory and simulation
 nframes = (Int ∘ round)(duration / dt)
@@ -31,17 +31,18 @@ trajectory = Trajectory(
     ringcan;
     T = nframes,
     dt = dt,
-    σθ = 0.0,
-    θ̇₀ = 0.05,
+    σθ = 0.5,
+    # θ̇₀ = 0.1,
     θ₀ = θ₀,
     still = still,
+    vmax=0.2,
 )
-simulation = Simulation(ringcan, trajectory; η = 0.0, b₀ = 0.05)
+simulation = Simulation(ringcan, trajectory; η = 0, b₀ = 1.0, τ=5.0)
 
 
 h, X̄ = @time run_simulation(
     simulation;
-    frame_every_n = 20,
+    frame_every_n = nothing,
     discard_first_ms = 0,
     average_over_ms = 10,
     fps = 10,
@@ -50,5 +51,5 @@ h, X̄ = @time run_simulation(
     savename = "test",
 );
 
-# # plot_trajectory_and_decoded(trajectory, X̄) |> display
+plot_trajectory_and_decoded(trajectory, X̄) |> display
 nothing
