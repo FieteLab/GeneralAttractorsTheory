@@ -10,7 +10,7 @@ Run a bunch of simulations varying constant speed v, b₀ and δ
 """
 SIMULATE = true
 
-fld_name = "params_grid_search_softrelu_v"
+fld_name = "params_grid_search_relu_v"
 B = range(4, 6, length=2) |> collect
 D = range(0.8, 1.4, length=6) |> collect
 V = range(0.1, 0.7, length=20) |> collect
@@ -19,7 +19,7 @@ V = range(0.1, 0.7, length=20) |> collect
 params = product(B, D, V) |> collect
 @info "Setting up" length(params)
 
-σ = :softrelu
+σ = :relu
 duration = 150
 dt = 0.5
 still = 50  # initialization period    
