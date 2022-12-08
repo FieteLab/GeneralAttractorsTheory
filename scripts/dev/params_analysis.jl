@@ -16,11 +16,10 @@ LOAD = true
 
 
 fld_name = "params_grid_search_softrelu_v"
-# B = range(0.01, 2, length=1) |> collect
+title = "Vᵢ/Vᵦ - soft RELU"
 B = range(4, 6, length=2) |> collect
-D = range(0.8, 1.2, length=4) |> collect
-V = range(0.2, 0.5, length=20) |> collect
-
+D = range(0.8, 1.4, length=6) |> collect
+V = range(0.1, 0.7, length=20) |> collect
 
 params = product(B, D, V) |> collect
 # colors = getfield.(Palette(indigo, salmon_dark; N=length(B)).colors, :string)
@@ -101,17 +100,20 @@ end
 # ---------------------------------------------------------------------------- #
 
 # ----------------------- plot v/s for different delta ----------------------- #
-plt = plot(xlabel="input v", ylabel="bump v", aspect_ratio=:equal)
+p1 = plot(xlabel="input v", ylabel="bump v", aspect_ratio=:equal, title=title * " b₀ = $(round(B[1], digits=1))")
+p2 = plot(xlabel="input v", ylabel="bump v", aspect_ratio=:equal, title=title * " b₀ = $(round(B[2], digits=1))")
 vmin, vmax = minimum(data.v), maximum(data.v)
-plot!([vmin, vmax], [vmin, vmax], lw=2,color="black", alpha=.5, ls=:dashdotdot, label="ideal")
+plot!(p1, [vmin, vmax], [vmin, vmax], lw=2,color="black", alpha=.5, ls=:dashdotdot, label="ideal")
+plot!(p2, [vmin, vmax], [vmin, vmax], lw=2,color="black", alpha=.5, ls=:dashdotdot, label=nothing)
 for (color, δ) in zip(dcolors, D)
     for (j, b) in enumerate(B)
         _data = data[(data.δ .== δ) .& (data.b .== b), :]
-        plot!(_data.v, _data.s, lw=2, color=color, 
-            label=j == 1 ? "δ=$(round(δ, digits=3))" : nothing, ls= j==1 ? :dash : :solid)
+        p = j == 1 ? p1 : p2
+        plot!(p, _data.v, _data.s, lw=2, color=color, 
+            label=j == 1 ? "δ=$(round(δ, digits=3))" : nothing)
     end
 end
-display(plt)
+plot(p1, p2, size=(1000, 800)) |> display
 
 
 # ------------------------ plot v/s for different b\_0 ----------------------- #
