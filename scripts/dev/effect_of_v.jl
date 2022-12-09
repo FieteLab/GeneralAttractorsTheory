@@ -25,10 +25,10 @@ and input velocities to see how it affects the bump speed
 SIMULATE = false
 fld_name = "torus_v"
 dt = 0.5
-V = range(0.01, 0.1, length=4) # speed stimuli
-B = range(0.05, 0.5, length=8) # static input
+V = range(0.01, 0.1, length = 4) # speed stimuli
+B = range(0.05, 0.5, length = 8) # static input
 
-colors = getfield.(Palette(indigo, salmon_dark; N=length(V)).colors, :string)
+colors = getfield.(Palette(indigo, salmon_dark; N = length(V)).colors, :string)
 
 # ------------------------------ run simulations ----------------------------- #
 if SIMULATE
@@ -63,12 +63,19 @@ if SIMULATE
             vmax = v,
             σθ = 0.0,
             θ₀ = 0,
-            x₀ = 1, y₀ = 1,
+            x₀ = 1,
+            y₀ = 1,
             still = still,
         )
 
         for (i, b₀) in enumerate(B)
-            println(Panel("Running sim $i/$(length(B)) | CAN: $j/$(length(V))", style = "red", justify = :center))
+            println(
+                Panel(
+                    "Running sim $i/$(length(B)) | CAN: $j/$(length(V))",
+                    style = "red",
+                    justify = :center,
+                ),
+            )
 
             simulation = Simulation(can, TJ; η = 0.0, b₀ = b₀)
 
@@ -82,7 +89,7 @@ if SIMULATE
                 s₀ = 1.0 .* activate,
                 savefolder = fld_name,
                 savename = "v_$(v)_run_$(i)",
-            );
+            )
 
             # plot_trajectory_and_decoded(TJ, X̄) |> display
         end
@@ -93,18 +100,10 @@ end
 # ------------------------------- run analysis ------------------------------- #
 
 
-can = CAN(
-    "torus",
-    cover,
-    n,
-    ξ_t,
-    d_t,
-    k_t;
-    offset_size = 0.1,
-    )
+can = CAN("torus", cover, n, ξ_t, d_t, k_t; offset_size = 0.1)
 
 
-plt = plot(xlabel="b0", ylabel="on mfld speed", title="δ constant, v varies")
+plt = plot(xlabel = "b0", ylabel = "on mfld speed", title = "δ constant, v varies")
 
 function ∑(x)
     n, _, m = size(x)
@@ -120,28 +119,21 @@ for (v, color) in zip(V, colors)
         s = ∑(history.S)[:, 10:end]
 
         # get peak location speed
-        peak_location = hcat(
-            map(
-                st -> decode_peak_location(st, can), 
-                eachcol(s)
-                )...
-            )
+        peak_location = hcat(map(st -> decode_peak_location(st, can), eachcol(s))...)
 
         on_mfld_speed = map(
-            i -> can.metric(
-                peak_location[:, i], peak_location[:, i-1]
-                ), 
-            2:size(peak_location, 2)
+            i -> can.metric(peak_location[:, i], peak_location[:, i-1]),
+            2:size(peak_location, 2),
         )
-        average_speed = sum(on_mfld_speed)/(length(on_mfld_speed)*dt)  # tot displacement over time
+        average_speed = sum(on_mfld_speed) / (length(on_mfld_speed) * dt)  # tot displacement over time
 
         push!(S, average_speed)
     end
 
-    plot!(plt, B, S, lw=2, color=color, label="actual v: $v")
-    scatter!(plt, B, S, ms=5, color="white", msc=color, label=nothing)
-    hline!(plt, [v], lw=1, color=color, label=nothing, linestyle=:dash, alpha=.5)
+    plot!(plt, B, S, lw = 2, color = color, label = "actual v: $v")
+    scatter!(plt, B, S, ms = 5, color = "white", msc = color, label = nothing)
+    hline!(plt, [v], lw = 1, color = color, label = nothing, linestyle = :dash, alpha = 0.5)
 end
 
 
-plot(plt,  size=(800, 600), grid=false)
+plot(plt, size = (800, 600), grid = false)

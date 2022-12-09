@@ -23,7 +23,7 @@ struct Ring <: AbstractManifold
     xmax::Vector
     metric::Metric
 end
-Ring() = Ring([0,], [2π, ], PeriodicEuclidean([2π]))
+Ring() = Ring([0], [2π], PeriodicEuclidean([2π]))
 
 struct Manifoldℝ² <: AbstractManifold
     xmin::Vector
@@ -38,7 +38,7 @@ struct Torus <: AbstractManifold
     xmax::Vector
     metric::Metric
 end
-Torus() = Torus([0, 2π], [0,  2π], PeriodicEuclidean([2π, 2π]))
+Torus() = Torus([0, 2π], [0, 2π], PeriodicEuclidean([2π, 2π]))
 T = Torus()
 
 

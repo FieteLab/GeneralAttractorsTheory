@@ -81,7 +81,18 @@ end
 # --------------------------- activation functions --------------------------- #
 relu(x) = max(0, x)
 
-activations::Dict{Symbol,Function} = Dict(:relu => relu, :tanh => tanh, :softrelu=>softrelu)
+function sigmoid(x, scale = 1, steepness = 1, switch_point = 0)
+    return scale / (1 + exp(-steepness * (x - switch_point)))
+end
+
+
+activations::Dict{Symbol,Function} = Dict(
+    :relu       => relu,
+    :tanh       => x -> (tanh(x) + 1) * 4,
+    :softrelu   => x -> softrelu(x),
+    :step       => x -> x >= 0 ? 4 : 0,
+    :sigmoid    => x -> sigmoid(x, 8, 2, 0),
+)
 
 
 abstract type AbstractCAN end
@@ -233,7 +244,7 @@ function CAN(
         offsets,
         offset_size,
         metric,
-        α
+        α,
     )
 end
 

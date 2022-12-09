@@ -5,7 +5,7 @@
 
 function Plots.plot(traj::Trajectory)
     d = size(traj.X, 2)
-    
+
     if d == 2
         plot(
             traj.X[:, 1],
@@ -84,12 +84,12 @@ end
 function simulation_frame_1dcan(simulation::Simulation, timems, v::Vector; kwargs...)
     plt = plot(;
         title = "elapsed: $(round(timems)) ms",
-        ylim = [min(0, minimum(simulation.S)), max(0.4, maximum(simulation.S))],
+        ylim = [min(-.1, minimum(simulation.S)), max(0.4, maximum(simulation.S))],
         grid = false,
     )
 
-    plot!(simulation.can.X[1, :], simulation.S[:, 1],label=nothing)
-    plot!(simulation.can.X[1, :], simulation.S[:, 2],label=nothing)
+    plot!(simulation.can.X[1, :], simulation.S[:, 1], lw=3, label = nothing)
+    plot!(simulation.can.X[1, :], simulation.S[:, 2], lw=3, label = nothing)
     plt
 end
 
@@ -316,21 +316,9 @@ function Plots.plot(
         traj = Plots.plot(tj, framen)
 
         # plot decoded trajectory
-        framen > (100 + 2) && plot!(
-            traj,
-            X̄[1:framen, 1],
-            color = :red,
-            label = nothing,
-            alpha = 0.6,
-        )
-        scatter!(
-            traj,
-            [framen],
-            [X̄[framen, 1]],
-            ms = 7,
-            color = :red,
-            label = "decoded",
-        )
+        framen > (100 + 2) &&
+            plot!(traj, X̄[1:framen, 1], color = :red, label = nothing, alpha = 0.6)
+        scatter!(traj, [framen], [X̄[framen, 1]], ms = 7, color = :red, label = "decoded")
 
         # main figure
         plot(traj, pop_activity, size = (1000, 800), layout = (2, 1))

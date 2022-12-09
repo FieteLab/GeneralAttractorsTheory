@@ -17,10 +17,7 @@ n = (m, m) # number of neurons per dimension
 
 # ℝ² → T cover map.
 """ ρ """
-ρ(x, y) = [
-    mod(x, 2π), 
-    mod(y, 2π)
-] # ρ: ℝ² → T
+ρ(x, y) = [mod(x, 2π), mod(y, 2π)] # ρ: ℝ² → T
 ρ(v) = ρ(v...)
 
 """
@@ -44,7 +41,7 @@ cover = CoverSpace(Manifoldℝ²(100), Torus(), ρ, ρⁱ)
 
 # define a function to get the coordinates of each neuron in the lattice
 function ξ_t(i::Int, j::Int)::Vector  # neurons coordinates function
-    sep = 2π/n[1]
+    sep = 2π / n[1]
     [lerp(i, n[1], 0, 2π - sep), lerp(j, n[2], 0, 2π - sep)]   # ∈ [0, 2π] × [0, 2π]
 end
 
@@ -72,7 +69,7 @@ toruscan = CAN(
     d_t,
     k_t;
     offset_size = 1.0,
-    σ = :softrelu,
-    α =1.2,
+    σ = :tanh,
+    α = 1.2,
     # Ω = Ω
 )

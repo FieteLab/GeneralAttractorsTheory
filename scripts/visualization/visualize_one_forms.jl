@@ -13,14 +13,14 @@ dx, scale = 8, 2
 
 i = 3
 p = show_oneforms(
-        toruscan.Ω[3],
-        toruscan.C,
-        cover.M.xmin,
-        cover.M.xmax;
-        dx = dx,
-        scale = scale,
-        color = :red,
-    )
+    toruscan.Ω[3],
+    toruscan.C,
+    cover.M.xmin,
+    cover.M.xmax;
+    dx = dx,
+    scale = scale,
+    color = :red,
+)
 
 # plots = []
 # for i = 1:2:length(toruscan.Ω)

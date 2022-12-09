@@ -67,14 +67,14 @@ function velocity_input(
     v::Vector,
     x::Vector,
     α::Float64,
-    J::Matrix,     
-    ) 
+    J::Matrix,
+)
     if any(isnan.(J))
 
     end
 
     # ωᵢ(x, J*v)/ (α * norm(oᵢ(x)))
-    ωᵢ(x, J*v)
+    ωᵢ(x, J * v)
 end
 
 
@@ -104,17 +104,18 @@ function step!(simulation::Simulation, x::Vector, v::Vector; s₀ = nothing)
 
     # get velocity input
     J = pushforward(can.C.ρ, x)
-    V = can.α .* map(
-        oo -> velocity_input(oo..., v, x, can.offset_size, J),
-        zip(can.offsets, can.Ω)
-    ) |> vec  # inputs vector of size 2d
+    V =
+        can.α .* map(
+            oo -> velocity_input(oo..., v, x, can.offset_size, J),
+            zip(can.offsets, can.Ω),
+        ) |> vec  # inputs vector of size 2d
     # r(x) = round(x; digits=2)
     # @info "data" v r.(can.Ω[1](x, v)) r.(V) r.(J) (2can.offset_size * norm(can.offsets[1](x)))
 
     # update each population with each population's input
-    for i = 1:d, j in 1:d
+    for i = 1:d, j = 1:d
         # get baseline and noise inputs
-        input = simulation.η > 0 ? (rand(Float64, size(S, 1)) .* simulation.η)  .+ b₀ : b₀
+        input = simulation.η > 0 ? (rand(Float64, size(S, 1)) .* simulation.η) .+ b₀ : b₀
 
         # enforce initial condition
         isnothing(s₀) || (S[:, i] .*= s₀)
@@ -199,7 +200,7 @@ function run_simulation(
                 decoder = Decoder(
                     simulation.trajectory.X[i, :],
                     decode_peak_location(S̄, simulation.can),
-                    1/simulation.can.offset_size
+                    1 / simulation.can.offset_size,
                 )
                 decoder_initialized = true
             end

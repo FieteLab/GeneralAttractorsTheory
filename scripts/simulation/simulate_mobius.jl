@@ -1,9 +1,9 @@
 using Plots
-
-
 using GeneralAttractors
 using GeneralAttractors.Simulations
-
+using Term
+install_term_stacktrace()
+install_term_logger()
 
 using Distances
 using GeneralAttractors.Kernels
@@ -15,7 +15,7 @@ import GeneralAttractors.Simulations: plot_trajectory_and_decoded
 
 # --------------------------------- simulate --------------------------------- #
 dt = 0.5
-duration = 2000
+duration = 200
 still = 100  # initialization period  
 dmin = 0.25  # minimal distance from x₀ for state intialization  
 
@@ -49,6 +49,8 @@ h, X̄ = @time run_simulation(
     s₀ = 1.0 .* activate,
     φ = mobius_embedding,
     savefolder = "mobius",
-    savename = "decoding",
+    savename = "test",
 );
+
+plot_trajectory_and_decoded(trajectory, X̄) |> display
 nothing

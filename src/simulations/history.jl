@@ -32,7 +32,7 @@ function History(
     n_discard = (Int ∘ round)(discard_first_ms / simulation.dt)
 
     # see over how many frames we average
-    average_over = average_over_ms > 0 ?  (Int ∘ round)(average_over_ms / simulation.dt) : 1
+    average_over = average_over_ms > 0 ? (Int ∘ round)(average_over_ms / simulation.dt) : 1
     keep_frames = (Int ∘ round)((nframes - n_discard) / average_over)
     keep_frames < 1 && error("Keep frames < 0, reduce discard or increase duration")
     Δt = average_over_ms > 0 ? average_over_ms : simulation.dt
@@ -43,7 +43,7 @@ function History(
     Ŝ = Array{Float64}(undef, (size(simulation.S)..., average_over))
     v = Array{Float64}(undef, (size(simulation.trajectory.V, 2), keep_frames))
     v̂ = Array{Float64}(undef, (size(simulation.trajectory.V, 2), average_over))
-    
+
     @debug "Done" size(S) size(Ŝ) size(v) size(v̂)
     metadata = Dict{Symbol,Any}(
         :can => simulation.can.name,

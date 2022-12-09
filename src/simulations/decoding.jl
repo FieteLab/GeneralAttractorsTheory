@@ -61,7 +61,10 @@ function (dec::Decoder)(s::Vector, can::AbstractCAN)
         candidates = can.C.ρⁱ(n̂...) # shape d × N
 
         # get the point closest to the latest decoded location (minus manifold shift)
-        d = map(i -> can.C.M.metric(dec.x̂ - dec.Δ, candidates[:, i]), 1:size(candidates, 2))
+        d = map(
+            i -> can.C.M.metric(dec.x̂ - dec.Δ, candidates[:, i]),
+            1:size(candidates, 2),
+        )
         selected = argmin(d)
         @debug "decoding recalibration triggered" d[selected]
 
@@ -73,7 +76,7 @@ function (dec::Decoder)(s::Vector, can::AbstractCAN)
         # get change in latent representation with no scaling
         x̂ = candidates[:, selected] + dec.Δ
         Δx̂ = x̂ .- dec.x̂
-        
+
         # set it as the new "decoded" position using scaling
         dec.x += Δx̂ * dec.α
         dec.x̂ = x̂

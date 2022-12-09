@@ -32,17 +32,17 @@ trajectory = Trajectory(
     T = nframes,
     dt = dt,
     σθ = 0.5,
-    # θ̇₀ = 0.1,
-    θ₀ = θ₀,
+    v0 = 0.1,
+    x₀ = x₀,
     still = still,
-    vmax=0.2,
+    vmax = 0.2,
 )
-simulation = Simulation(ringcan, trajectory; η = 0, b₀ = 0.5, τ=5.0)
+simulation = Simulation(ringcan, trajectory; η = 0, b₀ = 0.5, τ = 5.0)
 
 
 h, X̄ = @time run_simulation(
     simulation;
-    frame_every_n = nothing,
+    frame_every_n = 10,
     discard_first_ms = 0,
     average_over_ms = 10,
     fps = 10,
@@ -51,5 +51,5 @@ h, X̄ = @time run_simulation(
     savename = "test",
 );
 
-plot_trajectory_and_decoded(trajectory, X̄) |> display
+# plot_trajectory_and_decoded(trajectory, X̄) |> display
 nothing

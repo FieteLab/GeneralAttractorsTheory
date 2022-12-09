@@ -77,19 +77,20 @@ function Trajectory(
     M::Ring;
     T::Int = 250,
     dt::Float64 = 0.5,
-    θ₀ = nothing,
+    x₀ = nothing,
     σθ = 0.2,
-    θ̇₀ = 0,
+    μv = 0,
     still = 100,
     vmax = 0.15,
+    kwargs...,
 )
 
-    θ₀ = isnothing(θ₀) ? rand(0:0.2:2π) : θ₀
-    θ̇ = (moving_average(rand(T), 11) .- 0.5) .* σθ  .+ θ̇₀
-    θ̇[θ̇ .> vmax] .= vmax
-    θ̇[θ̇ .< 0vmax] .= -vmax
+    x₀ = isnothing(x₀) ? rand(0:0.2:2π) : x₀
+    θ̇ = (moving_average(rand(T), 11) .- 0.5) .* σθ .+ μv
+    θ̇[θ̇.>vmax] .= vmax
+    θ̇[θ̇.<0vmax] .= -vmax
 
-    θ = cumsum(θ̇) .* dt  .+ θ₀ # orientation
+    θ = cumsum(θ̇) .* dt .+ x₀ # orientation
     θ = mod.(θ, 2π)
 
     # turn into matrices
