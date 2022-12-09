@@ -124,12 +124,16 @@ function step!(simulation::Simulation, x::Vector, v::Vector; s₀ = nothing)
         Ṡ[:, i] .+= W[j] * S[:, j] .+ V[i] .+ input
     end
 
-    # remove bad entries
-    droptol!(simulation.S, 0.001)
-    droptol!(simulation.Ṡ, 0.001)
 
     # update activity
     simulation.S += (can.σ.(Ṡ) - S) / (simulation.τ)
+
+    # remove bad entries
+    droptol!(simulation.S, 0.001)
+    droptol!(simulation.Ṡ, 0.001)
+    simulation.S = sparse(simulation.S)
+    simulation.Ṡ = sparse(simulation.Ṡ)
+
     return ∑ⱼ(S)  # return the sum of all activations
 end
 

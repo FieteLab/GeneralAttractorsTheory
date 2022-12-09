@@ -33,7 +33,7 @@ trajectory = Trajectory(
     dt = dt,
     σθ = 0.5,
     v0 = 0.1,
-    x₀ = x₀,
+    x₀ = θ₀,
     still = still,
     vmax = 0.2,
 )

@@ -69,7 +69,7 @@ toruscan = CAN(
     d_t,
     k_t;
     offset_size = 1.0,
-    σ = :tanh,
-    α = 1.2,
+    σ = :softrelu,
+    α = 1.15,
     # Ω = Ω
 )

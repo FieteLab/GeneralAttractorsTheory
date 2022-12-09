@@ -14,11 +14,11 @@ import GeneralAttractors.Analysis: get_bump_speed
 include("../networks/ring.jl")
 
 SIMULATE = true
-fld_name = "calibrate_ring"
+fld_name = "calibrate_rinf"
 can = ringcan
 
 dt = 0.5
-duration = 200
+duration = 100
 still = 50  # initialization period        
 nframes = (Int ∘ round)(duration / dt)
 
@@ -39,9 +39,9 @@ end
 # ---------------------------------- params ---------------------------------- #
 τ = 5.0
 vmax = 0.3
-Δv = 0.05
+Δv = 0.1
 
-A = range(0.4, 0.5, step = 0.025) |> collect
+A = range(0.4, 0.5, step = 0.1) |> collect
 V = range(0, vmax, step = Δv) |> collect # baseline speed
 B = [0.1, 1.0]
 colors = getfield.(Palette(indigo, salmon_dark; N = length(V)).colors, :string)

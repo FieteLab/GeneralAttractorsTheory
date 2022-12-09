@@ -87,11 +87,11 @@ end
 
 
 activations::Dict{Symbol,Function} = Dict(
-    :relu       => relu,
-    :tanh       => x -> (tanh(x) + 1) * 4,
-    :softrelu   => x -> softrelu(x),
-    :step       => x -> x >= 0 ? 4 : 0,
-    :sigmoid    => x -> sigmoid(x, 8, 2, 0),
+    :relu => relu,
+    :tanh => x -> (tanh(x) + 1),
+    :softrelu => x -> softrelu(x),
+    :step => x -> x >= 0 ? 4 : 0,
+    :sigmoid => x -> sigmoid(x, 8, 2, 0),
 )
 
 

@@ -84,12 +84,12 @@ end
 function simulation_frame_1dcan(simulation::Simulation, timems, v::Vector; kwargs...)
     plt = plot(;
         title = "elapsed: $(round(timems)) ms",
-        ylim = [min(-.1, minimum(simulation.S)), max(0.4, maximum(simulation.S))],
+        ylim = [min(-0.1, minimum(simulation.S)), max(0.4, maximum(simulation.S))],
         grid = false,
     )
 
-    plot!(simulation.can.X[1, :], simulation.S[:, 1], lw=3, label = nothing)
-    plot!(simulation.can.X[1, :], simulation.S[:, 2], lw=3, label = nothing)
+    plot!(simulation.can.X[1, :], simulation.S[:, 1], lw = 3, label = nothing)
+    plot!(simulation.can.X[1, :], simulation.S[:, 2], lw = 3, label = nothing)
     plt
 end
 
