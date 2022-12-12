@@ -121,8 +121,8 @@ struct Mobius <: AbstractManifold
     metric::Metric
 end
 Mobius() = Mobius(
-    [-1 / 2, 1 / 2],
-    [0, 2π],
+    [-0.75, 0],
+    [ 0.75, 2π],
     [VectorField(ψ_t), VectorField(ψ_θ1), VectorField(ψ_θ2)],
     MobiusEuclidean(),
 )
@@ -134,13 +134,16 @@ that it's on the MB. If it's too much to the side
 on the non periodic dimension, put it at the manifold's boundary,
 if it's along the periodic dimension gets its position module 2π.
 """
-function apply_boundary_conditions!(x::Vector, ::Mobius)
-    if x[1] <= -0.475
-        x[1] = -0.475
-    elseif x[1] >= 0.475
-        x[1] = 0.475
+function apply_boundary_conditions!(x::Vector, m::Mobius)
+    # non periodic dimension
+    δ = 0.1  # padding around boundary to account for bump size
+    if x[1] <= m.xmin[1] + δ
+        x[1] = m.xmin[1] + δ
+    elseif x[1] >= m.xmax[1] - δ
+        x[1] = m.xmax[1] - δ
     end
 
+    # periodic dimension
     if x[2] >= 2π
         x[2] = x[2] - 2π
         x[1] = -x[1]

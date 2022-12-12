@@ -30,9 +30,9 @@ trajectory = Trajectory(
     toruscan;
     T = nframes,
     dt = dt,
-    σv = 1.0,
+    σv = 2.5,
     x₀ = x₀,
-    vmax = 0.2,
+    vmax = 0.1,
     still = still,
     scale = 5,
 )

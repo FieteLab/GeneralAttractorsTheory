@@ -26,4 +26,4 @@ k_r = LocalGlobalKernel(α = 0.5, σ = 5.0, β = 0.5)
 cover = CoverSpace(Ring())
 
 # make network
-ringcan = CAN("ring", cover, n, ξ_r, d_r, k_r; offset_size = 1.0, σ = :softrelu, α = 0.9)
+ringcan = CAN("ring", cover, n, ξ_r, d_r, k_r; offset_size = 1.0, σ = :softrelu, α = 0.85)

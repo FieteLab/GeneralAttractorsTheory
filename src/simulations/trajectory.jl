@@ -137,16 +137,17 @@ function Trajectory(
     scale::Number = 1,
 )
     ψs::Vector = M.ψs # get manifold vector fields
+    n_vfields = length(ψs)
 
     # get manifold dimensionality
     d = length(M.xmin)
 
     # get velocity params
-    σv = σv isa Number ? repeat([σv], d) : σv
-    μv = μv isa Number ? repeat([μv], d) : μv
-    @assert length(σv) == d
-    @assert length(μv) == d
-    @assert length(ψs) >= d
+    σv = σv isa Number ? repeat([σv], n_vfields) : σv
+    μv = μv isa Number ? repeat([μv], n_vfields) : μv
+    @assert length(σv) == n_vfields
+    @assert length(μv) == n_vfields
+    @assert n_vfields >= d
 
 
     # get starting point
@@ -157,7 +158,7 @@ function Trajectory(
 
     # get velocity vector magnitude in components at each frame
     Vs = Vector[]  # magnitude trace along each dimension
-    for i = 1:d
+    for i = 1:n_vfields
         v = if modality == :piecewise
             piecewise_linear(T, n_piecewise_segments, -vmax:(vmax/100):vmax)
         elseif modality == :constant
@@ -172,7 +173,7 @@ function Trajectory(
         Get the sum of the vector fields ψᵢ at position p ∈ M
         and at time step t
     """
-    ∑ψ(p, t) = map(i -> Vs[i][t] * ψs[i](p), 1:d) |> sum
+    ∑ψ(p, t) = map(i -> Vs[i][t] * ψs[i](p), 1:n_vfields) |> sum
 
     # get position and velocity vectors
     X, V = Matrix(reshape(zeros(T, d), T, d)), Matrix(reshape(zeros(T, d), T, d))

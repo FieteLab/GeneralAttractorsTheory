@@ -73,8 +73,8 @@ function velocity_input(
 
     end
 
-    # ωᵢ(x, J*v)/ (α * norm(oᵢ(x)))
-    ωᵢ(x, J * v)
+    ωᵢ(x, J*v)/ (α * norm(oᵢ(x)))
+    # ωᵢ(x, J * v)
 end
 
 
@@ -109,8 +109,9 @@ function step!(simulation::Simulation, x::Vector, v::Vector; s₀ = nothing)
             oo -> velocity_input(oo..., v, x, can.offset_size, J),
             zip(can.offsets, can.Ω),
         ) |> vec  # inputs vector of size 2d
+
     # r(x) = round(x; digits=2)
-    # @info "data" v r.(can.Ω[1](x, v)) r.(V) r.(J) (2can.offset_size * norm(can.offsets[1](x)))
+    # @info "data" r.(v) r.(V)
 
     # update each population with each population's input
     for i = 1:d, j = 1:d
@@ -195,7 +196,6 @@ function run_simulation(
 
             # step simulation
             x̂ = decoder_initialized ? decoder.x : x
-            # x̂ = simulation.trajectory.X[i, :]
             S̄ = step!(simulation, x̂, v; s₀ = s₀)
 
             # initialize decoder if necessary
@@ -221,7 +221,7 @@ function run_simulation(
                         try
                             plot(simulation, time[framen], framen, x, v, X̄, φ)
                         catch e
-                            @warn "cacca" framen x v X̄ φ
+                            @warn "cacca" framen e
                         end
                         frame(anim)
                     end

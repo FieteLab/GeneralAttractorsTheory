@@ -12,7 +12,7 @@ import GeneralAttractors: MobiusEuclidean, mobius_embedding
 println(Panel("Creating Mobius attractor", style = "green", justify = :center))
 
 # number of neurons
-n = ((Int ∘ round)(1 / 0.025), (Int ∘ round)(2π / 0.1))
+n = ((Int ∘ round)(1 / 0.05), (Int ∘ round)(2π / 0.2))
 
 # cover space
 mfld = Mobius()
@@ -20,30 +20,31 @@ cover = CoverSpace(mfld)
 
 # coordinates function (from neurons index to lattice coordintes)
 ξ_m(i::Int, j::Int)::Vector =
-    [lerp(i, n[1], -1 / 2, 1 / 2), lerp(j, n[2], 0.0, 2π - 2π / n[2])]  # ∈ [-1/2, 1/2] × [0, 2π]
+    [
+        lerp(i, n[1], mfld.xmin[1], mfld.xmax[1]), 
+        lerp(j, n[2], mfld.xmin[2], mfld.xmax[2] - mfld.xmax[2] / n[2])
+    ]  
 
 # metric
 d_m = MobiusEuclidean()
 
 # connectivity kernel
-# k_m = DiffOfExpKernel(; λ = 1.5)
-k_m = LocalGlobalKernel(α = 0.5, σ = 5, β = 0.5)
+k_m = LocalGlobalKernel(α = 1.25, σ = 1.5, β = 1.25)
 
 
 # define offset vector fields
 offsets =
     [p -> ψ_t(p), p -> -ψ_t(p), p -> ψ_θ1(p), p -> -ψ_θ1(p), p -> ψ_θ2(p), p -> -ψ_θ2(p)]
-offset_size = 0.75
+offset_size = 0.25
 
 # define one forms
-γ = offset_size # different scaling for one form fields
 Ω = [
-    OneForm(1, (t, θ) -> γ * ψ_t(t, θ)),
-    OneForm(2, (t, θ) -> -γ * ψ_t(t, θ)),
-    OneForm(3, (t, θ) -> γ * ψ_θ1(t, θ)),
-    OneForm(4, (t, θ) -> -γ * ψ_θ1(t, θ)),
-    OneForm(5, (t, θ) -> γ * ψ_θ2(t, θ)),
-    OneForm(6, (t, θ) -> -γ * ψ_θ2(t, θ)),
+    OneForm(1, (t, θ) -> offset_size * ψ_t(t, θ)),
+    OneForm(2, (t, θ) -> -offset_size * ψ_t(t, θ)),
+    OneForm(3, (t, θ) -> offset_size * ψ_θ1(t, θ)),
+    OneForm(4, (t, θ) -> -offset_size * ψ_θ1(t, θ)),
+    OneForm(5, (t, θ) -> offset_size * ψ_θ2(t, θ)),
+    OneForm(6, (t, θ) -> -offset_size * ψ_θ2(t, θ)),
 ]
 
 
@@ -59,5 +60,6 @@ mobiuscan = CAN(
     offset_size = offset_size,
     offsets = offsets,
     Ω = Ω,
-    α = 1.0,
+    σ=:softrelu,
+    α = 11,
 )

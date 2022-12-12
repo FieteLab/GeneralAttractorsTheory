@@ -2,7 +2,7 @@ using GeneralAttractors
 using Plots
 
 
-include("./networks/sphere.jl")
+include("../networks/sphere.jl")
 
 spherecan_noffset =
     CAN("sphere", cover, (m, m), I, X, d_s, k_s; offset_size = 0, offsets = offsets, Ω = Ω)

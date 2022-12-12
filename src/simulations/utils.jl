@@ -1,3 +1,15 @@
+"""
+Trajectories on periodic manifolds plotted in 2
+will have "jump" when the trajectory wraps around
+a periodic dimension. This removes those jumps
+by setting them to NaN so that they don't showup in plots.
+"""
+function remove_jumps_from_trajectory(X::Matrix)
+    Δ = [0, norm.(eachrow(diff(X, dims=1)))...]
+    X[Δ .>= 2, :] .*= NaN
+    X
+end
+
 # ---------------------------------------------------------------------------- #
 #                                      viz                                     #
 # ---------------------------------------------------------------------------- #
@@ -5,11 +17,16 @@
 
 function Plots.plot(traj::Trajectory)
     d = size(traj.X, 2)
-
+    X = remove_jumps_from_trajectory(traj.X)
     if d == 2
+        if traj.M isa Mobius
+            x, y = X[:, 2], X[:, 1]
+        else
+            x, y = X[:, 1], X[:, 2]
+        end
         plot(
-            traj.X[:, 1],
-            traj.X[:, 2],
+            x,
+            y,
             lw = 3,
             color = :black,
             label = nothing,
@@ -19,7 +36,7 @@ function Plots.plot(traj::Trajectory)
         )
     elseif d == 1
         plot(
-            traj.X[:, 1],
+            X[:, 1],
             lw = 3,
             color = :black,
             label = nothing,
@@ -35,46 +52,60 @@ end
 function Plots.plot(traj::Trajectory, i::Int; xmin = nothing, xmax = nothing)
     d = size(traj.X, 2)
 
-    xmin = isnothing(xmin) ? minimum(traj.X, dims = 1) : xmin
-    xmax = isnothing(xmax) ? maximum(traj.X, dims = 1) : xmax
+    if traj.M isa Mobius
+        xmin = isnothing(xmin) ? traj.M.xmin : xmin
+        xmax = isnothing(xmax) ? traj.M.xmax : xmax
+    else    
+        xmin = isnothing(xmin) ? minimum(traj.X, dims = 1) : xmin
+        xmax = isnothing(xmax) ? maximum(traj.X, dims = 1) : xmax
+    end
 
+    t0 = traj.M isa Mobius ? max(1, i-100) : 1
+    X = remove_jumps_from_trajectory(traj.X)
     if d == 2
+        if traj.M isa Mobius
+            k, j = 2, 1
+        else
+            k, j = 1, 2
+        end
         plt = plot(
-            eachcol(traj.X[1:i, :])...,
+            X[t0:i, k], X[t0:i, j],
             lw = 4,
             color = :black,
             grid = false,
             aspect_ratio = :equal,
-            label = "trajectory",
+            label = nothing,
             camera = (0.075 * i, 20),
+            xlim=[xmin[k], xmax[k]],
+            ylim=[xmin[j], xmax[j]],
         )
     elseif d == 1
         plt = plot(
-            traj.X[:, 1],
+            X[:, 1],
             lw = 4,
             color = :black,
             grid = false,
-            label = "trajectory",
+            label = nothing,
             ylim = [xmin[1], xmax[1]],
         )
     else
-        plt = plot(
-            eachcol(traj.X[1:i, :])...,
-            lw = 4,
-            color = :black,
-            grid = false,
-            aspect_ratio = :equal,
-            label = "trajectory",
-            xlim = [xmin[1], xmax[1]],
-            ylim = [xmin[2], xmax[2]],
-            zlim = [xmin[3], xmax[3]],
-            camera = (0.075 * i, 20),
-        )
+        error()
+        # plt = plot(
+        #     eachcol(X[t0:i, :])...,
+        #     lw = 4,
+        #     color = :black,
+        #     grid = false,
+        #     aspect_ratio = :equal,
+        #     label = nothing,
+        #     _X̄,
+        #     ylim = [xmin[2], xmax[2]],
+        #     zlim = [xmin[3], xmax[3]],
+        #     camera = (0.075 * i, 20),
+        # )
     end
 
-
     # fain line
-    plot!(plt, eachcol(traj.X)..., lw = 1.5, color = :black, label = nothing, alpha = 0.5)
+    # plot!(plt, eachcol(X)..., lw = 1.5, color = :black, label = nothing, alpha = 0.5)
 
     plt
 end
@@ -117,27 +148,7 @@ function simulation_frame_2dcan(
     x̄ = range(minimum(can.X[1, :]), maximum(can.X[1, :]), length = can.n[1])
     ȳ = range(minimum(can.X[2, :]), maximum(can.X[2, :]), length = can.n[2])
 
-    # offsets = map(offset_for_visual, can.offsets)
-    # for (i, offset) in enumerate(offsets)
-    #     S = simulation.S[:, i]
-
-    #     # get offset position for plotting
-    #     offset = offset .* vec(maximum(can.X; dims = 2))
-
-    #     # plot activity heatmap
-    #     x = offset[1] .+ x̄
-    #     y = offset[2] .+ ȳ
-    #     contourf!(x, y, reshape(S, can.n)', levels = 3)
-    # end
-
-    # plot the sum of all activations
     contourf!(x̄, ȳ, reshape(s̄, can.n)', levels = 3)
-
-    # plot input vector direction 
-    # x0, y0 = maximum(can.X; dims = 2) ./ 2.1
-    # plot!([x0, x0 + v̂[1]], [y0, y0 + v̂[2]], lw = 6, color = :green, alpha=.5, label = nothing)
-    # scatter!([x0], [y0], ms = 8, color = :green, label = nothing, alpha=.5, )
-
     plt
 end
 
@@ -153,36 +164,37 @@ function simulation_frame_2dcan(
     s = sum(simulation.S, dims = 2) |> vec
     M = by_column(φ, can.X)
 
-    th = maximum(s) .* 0.5
-    active = s .>= th
-    inactive = s .< th
+    # th = maximum(s) .* 0.5
+    # active = s .>= th
+    # inactive = s .< th
 
     plt = scatter3d(
-        eachrow(M[:, inactive])...,
-        marker_z = s[inactive],
+        eachrow(M)...,
+        marker_z = s,
         title = "elapsed: $(round(timems)) ms",
         grid = false,
         msa = 0,
         msw = 0,
-        clims = (0, maximum(s) * 0.95),
+        clims = (-maximum(s) * 0.95, maximum(s) * 0.95),
+        color=:bwr,
         ms = 6,
-        alpha = 0.1,
+        alpha = 0.75,
         label = nothing,
         colorbar = nothing,
     )
 
-    scatter3d!(
-        eachrow(M[:, active])...,
-        marker_z = s[active],
-        title = "elapsed: $(round(timems)) ms",
-        grid = false,
-        msa = 0,
-        msw = 0,
-        clims = (0, maximum(s) * 0.95),
-        ms = 8,
-        label = nothing,
-        colorbar = nothing,
-    )
+    # scatter3d!(
+    #     eachrow(M[:, active])...,
+    #     marker_z = s[active],
+    #     title = "elapsed: $(round(timems)) ms",
+    #     grid = false,
+    #     msa = 0,
+    #     msw = 0,
+    #     clims = (0, maximum(s) * 0.95),
+    #     ms = 8,
+    #     label = nothing,
+    #     colorbar = nothing,
+    # )
 
     return plt
 end
@@ -252,17 +264,18 @@ function Plots.plot(
 
     # plot trajectory
     tj = simulation.trajectory
-    ϕ(x) = moving_average(x, 31)
+    # ϕ(x) = moving_average(x, 31)
+    _X̄ = remove_jumps_from_trajectory(X̄)
     if simulation.can.name == "sphere"
-        traj = Plots.plot(tj, framen; xmin = [-1.5, -1.5, -1.5], xmax = [1.5, 1.5, 1.5])
+        traj = Plots.plot(tj, framen;)
         scatter3d!(traj, [x[1]], [x[2]], [x[3]], ms = 5, color = :black, label = "actual")
 
         # plot decoded trajectory
         plot3d!(
             traj,
-            X̄[1:framen, 1],
-            X̄[1:framen, 2],
-            X̄[1:framen, 3],
+            _X̄[1:framen, 1],
+            _X̄[1:framen, 2],
+            _X̄[1:framen, 3],
             color = :red,
             label = nothing,
             alpha = 1,
@@ -270,12 +283,12 @@ function Plots.plot(
         )
         scatter3d!(
             traj,
-            [X̄[framen, 1]],
-            [X̄[framen, 2]],
-            [X̄[framen, 3]],
+            [_X̄[framen, 1]],
+            [_X̄[framen, 2]],
+            [_X̄[framen, 3]],
             ms = 7,
             color = :red,
-            label = "decoded",
+            label = nothing,
         )
 
         # visualize activation of each individual population
@@ -292,22 +305,30 @@ function Plots.plot(
     elseif simulation.can.d == 2
         traj = Plots.plot(tj, framen)
 
+        if simulation.can.name == "mobius"
+            i,j = 2,1
+        else
+            i,j = 1, 2
+        end
+        
         # plot decoded trajectory
-        framen > (100 + 2) && plot!(
-            traj,
-            ϕ(X̄[100:framen, 1]),
-            ϕ(X̄[100:framen, 2]),
-            color = :red,
-            label = nothing,
-            alpha = 0.6,
-        )
+        framen > (100 + 2) && begin
+            plot!(
+                traj,
+                _X̄[100:framen, i],
+                _X̄[100:framen, j],
+                color = :red,
+                label = nothing,
+                alpha = 0.6,
+            )
+        end
         scatter!(
             traj,
-            [X̄[framen, 1]],
-            [X̄[framen, 2]],
+            [_X̄[framen, i]],
+            [_X̄[framen, j]],
             ms = 7,
             color = :red,
-            label = "decoded",
+            label = nothing,
         )
 
         # main figure
@@ -317,8 +338,8 @@ function Plots.plot(
 
         # plot decoded trajectory
         framen > (100 + 2) &&
-            plot!(traj, X̄[1:framen, 1], color = :red, label = nothing, alpha = 0.6)
-        scatter!(traj, [framen], [X̄[framen, 1]], ms = 7, color = :red, label = "decoded")
+            plot!(traj, _X̄[1:framen, 1], color = :red, label = nothing, alpha = 0.6)
+        scatter!(traj, [framen], [_X̄[framen, 1]], ms = 7, color = :red, label = nothing)
 
         # main figure
         plot(traj, pop_activity, size = (1000, 800), layout = (2, 1))
@@ -328,19 +349,19 @@ function Plots.plot(
         # plot decoded trajectory
         framen > (100 + 2) && plot!(
             traj,
-            ϕ(X̄[100:framen, 1]),
-            ϕ(X̄[100:framen, 2]),
+            _X̄[100:framen, 1],
+            _X̄[100:framen, 2],
             color = :red,
             label = nothing,
             alpha = 0.6,
         )
         scatter!(
             traj,
-            [X̄[framen, 1]],
-            [X̄[framen, 2]],
+            [_X̄[framen, 1]],
+            [_X̄[framen, 2]],
             ms = 7,
             color = :red,
-            label = "decoded",
+            label = nothing,
         )
 
         # main figure
@@ -367,11 +388,11 @@ function plot_trajectory_and_decoded(trajectory::Trajectory, X̄::Matrix)
     scatter!([[x] for x in trajectory.X[1, :]]..., ms = 5, color = :black, label = nothing)
 
     if d == 2
-        plot!(eachcol(X̄)..., lw = 3, color = :red, label = "decoded")
+        plot!(eachcol(X̄)..., lw = 3, color = :red, label = nothing)
     elseif d == 3
-        plot3d!(eachcol(X̄)..., lw = 3, color = :red, label = "decoded")
+        plot3d!(eachcol(X̄)..., lw = 3, color = :red, label = nothing)
     elseif d == 1
-        plot!(X̄, lw = 3, color = :red, label = "decoded")
+        plot!(X̄, lw = 3, color = :red, label = nothing)
     end
     return plt
 end
