@@ -1,7 +1,14 @@
 using GeneralAttractors.Simulations
 
-using GeneralAttractors.ManifoldUtils: Mobius, ψ_t, ψ_θ1
+using GeneralAttractors.ManifoldUtils: Mobius, ψ_t, ψ_θ1, ψ_θ2
 using Plots
+
+"""
+Schematic visualization of vector fields on the mobius strip.
+Not to scale with actual offsets on the network. 
+An example trajectory built out of these fields is also
+shown.
+"""
 
 x₀ = [0.3, 0]
 

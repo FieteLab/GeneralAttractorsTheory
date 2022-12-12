@@ -30,14 +30,14 @@ trajectory = Trajectory(
     toruscan;
     T = nframes,
     dt = dt,
-    σθ = 0.3,
-    σv = 0.3,
-    μv = 0,
+    σv = 1.0,
     x₀ = x₀,
     vmax = 0.2,
     still = still,
+    scale = 5,
 )
 simulation = Simulation(toruscan, trajectory; η = 0.0, b₀ = 0.5, τ = 5.0)
+
 
 # run
 h, X̄ = @time run_simulation(
@@ -51,5 +51,5 @@ h, X̄ = @time run_simulation(
     savename = "test",
 );
 
-plot_trajectory_and_decoded(trajectory, X̄) |> display
+# plot_trajectory_and_decoded(trajectory, X̄) |> display
 nothing

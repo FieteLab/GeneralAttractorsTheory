@@ -75,10 +75,6 @@ tangent to the sphere and correpsonding to a rotation.
 
 φ = sphere_embedding
 
-""" vector in sphere domain corresponding to vec given by ψx in ℝ³ """
-ψxS²(p) = jacobian(φ, p)' * ψx(φ(p))
-ψyS²(p) = jacobian(φ, p)' * ψy(φ(p))
-ψzS²(p) = jacobian(φ, p)' * ψz(φ(p))
 
 
 

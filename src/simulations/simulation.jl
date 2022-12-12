@@ -32,7 +32,7 @@ Holds information necessary for running a simulation.
     b₀::Float64 = 1.0       # baseline input activity
     η::Float64 = 0.1       # noise scale
     dt::Float64 = 0.5       # simulation step - milliseconds
-    τ::Float64 = 10.0      # activity time constant - milliseconds
+    τ::Float64 = 5.0      # activity time constant - milliseconds
 end
 
 Base.string(sim::Simulation) = "Simulation of $(sim.can)"

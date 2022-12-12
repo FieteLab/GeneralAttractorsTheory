@@ -31,8 +31,8 @@ trajectory = Trajectory(
     ringcan;
     T = nframes,
     dt = dt,
-    σθ = 0.5,
-    v0 = 0.1,
+    σv = 0.5,
+    μv = 0.0,
     x₀ = θ₀,
     still = still,
     vmax = 0.2,

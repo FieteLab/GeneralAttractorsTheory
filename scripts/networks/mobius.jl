@@ -27,23 +27,23 @@ d_m = MobiusEuclidean()
 
 # connectivity kernel
 # k_m = DiffOfExpKernel(; λ = 1.5)
-k_m = LocalGlobalKernel(α = 0.25, σ = 0.1, β = 0.25)
+k_m = LocalGlobalKernel(α = 0.5, σ = 5, β = 0.5)
 
 
 # define offset vector fields
 offsets =
     [p -> ψ_t(p), p -> -ψ_t(p), p -> ψ_θ1(p), p -> -ψ_θ1(p), p -> ψ_θ2(p), p -> -ψ_θ2(p)]
-offset_size = 0.1
+offset_size = 0.75
 
 # define one forms
-α = 1 / offset_size .* 2
+γ = offset_size # different scaling for one form fields
 Ω = [
-    OneForm(1, (t, θ) -> α * ψ_t(t, θ)),
-    OneForm(2, (t, θ) -> -α * ψ_t(t, θ)),
-    OneForm(3, (t, θ) -> α * ψ_θ1(t, θ)),
-    OneForm(4, (t, θ) -> -α * ψ_θ1(t, θ)),
-    OneForm(5, (t, θ) -> α * ψ_θ2(t, θ)),
-    OneForm(6, (t, θ) -> -α * ψ_θ2(t, θ)),
+    OneForm(1, (t, θ) -> γ * ψ_t(t, θ)),
+    OneForm(2, (t, θ) -> -γ * ψ_t(t, θ)),
+    OneForm(3, (t, θ) -> γ * ψ_θ1(t, θ)),
+    OneForm(4, (t, θ) -> -γ * ψ_θ1(t, θ)),
+    OneForm(5, (t, θ) -> γ * ψ_θ2(t, θ)),
+    OneForm(6, (t, θ) -> -γ * ψ_θ2(t, θ)),
 ]
 
 
@@ -59,4 +59,5 @@ mobiuscan = CAN(
     offset_size = offset_size,
     offsets = offsets,
     Ω = Ω,
+    α = 1.0,
 )

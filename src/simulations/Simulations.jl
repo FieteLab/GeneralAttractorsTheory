@@ -18,14 +18,9 @@ import ..ManifoldUtils:
     Sphere,
     Mobius,
     sphere_embedding,
-    ψx,
-    ψy,
-    ψz,
-    ψ_t,
-    ψ_θ1,
-    ψ_θ2,
     CoverSpace,
-    Ring
+    Ring,
+    apply_boundary_conditions!
 
 export Simulation, run_simulation
 export Trajectory

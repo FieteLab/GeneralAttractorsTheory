@@ -1,3 +1,4 @@
+import Term.Repr: @with_repr
 # ----------------------------------- utils ---------------------------------- #
 """
     function piecewise_linear(
@@ -49,6 +50,19 @@ function add_initial_still_phase(X::Matrix, V::Matrix, still, x₀)
 end
 
 
+"""
+    random_variable(N::Int, μ::Number, σ::Number; smoothing_window=nothing)
+
+1d white noise trace of length N, std `σ` and mean `μ`. Optionally smoothed.
+"""
+function random_variable(N::Int, μ::Number, σ::Number; smoothing_window = nothing)
+    x = (rand(N) .- 0.5) .* σ .+ μ
+    isnothing(smoothing_window) || (x = moving_average(x, smoothing_window))
+    return x
+end
+
+
+
 
 # ---------------------------------------------------------------------------- #
 #                                  TRAJECTORY                                  #
@@ -61,7 +75,7 @@ The trajectory is defined by a matrix V (T×d) of velocity
 along each of d-many dimensions at each time step in T. 
 X (T×d) is the coordinates of the trajectory's trace.
 """
-struct Trajectory
+@with_repr struct Trajectory
     M::AbstractManifold
     X::Matrix
     V::Matrix
@@ -73,105 +87,13 @@ Trajectory(can::AbstractCAN, args...; kwargs...) = Trajectory(can.C.M, args...; 
 
 
 
-function Trajectory(
-    M::Ring;
+"""
+Trajectory(
+    M::AbstractManifold,
     T::Int = 250,
     dt::Float64 = 0.5,
-    x₀ = nothing,
-    σθ = 0.2,
-    μv = 0,
-    still = 100,
-    vmax = 0.15,
-    kwargs...,
-)
-
-    x₀ = isnothing(x₀) ? rand(0:0.2:2π) : x₀
-    θ̇ = (moving_average(rand(T), 11) .- 0.5) .* σθ .+ μv
-    θ̇[θ̇.>vmax] .= vmax
-    θ̇[θ̇.<0vmax] .= -vmax
-
-    θ = cumsum(θ̇) .* dt .+ x₀ # orientation
-    θ = mod.(θ, 2π)
-
-    # turn into matrices
-    θ = reshape(θ, length(θ), 1)
-    θ̇ = reshape(θ̇, length(θ̇), 1)
-
-    # finalize
-    still > 0 && begin
-        θ, θ̇ = add_initial_still_phase(θ, θ̇, still, θ[1])
-    end
-    return Trajectory(M, θ, θ̇, still)
-end
-
-
-"""
-    ComputeTrajectory(; T::Int=250, μ=0.1, θ=0.5)
-
-a random walk of duration T-many steps over the manifold
-ℝ² with average velocity μ and average angular velocity θ.
-The trajectory is computed by assuming that an agent moves 
-with a certain velocity (randomly drawn from gaussian) and a 
-given angular velocity (randomy drawn) reflecting a change in orientation
-"""
-function Trajectory(
-    M::Manifoldℝ²;
-    T::Int = 250,
-    dt::Float64 = 0.5,
-    σv = 0.25,
-    μv = 0.05,
-    vmax = 0.1,
-    σθ = 0.5,
-    θ₀ = nothing,
-    x₀ = nothing,
-    still = 100,
-)
-    # get speed and orientation
-    v = (rand(T) .- 0.5) .* σv .+ μv .|> abs
-    v = moving_average(v, 21)
-    v[v.>vmax] .= vmax
-    v[v.<0] .= 0
-
-    θ₀ = isnothing(θ₀) ? rand(0:0.2:2π) : θ₀
-    θ̇ = moving_average(rand(T), 11) .- 0.5
-    θ̇ = cumsum(θ̇ .* σθ) .+ θ₀ # orientation
-
-    # get velocity at each component
-    vx = v .* cos.(θ̇)
-    vy = v .* sin.(θ̇)
-
-    # get random initial position
-    x₀ = isnothing(x₀) ? [rand(-20:2:20), rand(-20:2:20)] : x₀
-    x₀, y₀ = x₀
-
-    # Get trajectory
-    X, V = zeros(T, 2), zeros(T, 2)
-    X[1, :] = [x₀, y₀]
-    V[:, 1] = vx
-    V[:, 2] = vy
-    for t = 2:T
-        X[t, :] = X[t-1, :] + V[t, :] * dt
-    end
-
-    # finalize
-    still > 0 && begin
-        X, V = add_initial_still_phase(X, V, still, X[1, :])
-    end
-    return Trajectory(M, X, V, still)
-end
-
-
-
-
-"""
-Define random trajectories on the sphere (in ℝ³) by:
-i. defining three smooth 1-d random functions
-ii. use these to take linear combinations of killing fields of the unit sphere
-"""
-function Trajectory(
-    M::Sphere;
-    T::Int = 250,
-    σ = [1, 1, 1],
+    σv::Vector = [1, 1, 1],  # variability of each speed field
+    μv::Vector = [0, 0, 0],  # bias of each speed field
     x₀ = nothing,
     still = 0,
     vmax = 0.075,
@@ -179,123 +101,93 @@ function Trajectory(
     n_piecewise_segments = 3,
 )
 
-    # get starting point
-    x₀ = !isnothing(x₀) ? x₀ : begin
-        p = rand(-1:0.1:1, 3)
-        p ./= norm(p)
-    end
+Generic trajectory constructor. 
+Given a list of vector fields (ψᵢ) on a maniofold M,
+create a list of random white noise (smoothed) magnitude
+trajectories vᵢ for each vec field at each time step.
+From these integrate to reconstruct trajectory.
+Optionally, the trajectory can be made out of 
+segments of constant magnitude traces (modality=:piecewise)
+or it can be constant throughout (modality=:constant)
 
-    # get vfield "activation" at each frame
-    if modality == :piecewise
-        vx = piecewise_linear(T, n_piecewise_segments, -vmax:(vmax/100):vmax)
-        vy = piecewise_linear(T, n_piecewise_segments, -vmax:(vmax/100):vmax)
-        vz = piecewise_linear(T, n_piecewise_segments, -vmax:(vmax/100):vmax)
-    elseif modality == :constant
-        vx = ones(T) .* σ[1]
-        vy = ones(T) .* σ[2]
-        vz = ones(T) .* σ[3]
-    else
-        vx = moving_average((rand(T) .- 0.5) .* σ[1], 50) |> cumsum
-        vy = moving_average((rand(T) .- 0.5) .* σ[2], 50) |> cumsum
-        vz = moving_average((rand(T) .- 0.5) .* σ[3], 50) |> cumsum
-    end
+Arguments:
+ - M: manifold
+ - ψs: vector fields (defined as functions), one for each dimension of the mfld, at least.
+ - T, dt: total number of steps and Δt
+ - σv: std of the magnitude trace of each respective vfield
+ - μv: mean of each magnitude trace
+ - still: initial period with no speed
+ - x₀: initial condition
+ - vmax: cap on magnitude traces of each components of the velocity vector.
+ - modality: trajectory modality type
+ - scale: used to scale the velocity vectors.
 
-    clamp!(vx, -vmax, vmax)
-    clamp!(vy, -vmax, vmax)
-    clamp!(vz, -vmax, vmax)
-
-    # get position and velocity vectors
-    ∑ψ(p, i) = vx[i] * ψx(p...) + vy[i] * ψy(p...) + vz[i] * ψz(p...)
-    X, V = zeros(T, 3), zeros(T, 3)
-    X[1, :] = x₀
-    for t = 1:T
-        x = t == 1 ? x₀ : X[t-1, :]
-        v = ∑ψ(x, t)
-
-        #! REMOVE
-        v = v ./ norm(v) .* vmax
-        # if t < 100*dt
-        #     v .*= t/(100*dt)
-        # end
-
-        x̂ = x + v
-        X[t, :] = x̂
-        V[t, :] = v
-    end
-
-
-    # add a still phase
-    still > 0 && begin
-        X, V = add_initial_still_phase(X, V, still, x₀)
-    end
-    return Trajectory(M, X, V, still)
-end
-
-
-
+"""
 function Trajectory(
-    M::Mobius;
+    M::AbstractManifold;
     T::Int = 250,
-    σ = [1, 1, 1],
-    x₀ = nothing,
-    still = 0,
-    vmax = 0.075,
-    modality = :piecewise,
-    n_piecewise_segments = 3,
+    dt::Float64 = 0.5,
+    σv::Union{Number,Vector} = 1,  # variability of each speed field
+    μv::Union{Number,Vector} = 0,  # bias of each speed field
+    x₀::Union{Nothing,Number,Vector} = nothing,
+    still::Int = 0,
+    vmax::Number = 0.075,
+    modality::Symbol = :random,
+    n_piecewise_segments::Int = 3,
+    scale::Number = 1,
 )
+    ψs::Vector = M.ψs # get manifold vector fields
+
+    # get manifold dimensionality
+    d = length(M.xmin)
+
+    # get velocity params
+    σv = σv isa Number ? repeat([σv], d) : σv
+    μv = μv isa Number ? repeat([μv], d) : μv
+    @assert length(σv) == d
+    @assert length(μv) == d
+    @assert length(ψs) >= d
+
 
     # get starting point
-    x₀ = !isnothing(x₀) ? x₀ : [rand(-1/2:0.1:1/2), rand(0:0.1:2π)]
+    x₀ = x₀ isa Number ? repeat([x₀], d) : x₀
+    x₀ = !isnothing(x₀) ? x₀ : rand(M)
+    @assert length(x₀) == d
 
-    # get vfield "activation" at each frame
-    if modality == :piecewise
-        vx = piecewise_linear(T, n_piecewise_segments, -vmax:(vmax/100):vmax)
-        vy = piecewise_linear(T, n_piecewise_segments, -vmax*0.75:(vmax/100):vmax*0.75)
-        vz = piecewise_linear(T, n_piecewise_segments, -vmax*0.75:(vmax/100):vmax*0.75)
-    elseif modality == :constant
-        vx = ones(T) .* σ[1]
-        vy = ones(T) .* σ[2]
-        vz = ones(T) .* σ[3]
-    else
-        vx = moving_average((rand(T) .- 0.5) .* σ[1], 20) |> cumsum
-        vy = moving_average((rand(T) .- 0.5) .* σ[2], 20) |> cumsum
-        vz = moving_average((rand(T) .- 0.5) .* σ[3], 20) |> cumsum
+
+    # get velocity vector magnitude in components at each frame
+    Vs = Vector[]  # magnitude trace along each dimension
+    for i = 1:d
+        v = if modality == :piecewise
+            piecewise_linear(T, n_piecewise_segments, -vmax:(vmax/100):vmax)
+        elseif modality == :constant
+            ones(T) .* μv[i]
+        else
+            random_variable(T, μv[i], σv[i]; smoothing_window = 101) # |> cumsum
+        end
+        push!(Vs, v)
     end
 
-    clamp!(vx, -vmax, vmax)
-    clamp!(vy, -vmax, vmax)
-    clamp!(vz, -vmax, vmax)
+    """
+        Get the sum of the vector fields ψᵢ at position p ∈ M
+        and at time step t
+    """
+    ∑ψ(p, t) = map(i -> Vs[i][t] * ψs[i](p), 1:d) |> sum
 
     # get position and velocity vectors
-    ∑ψ(p, i) = vx[i] * ψ_t(p...) + vy[i] * ψ_θ1(p...) + vz[i] * ψ_θ2(p...)
-    X, V = zeros(T, 2), zeros(T, 2)
+    X, V = Matrix(reshape(zeros(T, d), T, d)), Matrix(reshape(zeros(T, d), T, d))
     X[1, :] = x₀
     for t = 1:T
+        # get velocity vector `v` at time `t` given vfields at position `x`.
         x = t == 1 ? x₀ : X[t-1, :]
-        v = ∑ψ(x, t)
+        v = ∑ψ(x, t) .* scale
+        v = norm(v) > vmax ? v / norm(v) * vmax : v
 
-        #! REMOVE
-        v = v ./ norm(v) .* vmax
-        x̂ = x + v
+        # get position at next time step
+        x̂ = x + v * dt
+        x̂ = apply_boundary_conditions!(x̂, M)
 
-        # correct for boundary conditions
-        if x̂[1] <= -0.475
-            x̂[1] = -0.475
-            # v[1] = 0
-        elseif x̂[1] >= 0.475
-            x̂[1] = 0.475
-            # v[1] = 0
-        end
-
-        if x̂[2] >= 2π
-            x̂[2] = x̂[2] - 2π
-            x̂[1] = -x̂[1]
-        elseif x̂[2] <= 0
-            x̂[2] = 2π + x̂[2]
-            x̂[1] = -x̂[1]
-        end
-
-
+        # store results
         X[t, :] = x̂
         V[t, :] = v
     end
