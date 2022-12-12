@@ -31,11 +31,11 @@ trajectory = Trajectory(
     ringcan;
     T = nframes,
     dt = dt,
-    σv = 0.5,
-    μv = 0.0,
+    σv = 1.0,
     x₀ = θ₀,
     still = still,
     vmax = 0.2,
+    scale=4,
 )
 simulation = Simulation(ringcan, trajectory; η = 0, b₀ = 0.5, τ = 5.0)
 
