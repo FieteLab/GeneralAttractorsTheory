@@ -67,7 +67,7 @@ function velocity_input(
     x::Vector,
 )
 
-    ωᵢ(x, v) #/ (norm(ωᵢ(x)))
+    ωᵢ(x, v)/ (norm(ωᵢ(x)))
     # v[ωᵢ.i] * sign(ωᵢ(x, v))
 end
 

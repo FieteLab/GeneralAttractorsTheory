@@ -12,14 +12,14 @@ import GeneralAttractors.ManifoldUtils: Ring, ring_ψ
 println(Panel("Creating ring attractor", style = "green", justify = :center))
 
 # neurons position and distance function
-n = (64,)  # number of neurons in the ring
+n = (200,)  # number of neurons in the ring
 
 # neurons coordinates and metric
 ξ_r(i::Int)::Vector = [lerp(i, n[1], 0.0, 2π - 2π / n[1])]  # neurons coordinates function
 d_r = PeriodicEuclidean([2π])  # distance function
 
 # kernel
-k_r = LocalGlobalKernel(α = 2.5, σ = 1.0, β = 2.5)
+k_r = LocalGlobalKernel(α = 2.5, σ = 0.25, β = 2.5)
 
 # cover map
 cover = CoverSpace(Ring())
@@ -42,4 +42,4 @@ ringcan = CAN("ring", cover, n, ξ_r, d_r, k_r;
     Ω = Ω,
     offset_size = offset_size, 
     σ = :softrelu, 
-    α = 600)
+    α = 350) # 120

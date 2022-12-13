@@ -323,6 +323,7 @@ function Plots.plot(
                 color = :red,
                 label = nothing,
                 alpha = 0.6,
+                lw=4,
             )
         end
         scatter!(

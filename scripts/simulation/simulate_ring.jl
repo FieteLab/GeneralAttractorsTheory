@@ -17,11 +17,11 @@ include("../networks/ring.jl")
 
 # --------------------------------- simulate --------------------------------- #
 dt = 0.5
-duration = 1000
+duration = 3000
 still = 50  # initialization period        
 
 
-θ₀ = π/2 # initialize state at position
+θ₀ = 5 # initialize state at position
 d = ringcan.metric.(θ₀, ringcan.X[1, :])
 activate = zeros(length(d))
 activate[d .< .4] .= 1
@@ -32,19 +32,19 @@ trajectory = Trajectory(
     ringcan;
     T = nframes,
     dt = dt,
-    σv = 0,
-    μv = 0.01,
+    σv = 0.1,
+    μv = 0.0,
     x₀ = θ₀,
     still = still,
     vmax = 0.01,
     scale=2,
 )
-simulation = Simulation(ringcan, trajectory; η = 0, b₀ = 0.5, τ = 10.0)
+simulation = Simulation(ringcan, trajectory; η = 0, b₀ = 0.1, τ = 10.0)
 
 
 h, X̄ = @time run_simulation(
     simulation;
-    frame_every_n = 30,
+    frame_every_n = nothing,
     discard_first_ms = 0,
     average_over_ms = 10,
     fps = 10,
@@ -53,5 +53,5 @@ h, X̄ = @time run_simulation(
     savename = "test",
 );
 
-# plot_trajectory_and_decoded(trajectory, X̄) |> display
+plot_trajectory_and_decoded(trajectory, X̄) |> display
 nothing
