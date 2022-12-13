@@ -409,7 +409,10 @@ function plot_can_vector_fields!(plt, can, vel, x_actual, x_decoded)
     if can.d ==1
         x0, x1 = minimum(can.X), maximum(can.X)
         for x in range(x0, x1, length=50)
-            y = can.Ω[1]([x])[1][1] * 4
+            # y = can.Ω[1]([x])[1][1] * 4
+
+            y = can.offsets[1](x)[1]
+            y = y>0 ? y/y : y
             plot!(plt, [x, x], [0, y], 
                 ylim=[0, 2],
                 lw=2, color=:red, alpha=.5, label=nothing)

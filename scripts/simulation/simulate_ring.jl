@@ -44,7 +44,7 @@ simulation = Simulation(ringcan, trajectory; η = 0, b₀ = 0.1, τ = 10.0)
 
 h, X̄ = @time run_simulation(
     simulation;
-    frame_every_n = nothing,
+    frame_every_n = 500,
     discard_first_ms = 0,
     average_over_ms = 10,
     fps = 10,

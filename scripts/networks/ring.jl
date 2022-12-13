@@ -42,4 +42,4 @@ ringcan = CAN("ring", cover, n, ξ_r, d_r, k_r;
     Ω = Ω,
     offset_size = offset_size, 
     σ = :softrelu, 
-    α = 350) # 120
+    α = 50) # 120
