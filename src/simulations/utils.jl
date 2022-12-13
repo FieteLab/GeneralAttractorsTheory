@@ -261,6 +261,9 @@ function Plots.plot(
         error("Simulation plot for d>2 not implemented")
     end
 
+    # plot vectori field over population activity
+    plot_can_vector_fields!(pop_activity, simulation.can, v, x, X̄[framen,:])
+
 
     # plot trajectory
     tj = simulation.trajectory
@@ -342,7 +345,7 @@ function Plots.plot(
         scatter!(traj, [framen], [_X̄[framen, 1]], ms = 7, color = :red, label = nothing)
 
         # main figure
-        plot(traj, pop_activity, size = (1000, 800), layout = (2, 1))
+        plot(traj, pop_activity, size = (1000, 800), layout = (2, 1), ylim=[0, 2π])
     else
         traj = Plots.plot(tj, framen)
 

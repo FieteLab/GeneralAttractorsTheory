@@ -68,6 +68,7 @@ function (dec::Decoder)(s::Vector, can::AbstractCAN)
         selected = argmin(d)
         @debug "decoding recalibration triggered" d[selected]
 
+        # find potential errors in decoding
         if d[selected] > 2.5
             r(x) = round(x; digits = 2)
             @warn "Decoding problems" r.(dec.x) r.(dec.n) r.(n̂) dec.Δ

@@ -83,7 +83,7 @@ X (T×d) is the coordinates of the trajectory's trace.
 end
 
 
-Trajectory(can::AbstractCAN, args...; kwargs...) = Trajectory(can.C.M, args...; kwargs...)
+Trajectory(can::AbstractCAN, args...; kwargs...) = Trajectory(can, can.C.M, args...; kwargs...)
 
 
 
@@ -124,18 +124,20 @@ Arguments:
 
 """
 function Trajectory(
-    M::AbstractManifold;
-    T::Int = 250,
-    dt::Float64 = 0.5,
-    σv::Union{Number,Vector} = 1,  # variability of each speed field
-    μv::Union{Number,Vector} = 0,  # bias of each speed field
-    x₀::Union{Nothing,Number,Vector} = nothing,
-    still::Int = 0,
-    vmax::Number = 0.075,
-    modality::Symbol = :random,
-    n_piecewise_segments::Int = 3,
-    scale::Number = 1,
-)
+        can::AbstractCAN,
+        M::AbstractManifold;
+        T::Int = 250,
+        dt::Float64 = 0.5,
+        σv::Union{Number,Vector} = 1,  # variability of each speed field
+        μv::Union{Number,Vector} = 0,  # bias of each speed field
+        x₀::Union{Nothing,Number,Vector} = nothing,
+        still::Int = 0,
+        vmax::Number = 0.075,
+        modality::Symbol = :random,
+        n_piecewise_segments::Int = 3,
+        scale::Number = 1,
+    )   
+    
     ψs::Vector = M.ψs # get manifold vector fields
     n_vfields = length(ψs)
 
@@ -164,7 +166,9 @@ function Trajectory(
         elseif modality == :constant
             ones(T) .* μv[i]
         else
-            random_variable(T, μv[i], σv[i]; smoothing_window = 101) # |> cumsum
+            x = random_variable(T, μv[i], σv[i]; smoothing_window = 101)
+            clamp!(x, -vmax, vmax)
+            x
         end
         push!(Vs, v)
     end
@@ -177,26 +181,45 @@ function Trajectory(
 
     # get position and velocity vectors
     X, V = Matrix(reshape(zeros(T, d), T, d)), Matrix(reshape(zeros(T, d), T, d))
-    X[1, :] = x₀
-    for t = 1:T
+    X[1, :] = get_closest_neuron(x₀, can.X, can.metric)
+    x_mfd = x₀ # keep track of where on the manifold we are
+    for t = 2:T
         # get velocity vector `v` at time `t` given vfields at position `x`.
-        x = t == 1 ? x₀ : X[t-1, :]
-        v = ∑ψ(x, t) .* scale
-        v = norm(v) > vmax ? v / norm(v) * vmax : v
+        x = X[t-1, :]
+        v = ∑ψ(x, t)
+        # v = norm(v) > vmax ? v / norm(v) * vmax : v
+        v *= scale
 
         # get position at next time step
-        x̂ = x + v * dt
-        x̂ = apply_boundary_conditions!(x̂, M)
+        x̂ = x + (v * dt)
+        x̂, v_correction = apply_boundary_conditions!(x̂, M)
+        x_mfd = x_mfd + (v * dt)
+        if can.C.M != can.C.N
+            x_mfd, _ = apply_boundary_conditions!(x_mfd, can.C.N)
+        end
 
         # store results
         X[t, :] = x̂
-        V[t, :] = v
+        V[t-1, :] = v .* v_correction
+        # V[t, :] = [Vs[1][t]]
     end
-
 
     # add a still phase
     still > 0 && begin
         X, V = add_initial_still_phase(X, V, still, x₀)
     end
     return Trajectory(M, X, V, still)
+end
+
+
+"""
+    get_closest_neuron(x, X)
+
+Given a point x in a manifold get the coordinates
+x̂ ∈ X of the closest neuron given a manifold
+metric `d`.
+"""
+function get_closest_neuron(x, X, d)
+    Δ = map(x̂ -> d(x̂, x), eachcol(X))
+    return X[:, argmin(Δ)]
 end

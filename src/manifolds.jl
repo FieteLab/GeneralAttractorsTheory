@@ -4,7 +4,7 @@ Collection of code useful to visualize manifolds
 module ManifoldUtils
 using Distances
 
-import ..GeneralAttractors: SphericalDistance, MobiusEuclidean
+import ..GeneralAttractors: SphericalDistance, MobiusEuclidean, lerp
 import ..GeneralAttractors: sphere_embedding, mobius_embedding
 
 export AbstractManifold, CoverSpace
@@ -53,24 +53,28 @@ function Base.rand(m::AbstractManifold)
 end
 
 """ Ensure x in M """
-apply_boundary_conditions!(x, ::AbstractManifold) = x
+apply_boundary_conditions!(x, ::AbstractManifold) = (x, ones(length(x)))
 
-
+# ---------------------------------------------------------------------------- #
+#                                     RING                                     #
+# ---------------------------------------------------------------------------- #
 struct Ring <: AbstractManifold
     xmin::Vector
     xmax::Vector
     ψs::Vector{AbstractVectorField}
     metric::Metric
 end
-Ring() = Ring([0], [2π], [ConstantVectorField(1, 1)], PeriodicEuclidean([2π]))
+Ring() = Ring([0], [2π], 
+    [VectorField(ring_ψ)], 
+    # [ConstantVectorField(1, 1)],
+    PeriodicEuclidean([2π]))
+
+apply_boundary_conditions!(x, ::Ring) = mod.(x, 2π), 1
 
 
-function apply_boundary_conditions!(x, ::Ring)
-    mod.(x, 2π)
-end
-
-
-
+# ---------------------------------------------------------------------------- #
+#                                     PLANE                                    #
+# ---------------------------------------------------------------------------- #
 struct Manifoldℝ² <: AbstractManifold
     xmin::Vector
     xmax::Vector
@@ -80,11 +84,16 @@ end
 Manifoldℝ²(m) = Manifoldℝ²(
     [-m, -m],
     [m, m],
-    [ConstantVectorField(2, 1), ConstantVectorField(2, 2)],
+    # [ConstantVectorField(2, 1), ConstantVectorField(2, 2)],
+    [VectorField(ℝ²_ψ1), VectorField(ℝ²_ψ2)],
     Euclidean(),
 )
 ℝ² = Manifoldℝ²(100)
 
+
+# ---------------------------------------------------------------------------- #
+#                                     TORUS                                    #
+# ---------------------------------------------------------------------------- #
 struct Torus <: AbstractManifold
     xmin::Vector
     xmax::Vector
@@ -99,7 +108,14 @@ Torus() = Torus(
 )
 T = Torus()
 
+function apply_boundary_conditions!(x::Vector, ::Torus)
+    return mod.(x, 2π), ones(length(x))
+end
 
+
+# ---------------------------------------------------------------------------- #
+#                                    SPHERE                                    #
+# ---------------------------------------------------------------------------- #
 struct Sphere <: AbstractManifold
     xmin::Vector
     xmax::Vector
@@ -113,7 +129,9 @@ S² = Sphere(
     SphericalDistance(),
 )
 
-
+# ---------------------------------------------------------------------------- #
+#                                    MOBIUS                                    #
+# ---------------------------------------------------------------------------- #
 struct Mobius <: AbstractManifold
     xmin::Vector
     xmax::Vector
@@ -135,12 +153,15 @@ on the non periodic dimension, put it at the manifold's boundary,
 if it's along the periodic dimension gets its position module 2π.
 """
 function apply_boundary_conditions!(x::Vector, m::Mobius)
+    vel_correction_facors = [1, 1]
     # non periodic dimension
-    δ = 0.1  # padding around boundary to account for bump size
+    δ = 0.2  # padding around boundary to account for bump size
     if x[1] <= m.xmin[1] + δ
         x[1] = m.xmin[1] + δ
+        vel_correction_facors[1] = 0
     elseif x[1] >= m.xmax[1] - δ
         x[1] = m.xmax[1] - δ
+        vel_correction_facors[1] = 0
     end
 
     # periodic dimension
@@ -151,7 +172,7 @@ function apply_boundary_conditions!(x::Vector, m::Mobius)
         x[2] = 2π + x[2]
         x[1] = -x[1]
     end
-    return x
+    return x, vel_correction_facors
 end
 
 

@@ -11,12 +11,14 @@ using GeneralAttractors: lerp
 using GeneralAttractors.ManifoldUtils
 import GeneralAttractors.Simulations: plot_trajectory_and_decoded
 
+Term.STACKTRACE_HIDDEN_MODULES[] = ["Plots", "RecipesPipeline"]
+
 include("../networks/mobius.jl")
 println(mobiuscan.n)
 
 # --------------------------------- simulate --------------------------------- #
 dt = 0.5
-duration = 200
+duration = 500
 still = 50  # initialization period  
 dmin = 0.5  # minimal distance from x₀ for state intialization  
 
@@ -32,17 +34,18 @@ trajectory = Trajectory(
     mobiuscan;
     T = nframes,
     dt = dt,
-    σv = [0, .5, .5],
-    μv = [.1, 0, 0],
+    σv = [1, 1, 0],
+    μv = [0, 0, 0],
     x₀ = x₀,
     still = still,
-    vmax = 0.1,
+    vmax = 0.05,
     scale = 1
 )
 simulation = Simulation(mobiuscan, trajectory; 
         η = 0.0, b₀ = 0.5, τ = 5.0)
 
 
+        
 # run
 h, X̄ = @time run_simulation(
     simulation;

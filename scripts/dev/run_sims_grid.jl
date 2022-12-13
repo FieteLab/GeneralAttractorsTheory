@@ -2,7 +2,7 @@ using GeneralAttractors
 using GeneralAttractors.Simulations
 import IterTools: product
 
-include("../networks/torus.jl")
+include("../networks/ring.jl")
 
 
 """
@@ -10,16 +10,19 @@ Run a bunch of simulations varying constant speed v, b₀ and δ
 """
 SIMULATE = true
 
-fld_name = "params_grid_search_tanh"
-B = range(4, 6, length = 2) |> collect
-D = range(0.8, 1.4, length = 6) |> collect
-V = range(0.1, 0.7, length = 20) |> collect
+fld_name = "ring_grid_search"
+mfld = "ring"
+# B = range(4, 6, length = 2) |> collect
+B = [1]
+D = range(0.05, 0.1, length = 35) |> collect
+V = range(0.05, 0.1, length = 4) |> collect
 
 
 params = product(B, D, V) |> collect
 @info "Setting up" length(params)
 
-σ = :tanh
+
+σ = :softrelu
 duration = 150
 dt = 0.5
 still = 50  # initialization period    
@@ -28,15 +31,27 @@ nframes = (Int ∘ round)(duration / dt)
 
 function run_all_sims()
     # ------------------------------- fixed params ------------------------------- #
-    x₀ = [1, 3.14] # initialize state at center of mfld
-    d = map(i -> toruscan.metric(x₀, toruscan.X[:, i]), 1:size(toruscan.X, 2))
-    activate = zeros(length(d))
-    activate[d.<0.5] .= 1
 
     count = 0
 
     for δ in D
-        can = CAN("torus", cover, n, ξ_t, d_t, k_t; offset_size = δ, σ = σ)
+        if mfld == "torus"
+            can = CAN("torus", cover, n, ξ_t, d_t, k_t; offset_size = δ, σ = σ)
+            x₀ = [1, 3.14] # initialize state at center of mfld
+            d = map(i -> toruscan.metric(x₀, toruscan.X[:, i]), 1:size(toruscan.X, 2))
+            activate = zeros(length(d))
+            activate[d.<0.5] .= 1
+        
+        elseif mfld == "ring"
+            can = CAN("ring", cover, n, ξ_r, d_r, k_r; offset_size = δ, σ = σ)
+            x₀ = [π/2] # initialize state at position
+            d = ringcan.metric.(x₀[1], ringcan.X[1, :])
+            activate = zeros(length(d))
+            activate[d .< .4] .= 1
+        
+        else
+            error()
+        end
 
         for b in B
             for v in V
@@ -53,13 +68,12 @@ function run_all_sims()
                     can;
                     T = nframes,
                     dt = dt,
-                    σv = v,
+                    σv = 0,
                     μv = v,
-                    vmax = v,
-                    σθ = 0.0,
-                    θ₀ = 0,
-                    x₀ = [1, 1],
+                    vmax = 2v,
+                    x₀ = x₀,
                     still = still,
+                    modality=:constant,
                 )
                 simulation = Simulation(can, TJ; η = 0.0, b₀ = b, τ = 5)
 

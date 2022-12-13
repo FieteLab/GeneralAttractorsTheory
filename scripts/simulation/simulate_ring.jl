@@ -1,10 +1,11 @@
 using Plots
-using Term
-install_term_stacktrace()
+
 
 using GeneralAttractors
 using GeneralAttractors.Simulations
-
+using Term
+Term.STACKTRACE_HIDDEN_MODULES[] = ["Plots"]
+install_term_stacktrace()
 
 using Distances
 using GeneralAttractors.Kernels
@@ -16,14 +17,14 @@ include("../networks/ring.jl")
 
 # --------------------------------- simulate --------------------------------- #
 dt = 0.5
-duration = 500
+duration = 1000
 still = 50  # initialization period        
 
 
-θ₀ = 3.14 # initialize state at center of mfld
+θ₀ = π/2 # initialize state at position
 d = ringcan.metric.(θ₀, ringcan.X[1, :])
 activate = zeros(length(d))
-activate[d.<2.5] .= 1
+activate[d .< .4] .= 1
 
 # initialize trajectory and simulation
 nframes = (Int ∘ round)(duration / dt)
@@ -31,19 +32,19 @@ trajectory = Trajectory(
     ringcan;
     T = nframes,
     dt = dt,
-    σv = 1,
-    μv = 0,
+    σv = 0,
+    μv = 0.01,
     x₀ = θ₀,
     still = still,
-    vmax = 0.1,
-    scale=4,
+    vmax = 0.01,
+    scale=2,
 )
-simulation = Simulation(ringcan, trajectory; η = 0, b₀ = 0.5, τ = 5.0)
+simulation = Simulation(ringcan, trajectory; η = 0, b₀ = 0.5, τ = 10.0)
 
 
 h, X̄ = @time run_simulation(
     simulation;
-    frame_every_n = 10,
+    frame_every_n = 30,
     discard_first_ms = 0,
     average_over_ms = 10,
     fps = 10,

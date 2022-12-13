@@ -1,3 +1,5 @@
+import MyterialColors: red, green, black, white
+
 # ---------------------------------- kernel ---------------------------------- #
 function Plots.plot(K::AbstractKernel; σ = 4, kwargs...)
     x = -σ:0.001:σ |> collect
@@ -399,4 +401,44 @@ function show_oneforms!(
         )
     end
     return plt
+end
+
+
+
+function plot_can_vector_fields!(plt, can, vel, x_actual, x_decoded)
+    if can.d ==1
+        x0, x1 = minimum(can.X), maximum(can.X)
+        for x in range(x0, x1, length=50)
+            y = can.Ω[1]([x])[1][1] * 4
+            plot!(plt, [x, x], [0, y], 
+                ylim=[0, 2],
+                lw=2, color=:red, alpha=.5, label=nothing)
+        end
+
+        plot!(plt, [x_actual[1], x_actual[1]], [0, 1.5],
+            lw=4, color=:black, label=nothing
+        )
+        plot!(plt, [x_decoded[1], x_decoded[1]], [0, 1.5],
+            lw=4, color=:red, label=nothing
+        )
+        return
+    end
+    n = size(can.X, 2)
+    scaling = 25.0
+    
+    colors = [white, white, red, red, green, green]
+    for i in 1:4:n
+        x = can.X[:, i]
+        scatter!(plt, [[x] for x in x]..., label=nothing, color=:black, ms=3)
+
+        for (j, o) in enumerate(can.Ω)
+            j % 2 == 0 && continue
+            v = o(x) * vel[(Int ∘ ceil)(j/2)]
+            plot!(plt,
+                [x[1], x[1]+v[1]*scaling],
+                [x[2], x[2]+v[2]*scaling],
+                lw=2, color=colors[j], label=nothing
+            )
+        end
+    end
 end

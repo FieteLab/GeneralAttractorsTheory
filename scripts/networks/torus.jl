@@ -6,7 +6,7 @@ using GeneralAttractors
 using GeneralAttractors.Kernels
 using GeneralAttractors: lerp
 using GeneralAttractors.ManifoldUtils
-import GeneralAttractors.ManifoldUtils: Manifoldℝ², Torus
+import GeneralAttractors.ManifoldUtils: Manifoldℝ², Torus, ℝ²_ψ1, ℝ²_ψ2
 
 
 println(Panel("Creating torus attractor", style = "green", justify = :center))
@@ -50,15 +50,25 @@ d_t = PeriodicEuclidean([2π, 2π])  # distance function over a torus manifold
 
 # connectivity kernel 
 # k_t = DiffOfExpKernel(; λ = 5.0)
-k_t = LocalGlobalKernel(α = 0.5, σ = 5.0, β = 0.5)
+# k_t = LocalGlobalKernel(α = 0.5, σ = 5.0, β = 0.5)
+k_t = LocalGlobalKernel(α = .25, σ = 1.5, β = .25)
+
+
+offset_size = 0.5
+offsets = [
+    p -> ℝ²_ψ1(p),
+    p -> -ℝ²_ψ1(p),
+    p -> ℝ²_ψ2(p),
+    p -> -ℝ²_ψ2(p),
+]
 
 # one forms
-# Ω = OneForm[
-#     OneForm(1, (x, y) -> [sin(x) + 2, 0]),
-#     OneForm(1, (x, y) -> -[sin(x) + 2, 0]),
-#     OneForm(2, (x, y) -> [0, sin(y) + 2]),
-#     OneForm(2, (x, y) -> -[0, sin(y) + 2]),
-# ]
+Ω = OneForm[
+    OneForm(1, (x, y) -> offset_size * ℝ²_ψ1(x, y)),
+    OneForm(1, (x, y) -> offset_size * -ℝ²_ψ1(x, y)),
+    OneForm(2, (x, y) -> offset_size * ℝ²_ψ2(x, y)),
+    OneForm(2, (x, y) -> offset_size * -ℝ²_ψ2(x, y)),
+]
 
 # make network
 toruscan = CAN(
@@ -68,8 +78,9 @@ toruscan = CAN(
     ξ_t,
     d_t,
     k_t;
-    offset_size = 1.0,
+    offset_size = offset_size,
     σ = :softrelu,
-    α = 1.2,
-    # Ω = Ω
+    α = 1,
+    offsets = offsets,
+    Ω = Ω
 )

@@ -34,7 +34,14 @@ k_m = LocalGlobalKernel(α = 1.25, σ = 1.5, β = 1.25)
 
 # define offset vector fields
 offsets =
-    [p -> ψ_t(p), p -> -ψ_t(p), p -> ψ_θ1(p), p -> -ψ_θ1(p), p -> ψ_θ2(p), p -> -ψ_θ2(p)]
+    [
+        p -> ψ_t(p),
+        p -> -ψ_t(p),
+        p -> ψ_θ1(p),
+        p -> -ψ_θ1(p),
+        p -> ψ_θ2(p), 
+        p -> -ψ_θ2(p)
+    ]
 offset_size = 0.25
 
 # define one forms
@@ -61,5 +68,5 @@ mobiuscan = CAN(
     offsets = offsets,
     Ω = Ω,
     σ=:softrelu,
-    α = 11,
+    α = 7,
 )

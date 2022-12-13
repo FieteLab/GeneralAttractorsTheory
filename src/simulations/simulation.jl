@@ -62,19 +62,13 @@ end
 
 
 function velocity_input(
-    oᵢ::AbstractWeightOffset,
     ωᵢ::OneForm,
     v::Vector,
     x::Vector,
-    α::Float64,
-    J::Matrix,
 )
-    if any(isnan.(J))
 
-    end
-
-    ωᵢ(x, J*v)/ (α * norm(oᵢ(x)))
-    # ωᵢ(x, J * v)
+    ωᵢ(x, v) #/ (norm(ωᵢ(x)))
+    # v[ωᵢ.i] * sign(ωᵢ(x, v))
 end
 
 
@@ -106,11 +100,11 @@ function step!(simulation::Simulation, x::Vector, v::Vector; s₀ = nothing)
     J = pushforward(can.C.ρ, x)
     V =
         can.α .* map(
-            oo -> velocity_input(oo..., v, x, can.offset_size, J),
-            zip(can.offsets, can.Ω),
+            o -> velocity_input(o, v, x),
+            can.Ω,
         ) |> vec  # inputs vector of size 2d
-
-    # r(x) = round(x; digits=2)
+    # V = v
+    r(x) = round(x; digits=4)
     # @info "data" r.(v) r.(V)
 
     # update each population with each population's input
@@ -196,6 +190,7 @@ function run_simulation(
 
             # step simulation
             x̂ = decoder_initialized ? decoder.x : x
+            # x̂ = x
             S̄ = step!(simulation, x̂, v; s₀ = s₀)
 
             # initialize decoder if necessary
@@ -204,7 +199,7 @@ function run_simulation(
                 decoder = Decoder(
                     simulation.trajectory.X[i, :],
                     decode_peak_location(S̄, simulation.can),
-                    1 / simulation.can.offset_size,
+                    # 1 / simulation.can.offset_size,
                 )
                 decoder_initialized = true
             end

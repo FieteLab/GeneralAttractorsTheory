@@ -2,11 +2,12 @@ using GeneralAttractors
 
 
 # ----------------------------------- ring ----------------------------------- #
-# show_connectivity(ring_attractor; plot_title = "Ring attractor connectivity")
+include("../networks/ring.jl")
+show_connectivity(ringcan; plot_title = "Ring attractor connectivity")
 
 # ----------------------------------- torus ---------------------------------- #
-include("../networks/torus.jl")
-show_connectivity(toruscan; plot_title = "Torus attractor connectivity")
+# include("../networks/torus.jl")
+# show_connectivity(toruscan; plot_title = "Torus attractor connectivity")
 
 # ---------------------------------- mobius ---------------------------------- #
 # include("../networks/mobius.jl")
