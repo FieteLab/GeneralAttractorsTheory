@@ -16,7 +16,7 @@ include("../networks/torus.jl")
 
 # --------------------------------- simulate --------------------------------- #
 dt = 0.5
-duration = 500
+duration = 1000
 still = 75  # initialization period        
 
 x₀ = [3.15, 3.15] # initialize state at center of mfld
@@ -31,9 +31,9 @@ trajectory = Trajectory(
     T = nframes,
     dt = dt,
     σv = 0.0,
-    μv = [.1, .0],
+    μv = [.1, .05],
     x₀ = x₀,
-    vmax = 0.1,
+    vmax = 0.02,
     still = still,
     scale = 1,
 )

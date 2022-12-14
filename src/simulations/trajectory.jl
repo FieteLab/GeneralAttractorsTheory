@@ -152,7 +152,7 @@ function Trajectory(
         scale::Number = 1,
     )   
     
-    ψs::Vector = can.C.M.ψs # get manifold vector fields
+    ψs::Vector = can.C.N.ψs # get manifold vector fields
     n_vfields = length(ψs)
 
     # get manifold dimensionality
@@ -195,29 +195,52 @@ function Trajectory(
 
 
     # first, generate a trajectory on the neural mfld
-    X, V = Matrix(reshape(zeros(T, d), T, d)), Matrix(reshape(zeros(T, d), T, d))
-    X[1, :] =  x₀
+    X̄, V = Matrix(reshape(zeros(T, d), T, d)), Matrix(reshape(zeros(T, d), T, d))
+    X̄[1, :] =  x₀
     for t in 2:T
-        x = X[t-1, :]
+        x = X̄[t-1, :]
 
         # get a velicirt vector
         v = ∑ψ(x, t) * scale
 
         # update on mfld position
         x̂ = x + (v * dt)
-        x̂, v_correction = apply_boundary_conditions!(x̂, can.C.M)
+        x̂, v_correction = apply_boundary_conditions!(x̂, can.C.N)
         
         # store
-        X[t, :] = x̂
+        X̄[t, :] = x̂
         V[t-1, :] = v .* v_correction
     end
 
     # if the M and N manifolds are the same, we're done
     if can.C.M == can.C.N
-        X̄ = X
+        X = X̄
     else
         # reconstruct the M mfld trajecotry using the cover map's inverse
-        X̄ = by_column(can.C.ρ, Matrix(X'))' |> Matrix
+        X = Matrix(reshape(zeros(T, d), T, d))
+        X[1, :] = X̄[1, :]
+        for t in 2:T
+            _x = can.C.ρⁱ(X̄[t, :]...)  # get a bunch of possible points
+
+            # get the closest one to the previous timestep
+            d = map(
+                i -> can.C.M.metric(X[t-1, :], _x[:, i]),
+                1:size(_x, 2),
+            )
+
+            if minimum(d) > 2
+                @info "cacca" X̄[t-1, :] X̄[t, :] X[t-1, :] X[t, :] _x
+                plt = scatter(eachrow(_x)..., color=:black, label="candidates")
+
+                __x = [[a] for a in X[t-1, :]] |> vec
+                scatter!(__x..., ms=10, color=:red, label="prev")
+                display(plt)
+            end
+
+            x̂ = _x[:, argmin(d)]
+            x̂, _ = apply_boundary_conditions!(x̂, can.C.M)
+            X[t, :] = x̂
+        end
     end
 
     # add a still phase

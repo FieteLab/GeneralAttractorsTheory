@@ -70,7 +70,7 @@ function velocity_input(
     ψs::Vector{AbstractVectorField},
 )
 
-    # ωᵢ(on_mfld_x, J*v)
+    ωᵢ(on_mfld_x, J*v) 
 
     # i = ωᵢ.i
     # eᵢ = ψs[i]
@@ -114,10 +114,9 @@ function step!(simulation::Simulation, decoded_x::Vector, on_mfld_x::Vector, v::
             1:length(can.Ω),
         ) |> vec  # inputs vector of size 2d
 
-    r(x) = round(x; digits=4)
-    # @info "data" r.(v) r.(V) eltype(J)
-    println("\n\n" * string(r.(v)))
-    println(string(r.(V)))
+    # r(x) = round(x; digits=4)
+    # println("\n\n" * string(r.(v)))
+    # println(string(r.(V)))
 
     # update each population with each population's input
     for i = 1:d, j = 1:d
