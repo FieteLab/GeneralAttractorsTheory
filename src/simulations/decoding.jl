@@ -85,5 +85,5 @@ function (dec::Decoder)(s::Vector, can::AbstractCAN)
         # update stored representation of n̂ location on neural manifold
         dec.n = n̂
     end
-    return dec.x
+    return dec.x, n̂
 end

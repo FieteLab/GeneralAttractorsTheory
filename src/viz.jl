@@ -426,6 +426,7 @@ function plot_can_vector_fields!(plt, can, vel, x_actual, x_decoded)
         )
         return
     end
+    return
     n = size(can.X, 2)
     scaling = 25.0
     

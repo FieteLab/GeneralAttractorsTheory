@@ -38,13 +38,14 @@ Prepend an initial stationary pahse to a trajectory.
 Used to let the network settle in into a selected
 state before starting a simulation with velocity inputs.
 """
-function add_initial_still_phase(X::Matrix, V::Matrix, still, x₀)
+function add_initial_still_phase(X::Matrix, X̄::Matrix, V::Matrix, still, x₀)
     standing = zeros(still, length(x₀))
     for i = 1:length(x₀)
         standing[:, i] .= x₀[i]
     end
 
     X = vcat(standing, X)
+    X̄ = vcat(standing, X̄)
     V = vcat(zeros(still, length(x₀)), V)
     return X, V
 end
@@ -63,6 +64,18 @@ end
 
 
 
+"""
+    get_closest_neuron(x, X)
+
+Given a point x in a manifold get the coordinates
+x̂ ∈ X of the closest neuron given a manifold
+metric `d`.
+"""
+function get_closest_neuron(x, X, d)
+    Δ = map(x̂ -> d(x̂, x), eachcol(X))
+    return X[:, argmin(Δ)]
+end
+
 
 # ---------------------------------------------------------------------------- #
 #                                  TRAJECTORY                                  #
@@ -78,6 +91,7 @@ X (T×d) is the coordinates of the trajectory's trace.
 @with_repr struct Trajectory
     M::AbstractManifold
     X::Matrix
+    X̄::Matrix   # on manifold trajectory
     V::Matrix
     still::Int # number of warmup frames at the start
 end
@@ -138,7 +152,7 @@ function Trajectory(
         scale::Number = 1,
     )   
     
-    ψs::Vector = M.ψs # get manifold vector fields
+    ψs::Vector = can.C.N.ψs # get manifold vector fields
     n_vfields = length(ψs)
 
     # get manifold dimensionality
@@ -179,47 +193,61 @@ function Trajectory(
     """
     ∑ψ(p, t) = map(i -> Vs[i][t] * ψs[i](p), 1:n_vfields) |> sum
 
-    # get position and velocity vectors
-    X, V = Matrix(reshape(zeros(T, d), T, d)), Matrix(reshape(zeros(T, d), T, d))
-    X[1, :] = get_closest_neuron(x₀, can.X, can.metric)
-    x_mfd = x₀ # keep track of where on the manifold we are
-    for t = 2:T
-        # get velocity vector `v` at time `t` given vfields at position `x`.
-        x = X[t-1, :]
-        v = ∑ψ(x, t)
-        # v = norm(v) > vmax ? v / norm(v) * vmax : v
-        v *= scale
 
-        # get position at next time step
+    # first, generate a trajectory on the neural mfld
+    X̄, V = Matrix(reshape(zeros(T, d), T, d)), Matrix(reshape(zeros(T, d), T, d))
+    X̄[1, :] =  x₀
+    for t in 2:T
+        x = X̄[t-1, :]
+
+        # get a velicirt vector
+        v = ∑ψ(x, t) * scale
+
+        # update on mfld position
         x̂ = x + (v * dt)
-        x̂, v_correction = apply_boundary_conditions!(x̂, M)
-        x_mfd = x_mfd + (v * dt)
-        if can.C.M != can.C.N
-            x_mfd, _ = apply_boundary_conditions!(x_mfd, can.C.N)
-        end
-
-        # store results
-        X[t, :] = x̂
+        x̂, v_correction = apply_boundary_conditions!(x̂, can.C.N)
+        
+        # store
+        X̄[t, :] = x̂
         V[t-1, :] = v .* v_correction
-        # V[t, :] = [Vs[1][t]]
+    end
+
+    # if the M and N manifolds are the same, we're done
+    if can.C.M == can.C.N
+        X = X̄
+    else
+        # reconstruct the M mfld trajecotry using the cover map's inverse
+        X = Matrix(reshape(zeros(T, d), T, d))
+        X[1, :] = X̄[1, :]
+        for t in 2:T
+            _x = can.C.ρⁱ(X̄[t, :]...)  # get a bunch of possible points
+
+            # get the closest one to the previous timestep
+            d = map(
+                i -> can.C.M.metric(X[t-1, :], _x[:, i]),
+                1:size(_x, 2),
+            )
+
+            if minimum(d) > 2
+                @info "cacca" X̄[t-1, :] X̄[t, :] X[t-1, :] X[t, :] _x
+                plt = scatter(eachrow(_x)..., color=:black, label="candidates")
+
+                __x = [[a] for a in X[t-1, :]] |> vec
+                scatter!(__x..., ms=10, color=:red, label="prev")
+                display(plt)
+            end
+
+            x̂ = _x[:, argmin(d)]
+            x̂, _ = apply_boundary_conditions!(x̂, can.C.M)
+            X[t, :] = x̂
+        end
     end
 
     # add a still phase
     still > 0 && begin
-        X, V = add_initial_still_phase(X, V, still, x₀)
+        X, V = add_initial_still_phase(X, X̄, V, still, x₀)
     end
-    return Trajectory(M, X, V, still)
+    return Trajectory(M, X, X̄, V, still)
 end
 
 
-"""
-    get_closest_neuron(x, X)
-
-Given a point x in a manifold get the coordinates
-x̂ ∈ X of the closest neuron given a manifold
-metric `d`.
-"""
-function get_closest_neuron(x, X, d)
-    Δ = map(x̂ -> d(x̂, x), eachcol(X))
-    return X[:, argmin(Δ)]
-end

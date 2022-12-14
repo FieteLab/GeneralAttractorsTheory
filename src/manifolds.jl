@@ -84,8 +84,7 @@ end
 Manifoldℝ²(m) = Manifoldℝ²(
     [-m, -m],
     [m, m],
-    # [ConstantVectorField(2, 1), ConstantVectorField(2, 2)],
-    [VectorField(ℝ²_ψ1), VectorField(ℝ²_ψ2)],
+    [ConstantVectorField(2, 1), ConstantVectorField(2, 2)],
     Euclidean(),
 )
 ℝ² = Manifoldℝ²(100)
@@ -103,7 +102,8 @@ end
 Torus() = Torus(
     [0, 2π],
     [0, 2π],
-    [ConstantVectorField(2, 1), ConstantVectorField(2, 2)],
+    # [ConstantVectorField(2, 1), ConstantVectorField(2, 2)],
+    [VectorField(ℝ²_ψ1), VectorField(ℝ²_ψ2)],
     PeriodicEuclidean([2π, 2π]),
 )
 T = Torus()

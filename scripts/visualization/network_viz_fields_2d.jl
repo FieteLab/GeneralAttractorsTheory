@@ -11,7 +11,7 @@ Visualization of the vector fields on the mobiuscan
 include("../networks/torus.jl")
 
 can = toruscan
-scaling = 1
+scaling = 0.3
 colors = [black, black, indigo, indigo, salmon_dark, salmon_dark]
 
 
@@ -24,7 +24,7 @@ p = plot(
 
 
 n = size(can.X, 2)
-for i in 1:4:n
+for i in 1:5:n
     x = can.X[:, i]
     scatter!([[x] for x in x]..., label=nothing, color=:black, ms=3)
 
@@ -34,7 +34,7 @@ for i in 1:4:n
         plot!(
             [x[1], x[1]+v[1]*scaling],
             [x[2], x[2]+v[2]*scaling],
-            lw=2, color=colors[j], label=nothing
+            lw=4, color=colors[j], label=nothing
         )
     end
 end

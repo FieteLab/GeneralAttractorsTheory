@@ -18,15 +18,12 @@ end
 function Plots.plot(traj::Trajectory)
     d = size(traj.X, 2)
     X = remove_jumps_from_trajectory(traj.X)
+    X̄ = remove_jumps_from_trajectory(traj.X̄)
     if d == 2
-        if traj.M isa Mobius
-            x, y = X[:, 2], X[:, 1]
-        else
-            x, y = X[:, 1], X[:, 2]
-        end
-        plot(
-            x,
-            y,
+        i,j = traj.M isa Mobius ? (2, 1) : (1, 2)
+
+        p1 = plot(
+            X[:, i], X[:, j],
             lw = 3,
             color = :black,
             label = nothing,
@@ -34,6 +31,19 @@ function Plots.plot(traj::Trajectory)
             grid = false,
             aspect_ratio = :equal,
         )
+
+        p2 =         plot(
+            X̄[:, i], X̄[:, j],
+            lw = 3,
+            color = :red,
+            label = nothing,
+            title = "on mfld traj",
+            grid = false,
+            aspect_ratio = :equal,
+        )
+
+        plot(p1, p2)
+
     elseif d == 1
         plot(
             X[:, 1],
@@ -164,10 +174,6 @@ function simulation_frame_2dcan(
     s = sum(simulation.S, dims = 2) |> vec
     M = by_column(φ, can.X)
 
-    # th = maximum(s) .* 0.5
-    # active = s .>= th
-    # inactive = s .< th
-
     plt = scatter3d(
         eachrow(M)...,
         marker_z = s,
@@ -182,19 +188,6 @@ function simulation_frame_2dcan(
         label = nothing,
         colorbar = nothing,
     )
-
-    # scatter3d!(
-    #     eachrow(M[:, active])...,
-    #     marker_z = s[active],
-    #     title = "elapsed: $(round(timems)) ms",
-    #     grid = false,
-    #     msa = 0,
-    #     msw = 0,
-    #     clims = (0, maximum(s) * 0.95),
-    #     ms = 8,
-    #     label = nothing,
-    #     colorbar = nothing,
-    # )
 
     return plt
 end
@@ -256,6 +249,16 @@ function Plots.plot(
             pop_activity = custom_sphere_viz(simulation, timems, v, φ; kwargs...)
         else
             pop_activity = simulation_frame_2dcan(simulation, timems, v, φ; kwargs...)
+            
+            i,j = simulation.trajectory.M isa Mobius ? (2, 1) : (1, 2)
+            traj_on_mf = remove_jumps_from_trajectory(simulation.trajectory.X̄)
+            plot!(
+                pop_activity,
+                traj_on_mf[:, i], traj_on_mf[:, j],
+                lw = 3,
+                color = :red,
+                label = nothing,
+            )
         end
     else
         error("Simulation plot for d>2 not implemented")
@@ -308,18 +311,14 @@ function Plots.plot(
     elseif simulation.can.d == 2
         traj = Plots.plot(tj, framen)
 
-        if simulation.can.name == "mobius"
-            i,j = 2,1
-        else
-            i,j = 1, 2
-        end
+        i, j = simulation.can.name == "mobius" ? (2, 1) : (1, 2)
         
         # plot decoded trajectory
-        framen > (100 + 2) && begin
+        framen > (50 + 2) && begin
             plot!(
                 traj,
-                _X̄[100:framen, i],
-                _X̄[100:framen, j],
+                _X̄[50:framen, i],
+                _X̄[50:framen, j],
                 color = :red,
                 label = nothing,
                 alpha = 0.6,
@@ -378,9 +377,11 @@ end
 #                               END OF SIMULATION                              #
 # ---------------------------------------------------------------------------- #
 function plot_trajectory_and_decoded(trajectory::Trajectory, X̄::Matrix)
+    X = remove_jumps_from_trajectory(trajectory.X)
+    X̄ = remove_jumps_from_trajectory(X̄)
     d = size(X̄, 2)
     plt = plot(
-        eachcol(trajectory.X)...,
+        eachcol(X)...,
         lw = 5,
         color = :black,
         label = "traj.",
@@ -389,7 +390,7 @@ function plot_trajectory_and_decoded(trajectory::Trajectory, X̄::Matrix)
         title = "Decoded trajectory",
     )
 
-    scatter!([[x] for x in trajectory.X[1, :]]..., ms = 5, color = :black, label = nothing)
+    scatter!([[x] for x in X[1, :]]..., ms = 5, color = :black, label = nothing)
 
     if d == 2
         plot!(eachcol(X̄)..., lw = 3, color = :red, label = nothing)
@@ -399,6 +400,38 @@ function plot_trajectory_and_decoded(trajectory::Trajectory, X̄::Matrix)
         plot!(X̄, lw = 3, color = :red, label = nothing)
     end
     return plt
+end
+
+
+"""
+Plot a trajectory's on-manifold trace and the neural data's one.
+"""
+function plot_on_mfld_trajectory_and_history(can, trajectory::Trajectory, h::History)
+    i,j = trajectory.M isa Mobius ? (2, 1) : (1, 2)
+    X̄ = remove_jumps_from_trajectory(trajectory.X̄)
+
+    p = plot(
+            X̄[:, i], X̄[:, j],
+            lw = 3,
+            color = :black,
+            label = nothing,
+            grid = false,
+            aspect_ratio = :equal,
+        )
+
+    S = h.S
+    n, _, m = size(S)
+    S = real.(reshape(sum(S, dims = 2), (n, m)))
+    peak_location = Matrix(hcat(map(st -> decode_peak_location(st, can), eachcol(S))...)')  |> remove_jumps_from_trajectory
+
+    plot!(      
+            p,
+            peak_location[:, i], peak_location[:, j],
+            lw = 3,
+            color = :red,
+            label = nothing,
+        )
+    p
 end
 
 

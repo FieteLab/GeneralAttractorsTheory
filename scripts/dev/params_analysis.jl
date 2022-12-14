@@ -20,8 +20,8 @@ fld_name = "ring_grid_search"
 mfld = "ring"
 # B = range(4, 6, length = 2) |> collect
 B = [1]
-D = range(0.05, 0.2, length = 35) |> collect
-V = range(0.05, 0.2, length = 4) |> collect
+D = range(0.05, 0.5, length = 35) |> collect
+V = range(0.05, 0.5, length = 4) |> collect
 
 
 params = product(B, D, V) |> collect

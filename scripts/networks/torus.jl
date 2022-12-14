@@ -12,7 +12,7 @@ import GeneralAttractors.ManifoldUtils: Manifoldℝ², Torus, ℝ²_ψ1, ℝ²_�
 println(Panel("Creating torus attractor", style = "green", justify = :center))
 
 # number of neurons
-m = 30 # number of neurons in each dimension
+m = 48 # number of neurons in each dimension
 n = (m, m) # number of neurons per dimension
 
 # ℝ² → T cover map.
@@ -27,7 +27,7 @@ Inverse of the cover map rho over the domain.
 Given a point (x,y) in N it gives a set of points (x̂, ŷ)
 in the cover space such that ρ(x̂, ŷ)=(x,y)
 """
-function ρⁱ(x, y; n = 6)
+function ρⁱ(x, y; n = 50)
     pts = zeros(2, n^2)
     for (c, i) in enumerate(-n/2:(n/2-1)), (k, j) in enumerate(-n/2:(n/2-1))
         x̂ = x + 2π * i
@@ -36,6 +36,7 @@ function ρⁱ(x, y; n = 6)
     end
     return pts
 end
+ρⁱ(w::Vector; n=6) = ρⁱ(w...; n=n)
 
 cover = CoverSpace(Manifoldℝ²(100), Torus(), ρ, ρⁱ)
 
@@ -51,10 +52,10 @@ d_t = PeriodicEuclidean([2π, 2π])  # distance function over a torus manifold
 # connectivity kernel 
 # k_t = DiffOfExpKernel(; λ = 5.0)
 # k_t = LocalGlobalKernel(α = 0.5, σ = 5.0, β = 0.5)
-k_t = LocalGlobalKernel(α = .25, σ = 1.5, β = .25)
+k_t = LocalGlobalKernel(α = 2.5, σ = 1.5, β = 2.5)
 
 
-offset_size = 0.5
+offset_size = 0.2
 offsets = [
     p -> ℝ²_ψ1(p),
     p -> -ℝ²_ψ1(p),
@@ -80,7 +81,7 @@ toruscan = CAN(
     k_t;
     offset_size = offset_size,
     σ = :softrelu,
-    α = 1,
+    α = 40,
     offsets = offsets,
     Ω = Ω
 )
