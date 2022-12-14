@@ -43,18 +43,18 @@ plot(trajectory) |> display
 
 # TODO fix torus inverse to reconstuct the trajectory
 
-# # run
-# h, X̄ = @time run_simulation(
-#     simulation;
-#     frame_every_n = 100,
-#     discard_first_ms = 0,
-#     average_over_ms = 10,
-#     fps = 4,
-#     s₀ = 1.0 .* activate,
-#     savefolder = "torus",
-#     savename = "test",
-# );
+# run
+h, X̄ = @time run_simulation(
+    simulation;
+    frame_every_n = 100,
+    discard_first_ms = 0,
+    average_over_ms = 10,
+    fps = 4,
+    s₀ = 1.0 .* activate,
+    savefolder = "torus",
+    savename = "test",
+);
 
-# plot_trajectory_and_decoded(trajectory, X̄) |> display
-# plot_on_mfld_trajectory_and_history(toruscan, trajectory, h) |> display
-# nothing
+plot_trajectory_and_decoded(trajectory, X̄) |> display
+plot_on_mfld_trajectory_and_history(toruscan, trajectory, h) |> display
+nothing

@@ -70,12 +70,12 @@ function velocity_input(
     ψs::Vector{AbstractVectorField},
 )
 
-    # ωᵢ(x, v)
+    # ωᵢ(on_mfld_x, J*v)
 
-    i = ωᵢ.i
-    eᵢ = ψs[i]
-    ê = J * eᵢ(decoded_x) # pushforward of the basis vector on the M mfld
-    ωᵢ(on_mfld_x, ê) * v[i]  # one form on the N manifold
+    # i = ωᵢ.i
+    # eᵢ = ψs[i]
+    # ê = J * eᵢ(decoded_x) # pushforward of the basis vector on the M mfld
+    # ωᵢ(on_mfld_x, ê) * v[i]  # one form on the N manifold
 
 end
 
@@ -116,6 +116,7 @@ function step!(simulation::Simulation, decoded_x::Vector, on_mfld_x::Vector, v::
 
     r(x) = round(x; digits=4)
     # @info "data" r.(v) r.(V) eltype(J)
+    println("\n\n" * string(r.(v)))
     println(string(r.(V)))
 
     # update each population with each population's input
