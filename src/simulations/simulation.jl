@@ -71,6 +71,7 @@ function velocity_input(
 )
 
     ωᵢ(on_mfld_x, J*v) 
+    # v[ωᵢ.i] * ωᵢ(on_mfld_x)[1]
 
     # i = ωᵢ.i
     # eᵢ = ψs[i]

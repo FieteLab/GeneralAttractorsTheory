@@ -1,5 +1,6 @@
 using GeneralAttractors.Simulations
 import MyterialColors: indigo, salmon_dark, black
+import LinearAlgebra: norm
 
 using GeneralAttractors.ManifoldUtils: Mobius, ψ_t, ψ_θ1, ψ_θ2
 using Plots
@@ -11,7 +12,7 @@ Visualization of the vector fields on the mobiuscan
 include("../networks/torus.jl")
 
 can = toruscan
-scaling = 0.3
+scaling = 0.5
 colors = [black, black, indigo, indigo, salmon_dark, salmon_dark]
 
 
@@ -31,9 +32,11 @@ for i in 1:5:n
     for (j, o) in enumerate(can.Ω)
         j % 2 == 0 && continue
         v = o(x)
+        # v /= norm(v)
+        v *= scaling
         plot!(
-            [x[1], x[1]+v[1]*scaling],
-            [x[2], x[2]+v[2]*scaling],
+            [x[1], x[1]+v[1]],
+            [x[2], x[2]+v[2]],
             lw=4, color=colors[j], label=nothing
         )
     end
