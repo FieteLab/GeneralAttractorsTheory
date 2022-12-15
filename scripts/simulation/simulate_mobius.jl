@@ -14,31 +14,31 @@ include("../networks/mobius.jl")
 
 # --------------------------------- simulate --------------------------------- #
 dt = 0.5
-duration = 1000
+duration = 600
 still = 50  # initialization period  
 dmin = 0.5  # minimal distance from x₀ for state intialization  
 
 # select neurons to initialize
-x₀ = [0.25, 5]
+x₀ = [0.5, 5]
 d = map(i -> mobiuscan.metric(x₀, mobiuscan.X[:, i]), 1:size(mobiuscan.X, 2))
 activate = zeros(length(d))
 activate[d.<dmin] .= 1
 
 # initialize trajectory and simulation
 nframes = (Int ∘ round)(duration / dt)
-# trajectory = Trajectory(
-#     mobiuscan;
-#     T = nframes,
-#     dt = dt,
-#     σv = [0.5, 0.3, 0.3],
-#     # μv = [.05, .01, 0.01],
-#     x₀ = x₀,
-#     still = still,
-#     vmax = 0.2,
-#     scale = 1
-# )
+trajectory = Trajectory(
+    mobiuscan;
+    T = nframes,
+    dt = dt,
+    # σv = [0.5, 0.3, 0.3],
+    σv = 0,
+    μv = [1, .0, 0.0],
+    x₀ = x₀,
+    still = still,
+    vmax = 0.1,
+)
 plot(trajectory) |> display
-histogram(trajectory.V, alpha=.5) |> display
+
 
 simulation = Simulation(mobiuscan, trajectory; 
         η = 0.0, b₀ = 0.5, τ = 5.0)

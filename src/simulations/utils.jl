@@ -196,7 +196,7 @@ function simulation_frame_2dcan(
         alpha = 0.8,
         label = nothing,
         colorbar = nothing,
-        camera=(45, 60),
+        camera=(90, 0),
     )
 
     return plt
@@ -249,15 +249,16 @@ function Plots.plot(
         else
             pop_activity = simulation_frame_2dcan(simulation, timems, v, φ; kwargs...)
             
-            i,j = simulation.trajectory.M isa Mobius ? (2, 1) : (1, 2)
-            traj_on_mf = remove_jumps_from_trajectory(simulation.trajectory.X̄)
-            plot!(
-                pop_activity,
-                traj_on_mf[:, i], traj_on_mf[:, j],
-                lw = 3,
-                color = :red,
-                label = nothing,
-            )
+            isa(simulation.can.C.M, Mobius) || begin
+                traj_on_mf = remove_jumps_from_trajectory(simulation.trajectory.X̄)
+                plot!(
+                    pop_activity,
+                    traj_on_mf[:, i], traj_on_mf[:, j],
+                    lw = 3,
+                    color = :red,
+                    label = nothing,
+                )
+            end
         end
     else
         error("Simulation plot for d>2 not implemented")
