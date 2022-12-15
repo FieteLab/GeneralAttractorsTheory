@@ -144,21 +144,36 @@ https://github.com/JuliaStats/Distances.jl/blob/master/src/haversine.jl
 For an embedding of the sphere see: https://stackoverflow.com/questions/10473852/convert-latitude-and-longitude-to-point-in-3d-space
 """
 function plot_distance_function(d::Union{SphericalDistance,SphericalAngle}; kwargs...)
-    long = range(-π + 0.01, π - 0.01, length = 100) |> collect
-    lat = range(-π / 2 + 0.01, π / 2 - 0.01, length = 100) |> collect
-    X = (long × lat) |> collect
-    X = [[x...] for x in vec(X)]
+    function fibonacci_sphere(n = 1000)
+        points = zeros(3, n)
+        ϕ = π * (3 - √5)  # golden angle in radians
+    
+        for i = 1:n
+            y = 1 - (i / float(n - 1)) * 2  # y goes from 1 to -1
+            radius = √(Complex(1 - y * y)) |> real  # radius at y
+    
+            θ = ϕ * i  # golden angle increment
+    
+            x = cos(θ) * radius
+            z = sin(θ) * radius
+    
+            points[:, i] = [x, y, z]
+        end
+        return points
+    end
 
-    points = [[-π, 0], [2, π / 2], [π - 1, π / 2 - 1], [π, -1]]
-    plot_distance_2d(
-        d,
-        long,
-        lat;
-        points = points,
-        xlabel = "longitude",
-        ylabel = "latitude",
-        kwargs...,
-    )
+    vips = ([1, 0, 0], [0, 0, 1], [0, 1, 0])
+    X = fibonacci_sphere(400)
+
+    plts = []
+    for p in vips
+        Δx = [evaluate(d, p, x) for x in eachcol(X)]
+        plt = scatter3d(eachrow(X)..., marker_z=Δx)
+        scatter3d!(plt, [p[1]], [p[2]], [p[3]], ms=10, color=:red)
+        push!(plts, plt)
+    end
+
+    plot(plts...)
 end
 
 # ------------------------------- connectivity ------------------------------- #

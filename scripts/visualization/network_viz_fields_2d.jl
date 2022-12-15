@@ -1,8 +1,8 @@
 using GeneralAttractors.Simulations
-import MyterialColors: indigo, salmon_dark, black
+import MyterialColors
 import LinearAlgebra: norm
 
-using GeneralAttractors.ManifoldUtils: Mobius, ψ_t, ψ_θ1, ψ_θ2
+using GeneralAttractors.ManifoldUtils: Mobius, MB_ψ1, MB_ψ2, MB_ψ3
 using Plots
 
 
@@ -10,8 +10,14 @@ using Plots
 include("../networks/mobius.jl")
 
 can = mobiuscan
-scaling = 1.5
-colors = [black, black, indigo, indigo, salmon_dark, salmon_dark]
+scaling = 1.0
+colors = [
+    MyterialColors.black,
+    MyterialColors.black,
+    MyterialColors.red,
+    MyterialColors.red,
+    MyterialColors.green,
+    MyterialColors.green]
 
 
 
@@ -23,7 +29,7 @@ p = plot(
 
 
 n = size(can.X, 2)
-for i in 1:5:n
+for i in 1:15:n
     x = can.X[:, i]
     scatter!([[x] for x in x]..., label=nothing, color=:black, ms=3)
 

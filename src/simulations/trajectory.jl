@@ -169,7 +169,7 @@ function Trajectory(
     # get starting point
     x₀ = x₀ isa Number ? repeat([x₀], d) : x₀
     x₀ = !isnothing(x₀) ? x₀ : rand(M)
-    @assert length(x₀) == d
+    @assert length(x₀) == d "Got x₀: $(x₀) and d=$d"
 
 
     # get velocity vector magnitude in components at each frame

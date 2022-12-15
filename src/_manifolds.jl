@@ -35,16 +35,13 @@ end
 # ---------------------------------------------------------------------------- #
 
 """ constant """
-ψ_t(t, θ) = [0, 1]
-ψ_t(p) = ψ_t(p...)
+MB_ψ1(t, θ) = [0, 1]
+MB_ψ2(t, θ) = [0.5, 0]
+MB_ψ3(t, θ) = [-0.5, 0]
 
-# ψ_θ1(t, θ) = [cos(θ*2), 0]
-ψ_θ1(t, θ) = [0.5, 0]
-ψ_θ1(p) = ψ_θ1(p...)
-
-# ψ_θ2(t, θ) = [sin(θ*2), 0]
-ψ_θ2(t, θ) = [-0.5, 0]
-ψ_θ2(p) = ψ_θ2(p...)
+MB_ψ1(p) = MB_ψ1(p...)
+MB_ψ2(p) = MB_ψ2(p...)
+MB_ψ3(p) = MB_ψ3(p...)
 
 
 
@@ -91,16 +88,18 @@ tangent to the sphere and correpsonding to a rotation.
 ∂y = [0, 1, 0]
 ∂z = [0, 0, 1]
 
+normalize(x) = norm(x) > 0 ? x ./ norm(x) : x
+
 """ rotation around X axis """
-ψx(x, y, z) = (z * ∂y - y * ∂z)
+ψx(x, y, z) = (z * ∂y - y * ∂z) # |> normalize
 ψx(p) = ψx(p...)
 
 """ rotation around Y axis """
-ψy(x, y, z) = (z * ∂x - x * ∂z)
+ψy(x, y, z) = (z * ∂x - x * ∂z) # |> normalize
 ψy(p) = ψy(p...)
 
 """ rotation around Z axis """
-ψz(x, y, z) = (x * ∂y - y * ∂x)
+ψz(x, y, z) = (x * ∂y - y * ∂x) # |> normalize
 ψz(p) = ψz(p...)
 
 φ = sphere_embedding

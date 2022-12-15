@@ -11,11 +11,10 @@ import GeneralAttractors.Simulations: plot_trajectory_and_decoded
 
 
 include("../networks/mobius.jl")
-print(n)
 
 # --------------------------------- simulate --------------------------------- #
 dt = 0.5
-duration = 3000
+duration = 1000
 still = 50  # initialization period  
 dmin = 0.5  # minimal distance from x₀ for state intialization  
 
@@ -27,17 +26,17 @@ activate[d.<dmin] .= 1
 
 # initialize trajectory and simulation
 nframes = (Int ∘ round)(duration / dt)
-trajectory = Trajectory(
-    mobiuscan;
-    T = nframes,
-    dt = dt,
-    σv = [0.5, 0.3, 0.3],
-    # μv = [.05, .01, 0.01],
-    x₀ = x₀,
-    still = still,
-    vmax = 0.2,
-    scale = 1
-)
+# trajectory = Trajectory(
+#     mobiuscan;
+#     T = nframes,
+#     dt = dt,
+#     σv = [0.5, 0.3, 0.3],
+#     # μv = [.05, .01, 0.01],
+#     x₀ = x₀,
+#     still = still,
+#     vmax = 0.2,
+#     scale = 1
+# )
 plot(trajectory) |> display
 histogram(trajectory.V, alpha=.5) |> display
 

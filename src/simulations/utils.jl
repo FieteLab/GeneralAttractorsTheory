@@ -55,7 +55,15 @@ function Plots.plot(traj::Trajectory)
             grid = false,
         )
     else
-        error("Not implemented")
+        p1 = plot(
+            eachcol(X)...,
+            lw = 3,
+            color = :black,
+            label = nothing,
+            title = "trajectory",
+            grid = false,
+            aspect_ratio = :equal,
+        )
     end
 end
 
@@ -96,19 +104,18 @@ function Plots.plot(traj::Trajectory, i::Int; xmin = nothing, xmax = nothing)
             ylim = [xmin[1], xmax[1]],
         )
     else
-        error()
-        # plt = plot(
-        #     eachcol(X[t0:i, :])...,
-        #     lw = 4,
-        #     color = :black,
-        #     grid = false,
-        #     aspect_ratio = :equal,
-        #     label = nothing,
-        #     _X̄,
-        #     ylim = [xmin[2], xmax[2]],
-        #     zlim = [xmin[3], xmax[3]],
-        #     camera = (0.075 * i, 20),
-        # )
+        plt = plot(
+            eachcol(X[t0:i, :])...,
+            lw = 4,
+            color = :black,
+            grid = false,
+            aspect_ratio = :equal,
+            label = nothing,
+            xlim=[-1.1, 1.1],
+            ylim=[-1.1, 1.1],
+            zlim=[-1.1, 1.1],
+            camera = (0.075 * i, 20),
+        )
     end
 
     # fain line
@@ -189,7 +196,7 @@ function simulation_frame_2dcan(
         alpha = 0.8,
         label = nothing,
         colorbar = nothing,
-        camera=(45, 60)
+        camera=(45, 60),
     )
 
     return plt
@@ -199,34 +206,23 @@ function custom_sphere_viz(simulation::Simulation, timems, v::Vector, φ; kwargs
     can = simulation.can
     s = sum(simulation.S, dims = 2) |> vec
 
-    th = maximum(s) .* 0.5
-    active = s .>= th
-    inactive = s .< th
 
     plt = scatter3d(
-        eachrow(can.X[:, inactive])...,
-        marker_z = s[inactive],
+        eachrow(can.X)...,
+        marker_z = s,
         title = "elapsed: $(round(timems)) ms",
         grid = false,
-        msa = 0,
-        msw = 0,
-        clims = (0, maximum(s) * 0.95),
-        ms = 6,
-        alpha = 0.1,
+        msa = .8,
+        msw = .5,
+        clims = (-maximum(s) * 0.95, maximum(s) * 0.95),
+        color=:bwr,
+        ms = 3,
+        alpha = 0.8,
         label = nothing,
         colorbar = nothing,
-    )
-    scatter3d!(
-        eachrow(can.X[:, active])...,
-        marker_z = s[active],
-        title = "elapsed: $(round(timems)) ms",
-        grid = false,
-        msa = 0,
-        msw = 0,
-        clims = (0, maximum(s) * 0.95),
-        ms = 8,
-        label = nothing,
-        colorbar = nothing,
+        xlim=[-1.1, 1.1],
+        ylim=[-1.1, 1.1],
+        zlim=[-1.1, 1.1],
     )
 
     return plt
@@ -253,15 +249,15 @@ function Plots.plot(
         else
             pop_activity = simulation_frame_2dcan(simulation, timems, v, φ; kwargs...)
             
-            # i,j = simulation.trajectory.M isa Mobius ? (2, 1) : (1, 2)
-            # traj_on_mf = remove_jumps_from_trajectory(simulation.trajectory.X̄)
-            # plot!(
-            #     pop_activity,
-            #     traj_on_mf[:, i], traj_on_mf[:, j],
-            #     lw = 3,
-            #     color = :red,
-            #     label = nothing,
-            # )
+            i,j = simulation.trajectory.M isa Mobius ? (2, 1) : (1, 2)
+            traj_on_mf = remove_jumps_from_trajectory(simulation.trajectory.X̄)
+            plot!(
+                pop_activity,
+                traj_on_mf[:, i], traj_on_mf[:, j],
+                lw = 3,
+                color = :red,
+                label = nothing,
+            )
         end
     else
         error("Simulation plot for d>2 not implemented")
@@ -301,16 +297,17 @@ function Plots.plot(
         )
 
         # visualize activation of each individual population
-        _x = 1:size(simulation.S, 2)
-        y = map(i -> maximum(simulation.S[:, i]), _x)
-        b = bar(_x, y)
+        # _x = 1:size(simulation.S, 2)
+        # y = map(i -> maximum(simulation.S[:, i]), _x)
+        # b = bar(_x, y)
 
-        # visualize distance between decoded and real position
-        d = simulation.can.metric(x, X̄[framen, :])
-        b2 = bar([0], [d], title = "Dedoded distance", ylim = [0, 3])
+        # # visualize distance between decoded and real position
+        # d = simulation.can.metric(x, X̄[framen, :])
+        # b2 = bar([0], [d], title = "Dedoded distance", ylim = [0, 3])
 
-        # main figure
-        plot(traj, pop_activity, b, b2, size = (1000, 800), layout = (2, 2))
+        # # main figure
+        # plot(traj, pop_activity, b, b2, size = (1000, 800), layout = (2, 2))
+        plot(traj, pop_activity)
     elseif simulation.can.d == 2
         traj = Plots.plot(tj, framen)
 

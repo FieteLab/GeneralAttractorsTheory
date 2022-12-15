@@ -415,18 +415,22 @@ function get_pairwise_distance_with_offset(
     offset_size::Number,
     ::Nothing,
 )::Matrix
-    # δx = by_column(offset.ψ, X)
+    δx = by_column(offset.ψ, X)
 
     # n = norm(δx)
 
-    δx = hcat(
-        map(
-            x -> norm(offset.ψ(x)) > 0 ? offset.ψ(x)/norm(offset.ψ(x)) : offset.ψ(x),
-            eachcol(X)
-        )...
-    )
+    # δx = hcat(
+    #     map(
+    #         x -> norm(offset.ψ(x)) > 0 ? offset.ψ(x)/norm(offset.ψ(x)) : offset.ψ(x),
+    #         eachcol(X)
+    #     )...
+    # )
 
-    pairwise(metric, X .- (offset_size .* δx), X)
+    X̂ = by_column(x -> x .- offset.ψ(x), X)
+    pairwise(metric, X, X̂)
+    # @info "cacca" δx X offset_size offset_size .* δx  aδx
+    # pairwise(metric, X .- (offset_size .* δx), X)
+
 end
 
 

@@ -30,6 +30,7 @@ for i = 1:2:5
     p = Plots.scatter3d(
         eachrow(spherecan.X)...,
         marker_z = conn,
+        clims=(-1, 0),
         markersize = 4,
         msa = 0,
         msw = 0,

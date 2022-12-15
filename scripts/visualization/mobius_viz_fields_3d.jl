@@ -11,7 +11,7 @@ include("../networks/mobius.jl")
 
 
 ψ1, ψ2, ψ3 = mobiuscan.C.M.ψs
-scaling = .05
+scaling = .07
 
 
 
@@ -35,7 +35,7 @@ for t = -1/2:0.1:1/2, θ = 0:0.25:(2π-0.25)
             [m[1][1], p[1]],
             [m[2][1], p[2]],
             [m[3][1], p[3]],
-            lw=2, color=c, label=nothing
+            lw=4, color=c, label=nothing
         )
     end
 end

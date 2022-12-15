@@ -48,7 +48,7 @@ function Base.rand(m::AbstractManifold)
     d = length(m.xmin)
     x = zeros(d)
     for i = 1:d
-        x[1] = rand(m.xmin[i]:0.025:m.xmax[i])
+        x[i] = rand(m.xmin[i]:0.025:m.xmax[i])
     end
     x
 end
@@ -124,8 +124,8 @@ end
     metric::Metric
 end
 S² = Sphere(
-    [-π, -π / 2],
-    [π, π / 2],
+    [-1, -1, -1],
+    [1, 1, 1],
     [VectorField(ψx), VectorField(ψy), VectorField(ψz)],
     SphericalDistance(),
 )
@@ -143,7 +143,7 @@ end
 Mobius() = Mobius(
     [-0.75, 0],
     [ 0.75, 2π],
-    [VectorField(ψ_t), VectorField(ψ_θ1), VectorField(ψ_θ2)],
+    [VectorField(MB_ψ1), VectorField(MB_ψ2), VectorField(MB_ψ3)],
     # [ConstantVectorField(2, 1), ConstantVectorField(2, 2)],
     MobiusEuclidean(),
 )
