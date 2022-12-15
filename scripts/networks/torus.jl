@@ -12,7 +12,7 @@ import GeneralAttractors.ManifoldUtils: Manifoldℝ², Torus, ℝ²_ψ1, ℝ²_�
 println(Panel("Creating torus attractor", style = "green", justify = :center))
 
 # number of neurons
-m = 48 # number of neurons in each dimension
+m = 40 # number of neurons in each dimension
 n = (m, m) # number of neurons per dimension
 
 # ℝ² → T cover map.
@@ -55,7 +55,7 @@ d_t = PeriodicEuclidean([2π, 2π])  # distance function over a torus manifold
 k_t = LocalGlobalKernel(α = 2.5, σ = 1.5, β = 2.5)
 
 
-offset_size = 0.2
+offset_size = 0.3
 offsets = [
     p -> ℝ²_ψ1(p),
     p -> -ℝ²_ψ1(p),
@@ -81,7 +81,7 @@ toruscan = CAN(
     k_t;
     offset_size = offset_size,
     σ = :softrelu,
-    α = 42,
-    offsets = offsets,
-    Ω = Ω
+    α = 4.5,
+    # offsets = offsets,
+    # Ω = Ω
 )

@@ -141,7 +141,7 @@ mutable struct CAN <: AbstractCAN
     α::Number                           # scaling factor to make bump speed the same as input speed
 end
 
-Base.string(can::CAN) = "CAN (dim=$(length(can.n))) - n neurons: $(can.n)"
+Base.string(can::CAN) = "CAN $(can.name) (dim=$(length(can.n))) - n neurons: $(can.n)"
 Base.print(io::IO, can::CAN) = print(io, string(can))
 Base.show(io::IO, ::MIME"text/plain", can::CAN) = print(io, string(can))
 

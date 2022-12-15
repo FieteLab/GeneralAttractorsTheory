@@ -5,14 +5,12 @@ import LinearAlgebra: norm
 using GeneralAttractors.ManifoldUtils: Mobius, ψ_t, ψ_θ1, ψ_θ2
 using Plots
 
-"""
-Visualization of the vector fields on the mobiuscan
-"""
 
-include("../networks/torus.jl")
 
-can = toruscan
-scaling = 0.5
+include("../networks/mobius.jl")
+
+can = mobiuscan
+scaling = 1.5
 colors = [black, black, indigo, indigo, salmon_dark, salmon_dark]
 
 

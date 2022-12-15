@@ -46,7 +46,7 @@ that are closest to it.
 function (dec::Decoder)(s::Vector, can::AbstractCAN)
     # get the position of activity bump in neural mfld coordinates
     n̂ = decode_peak_location(s, can)
-    can.C.M == can.C.N && return n̂
+    can.C.M == can.C.N && return (n̂, n̂)
 
     # get Δn relative to previous bump coordinates
     Δn = n̂ .- dec.n
@@ -66,7 +66,6 @@ function (dec::Decoder)(s::Vector, can::AbstractCAN)
             1:size(candidates, 2),
         )
         selected = argmin(d)
-        @debug "decoding recalibration triggered" d[selected]
 
         # find potential errors in decoding
         if d[selected] > 2.5

@@ -16,8 +16,8 @@ include("../networks/torus.jl")
 
 # --------------------------------- simulate --------------------------------- #
 dt = 0.5
-duration = 1000
-still = 75  # initialization period        
+duration = 600
+still = 100  # initialization period        
 
 x₀ = [3.15, 3.15] # initialize state at center of mfld
 d = map(i -> toruscan.metric(x₀, toruscan.X[:, i]), 1:size(toruscan.X, 2))
@@ -30,23 +30,22 @@ trajectory = Trajectory(
     toruscan;
     T = nframes,
     dt = dt,
-    σv = 0.0,
-    μv = [.1, .0],
+    σv = 0.5,
+    # μv = [.1, .0],
     x₀ = x₀,
-    vmax = 0.02,
+    vmax = 0.1,
     still = still,
-    scale = 1,
+    scale = 2,
 )
-simulation = Simulation(toruscan, trajectory; η = 0.0, b₀ = 0.5, τ = 5.0)
-
 plot(trajectory) |> display
 
-# TODO fix torus inverse to reconstuct the trajectory
+simulation = Simulation(toruscan, trajectory; η = 0.0, b₀ = 0.5, τ = 5.0)
+
 
 # run
 h, X̄ = @time run_simulation(
     simulation;
-    frame_every_n = 100,
+    frame_every_n = 80,
     discard_first_ms = 0,
     average_over_ms = 10,
     fps = 4,

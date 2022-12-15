@@ -29,7 +29,7 @@ cover = CoverSpace(mfld)
 d_m = MobiusEuclidean()
 
 # connectivity kernel
-k_m = LocalGlobalKernel(α = 1.25, σ = 1.5, β = 1.25)
+k_m = LocalGlobalKernel(α = 2.5, σ = 1.5, β = 2.5)
 
 
 # define offset vector fields
@@ -42,7 +42,7 @@ offsets =
         p -> ψ_θ2(p), 
         p -> -ψ_θ2(p)
     ]
-offset_size = 0.25
+offset_size = 0.2
 
 # define one forms
 Ω = [
@@ -68,5 +68,5 @@ mobiuscan = CAN(
     offsets = offsets,
     Ω = Ω,
     σ=:softrelu,
-    α = 7,
+    α = 42,
 )

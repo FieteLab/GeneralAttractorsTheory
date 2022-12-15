@@ -182,7 +182,8 @@ function Trajectory(
         else
             x = random_variable(T, μv[i], σv[i]; smoothing_window = 101)
             clamp!(x, -vmax, vmax)
-            x
+            ramp = [range(0, 1, length=100)..., ones(T-100)...]
+            x .* ramp
         end
         push!(Vs, v)
     end

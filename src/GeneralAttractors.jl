@@ -1,4 +1,13 @@
 module GeneralAttractors
+
+# using Term
+# Term.STACKTRACE_HIDDEN_MODULES[] = ["Plots", "RecipesPipeline"]
+# Term.STACKTRACE_HIDE_FRAMES[] = false
+
+# install_term_stacktrace()
+# install_term_logger()
+# install_term_repr()
+
 using LinearAlgebra: norm
 using Plots
 using Distances: PeriodicEuclidean, evaluate, UnionMetric, SphericalAngle

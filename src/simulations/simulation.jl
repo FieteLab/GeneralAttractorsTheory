@@ -197,10 +197,11 @@ function run_simulation(
             v = simulation.trajectory.V[i, :]
 
             # decode manifold bump position
+            s̄ = ∑ⱼ(simulation.S)
             if decoder_initialized
-                decoded_x, on_mfld_x = decoder(∑ⱼ(simulation.S), simulation.can)
+                decoded_x, on_mfld_x = decoder(s̄, simulation.can)
             else
-                decoded_x, on_mfld_x = x, decode_peak_location(∑ⱼ(simulation.S), simulation.can)
+                decoded_x, on_mfld_x = x, decode_peak_location(s̄, simulation.can)
             end
             X̄[i, :] = decoded_x
 
@@ -208,7 +209,7 @@ function run_simulation(
             S̄ = step!(simulation, decoded_x, on_mfld_x, v; s₀ = s₀)
 
             # initialize decoder if necessary
-            if i >= simulation.trajectory.still && !decoder_initialized
+            if (i >= simulation.trajectory.still + 0) && !decoder_initialized
                 # prep decoder
                 decoder = Decoder(
                     simulation.trajectory.X[i, :],

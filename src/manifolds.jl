@@ -3,6 +3,7 @@ Collection of code useful to visualize manifolds
 """
 module ManifoldUtils
 using Distances
+import Term.Repr: @with_repr, termshow
 
 import ..GeneralAttractors: SphericalDistance, MobiusEuclidean, lerp
 import ..GeneralAttractors: sphere_embedding, mobius_embedding
@@ -19,7 +20,7 @@ include("_manifolds.jl")
 
 abstract type AbstractVectorField end
 
-struct ConstantVectorField <: AbstractVectorField
+@with_repr struct ConstantVectorField <: AbstractVectorField
     d::Int
     i::Int
 end
@@ -30,7 +31,7 @@ function (ψ::ConstantVectorField)(::Vector)
     return v
 end
 
-struct VectorField <: AbstractVectorField
+@with_repr struct VectorField <: AbstractVectorField
     f::Function
 end
 (ψ::VectorField)(x::Vector) = ψ.f(x)
@@ -58,15 +59,15 @@ apply_boundary_conditions!(x, ::AbstractManifold) = (x, ones(length(x)))
 # ---------------------------------------------------------------------------- #
 #                                     RING                                     #
 # ---------------------------------------------------------------------------- #
-struct Ring <: AbstractManifold
+@with_repr struct Ring <: AbstractManifold
     xmin::Vector
     xmax::Vector
     ψs::Vector{AbstractVectorField}
     metric::Metric
 end
 Ring() = Ring([0], [2π], 
-    [VectorField(ring_ψ)], 
-    # [ConstantVectorField(1, 1)],
+    # [VectorField(ring_ψ)], 
+    [ConstantVectorField(1, 1)],
     PeriodicEuclidean([2π]))
 
 apply_boundary_conditions!(x, ::Ring) = mod.(x, 2π), 1
@@ -75,7 +76,7 @@ apply_boundary_conditions!(x, ::Ring) = mod.(x, 2π), 1
 # ---------------------------------------------------------------------------- #
 #                                     PLANE                                    #
 # ---------------------------------------------------------------------------- #
-struct Manifoldℝ² <: AbstractManifold
+@with_repr struct Manifoldℝ² <: AbstractManifold
     xmin::Vector
     xmax::Vector
     ψs::Vector{AbstractVectorField}
@@ -93,7 +94,7 @@ Manifoldℝ²(m) = Manifoldℝ²(
 # ---------------------------------------------------------------------------- #
 #                                     TORUS                                    #
 # ---------------------------------------------------------------------------- #
-struct Torus <: AbstractManifold
+@with_repr struct Torus <: AbstractManifold
     xmin::Vector
     xmax::Vector
     ψs::Vector{AbstractVectorField}
@@ -102,8 +103,8 @@ end
 Torus() = Torus(
     [0, 2π],
     [0, 2π],
-    # [ConstantVectorField(2, 1), ConstantVectorField(2, 2)],
-    [VectorField(ℝ²_ψ1), VectorField(ℝ²_ψ2)],
+    [ConstantVectorField(2, 1), ConstantVectorField(2, 2)],
+    # [VectorField(ℝ²_ψ1), VectorField(ℝ²_ψ2)],
     PeriodicEuclidean([2π, 2π]),
 )
 T = Torus()
@@ -116,7 +117,7 @@ end
 # ---------------------------------------------------------------------------- #
 #                                    SPHERE                                    #
 # ---------------------------------------------------------------------------- #
-struct Sphere <: AbstractManifold
+@with_repr struct Sphere <: AbstractManifold
     xmin::Vector
     xmax::Vector
     ψs::Vector{AbstractVectorField}
@@ -132,16 +133,18 @@ S² = Sphere(
 # ---------------------------------------------------------------------------- #
 #                                    MOBIUS                                    #
 # ---------------------------------------------------------------------------- #
-struct Mobius <: AbstractManifold
+@with_repr struct Mobius <: AbstractManifold
     xmin::Vector
     xmax::Vector
     ψs::Vector{AbstractVectorField}
     metric::Metric
 end
+
 Mobius() = Mobius(
     [-0.75, 0],
     [ 0.75, 2π],
     [VectorField(ψ_t), VectorField(ψ_θ1), VectorField(ψ_θ2)],
+    # [ConstantVectorField(2, 1), ConstantVectorField(2, 2)],
     MobiusEuclidean(),
 )
 
@@ -180,7 +183,7 @@ end
 #                                 COVER SPACES                                 #
 # ---------------------------------------------------------------------------- #
 
-struct CoverSpace
+@with_repr struct CoverSpace
     M::AbstractManifold  # variable manifold (cover space)
     N::AbstractManifold  # neural manifold (covered)
     ρ::Function          # cover map | it's ρ (\rho) not 'p'

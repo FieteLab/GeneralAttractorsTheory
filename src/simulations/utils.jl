@@ -20,7 +20,8 @@ function Plots.plot(traj::Trajectory)
     X = remove_jumps_from_trajectory(traj.X)
     X̄ = remove_jumps_from_trajectory(traj.X̄)
     if d == 2
-        i,j = traj.M isa Mobius ? (2, 1) : (1, 2)
+        # i,j = traj.M isa Mobius ? (2, 1) : (1, 2)
+        i, j = (1, 2)
 
         p1 = plot(
             X[:, i], X[:, j],
@@ -31,8 +32,8 @@ function Plots.plot(traj::Trajectory)
             grid = false,
             aspect_ratio = :equal,
         )
-
-        p2 =         plot(
+    
+        p2 = plot(
             X̄[:, i], X̄[:, j],
             lw = 3,
             color = :red,
@@ -66,21 +67,17 @@ function Plots.plot(traj::Trajectory, i::Int; xmin = nothing, xmax = nothing)
         xmin = isnothing(xmin) ? traj.M.xmin : xmin
         xmax = isnothing(xmax) ? traj.M.xmax : xmax
     else    
-        xmin = isnothing(xmin) ? minimum(traj.X, dims = 1) : xmin
-        xmax = isnothing(xmax) ? maximum(traj.X, dims = 1) : xmax
+        xmin = isnothing(xmin) ? minimum(traj.X, dims = 1) .- abs.(minimum(traj.X, dims = 1) * 1.1) : xmin
+        xmax = isnothing(xmax) ? maximum(traj.X, dims = 1) .+ maximum(traj.X, dims = 1) * 1.1 : xmax
     end
 
-    t0 = traj.M isa Mobius ? max(1, i-100) : 1
+    t0 = traj.M isa Mobius ? max(1, i-200) : 1
     X = remove_jumps_from_trajectory(traj.X)
     if d == 2
-        if traj.M isa Mobius
-            k, j = 2, 1
-        else
-            k, j = 1, 2
-        end
+        k, j = 1, 2
         plt = plot(
             X[t0:i, k], X[t0:i, j],
-            lw = 4,
+            lw = 6,
             color = :black,
             grid = false,
             aspect_ratio = :equal,
@@ -143,6 +140,11 @@ function simulation_frame_2dcan(
     kwargs...,
 )
     can = simulation.can
+    # plt = plot()
+    # for i in 1:size(simulation.S, 2)
+    #     s = sum(reshape(simulation.S[:, i], can.n), dims=2)
+    #     plot!(s, lw=4, label="Pop: $i", alpha=.5)
+    # end
     s̄ = sum(simulation.S, dims = 2) |> vec
 
     plt = plot(;
@@ -184,9 +186,10 @@ function simulation_frame_2dcan(
         clims = (-maximum(s) * 0.95, maximum(s) * 0.95),
         color=:bwr,
         ms = 6,
-        alpha = 0.75,
+        alpha = 0.8,
         label = nothing,
         colorbar = nothing,
+        camera=(45, 60)
     )
 
     return plt
@@ -250,15 +253,15 @@ function Plots.plot(
         else
             pop_activity = simulation_frame_2dcan(simulation, timems, v, φ; kwargs...)
             
-            i,j = simulation.trajectory.M isa Mobius ? (2, 1) : (1, 2)
-            traj_on_mf = remove_jumps_from_trajectory(simulation.trajectory.X̄)
-            plot!(
-                pop_activity,
-                traj_on_mf[:, i], traj_on_mf[:, j],
-                lw = 3,
-                color = :red,
-                label = nothing,
-            )
+            # i,j = simulation.trajectory.M isa Mobius ? (2, 1) : (1, 2)
+            # traj_on_mf = remove_jumps_from_trajectory(simulation.trajectory.X̄)
+            # plot!(
+            #     pop_activity,
+            #     traj_on_mf[:, i], traj_on_mf[:, j],
+            #     lw = 3,
+            #     color = :red,
+            #     label = nothing,
+            # )
         end
     else
         error("Simulation plot for d>2 not implemented")
@@ -311,7 +314,8 @@ function Plots.plot(
     elseif simulation.can.d == 2
         traj = Plots.plot(tj, framen)
 
-        i, j = simulation.can.name == "mobius" ? (2, 1) : (1, 2)
+        # i, j = simulation.can.name == "mobius" ? (2, 1) : (1, 2)
+        i, j = 1, 2
         
         # plot decoded trajectory
         framen > (50 + 2) && begin
