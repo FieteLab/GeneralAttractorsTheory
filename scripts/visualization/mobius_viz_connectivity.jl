@@ -10,9 +10,9 @@ include("../networks/mobius.jl")
 X = mobiuscan.X
 M = by_column(mobius_embedding, X)
 
-idx = 9
+idx = 610
 plts = []
-for i = [1, 3, 6]
+for i = [1, 3]
     conn = mobiuscan.Ws[i][idx, :] #  .- spherecan_noffset.Ws[i][idx, :]
     p = Plots.scatter3d(
         eachrow(M)...,

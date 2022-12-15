@@ -10,7 +10,7 @@ using Plots
 include("../networks/mobius.jl")
 
 can = mobiuscan
-scaling = 1.0
+scaling = 0.25
 colors = [
     MyterialColors.black,
     MyterialColors.black,
@@ -31,19 +31,35 @@ p = plot(
 n = size(can.X, 2)
 for i in 1:15:n
     x = can.X[:, i]
-    scatter!([[x] for x in x]..., label=nothing, color=:black, ms=3)
 
-    for (j, o) in enumerate(can.Ω)
+    for (j, offset) in enumerate(can.offsets)
         j % 2 == 0 && continue
-        v = o(x)
-        # v /= norm(v)
-        v *= scaling
-        plot!(
-            [x[1], x[1]+v[1]],
-            [x[2], x[2]+v[2]],
-            lw=4, color=colors[j], label=nothing
-        )
+
+        for (k, x) in enumerate(eachcol(can.X))
+            k % 12 != 0 && continue
+            scatter!([[x] for x in x]..., label=nothing, color=:black, ms=3)
+
+
+            v = offset.ψ(x) * scaling
+            plot!(
+                [x[1], x[1]+v[1]],
+                [x[2], x[2]+v[2]],
+                lw=4, color=colors[j], label=nothing
+            )
+        end
     end
+
+    # for (j, o) in enumerate(can.Ω)
+    #     j % 2 == 0 && continue
+    #     v = o(x)
+    #     # v /= norm(v)
+    #     v *= scaling
+    #     plot!(
+    #         [x[1], x[1]+v[1]],
+    #         [x[2], x[2]+v[2]],
+    #         lw=4, color=colors[j], label=nothing
+    #     )
+    # end
 end
 
 # for t = -1/2:0.4:1/2, θ = 0:0.25:2π

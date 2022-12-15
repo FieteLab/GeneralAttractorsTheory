@@ -39,8 +39,8 @@ offsets =
         p -> -MB_ψ1(p),
         p -> MB_ψ2(p),
         p -> -MB_ψ2(p),
-        p -> MB_ψ3(p), 
-        p -> -MB_ψ3(p)
+        # p -> MB_ψ3(p), 
+        # p -> -MB_ψ3(p)
     ]
 offset_size = 0.2
 
@@ -50,8 +50,8 @@ offset_size = 0.2
     OneForm(2, (t, θ) -> -offset_size * MB_ψ1(t, θ)),
     OneForm(3, (t, θ) -> offset_size * MB_ψ2(t, θ)),
     OneForm(4, (t, θ) -> -offset_size * MB_ψ2(t, θ)),
-    OneForm(5, (t, θ) -> offset_size * MB_ψ3(t, θ)),
-    OneForm(6, (t, θ) -> -offset_size * MB_ψ3(t, θ)),
+    # OneForm(5, (t, θ) -> offset_size * MB_ψ3(t, θ)),
+    # OneForm(6, (t, θ) -> -offset_size * MB_ψ3(t, θ)),
 ]
 
 
@@ -68,5 +68,5 @@ mobiuscan = CAN(
     offsets = offsets,
     Ω = Ω,
     σ=:softrelu,
-    α = 42,
+    α = 35,
 )

@@ -143,7 +143,7 @@ end
 Mobius() = Mobius(
     [-0.75, 0],
     [ 0.75, 2π],
-    [VectorField(MB_ψ1), VectorField(MB_ψ2), VectorField(MB_ψ3)],
+    [VectorField(MB_ψ1), VectorField(MB_ψ2)],
     # [ConstantVectorField(2, 1), ConstantVectorField(2, 2)],
     MobiusEuclidean(),
 )
@@ -158,7 +158,7 @@ if it's along the periodic dimension gets its position module 2π.
 function apply_boundary_conditions!(x::Vector, m::Mobius)
     vel_correction_facors = [1, 1]
     # non periodic dimension
-    δ = 0.1  # padding around boundary to account for bump size
+    δ = 0.2  # padding around boundary to account for bump size
     if x[1] <= m.xmin[1] + δ
         x[1] = m.xmin[1] + δ
         vel_correction_facors[1] = 0

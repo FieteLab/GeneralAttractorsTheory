@@ -14,7 +14,7 @@ include("../networks/mobius.jl")
 
 # --------------------------------- simulate --------------------------------- #
 dt = 0.5
-duration = 600
+duration = 400
 still = 50  # initialization period  
 dmin = 0.5  # minimal distance from x₀ for state intialization  
 
@@ -30,9 +30,9 @@ trajectory = Trajectory(
     mobiuscan;
     T = nframes,
     dt = dt,
-    # σv = [0.5, 0.3, 0.3],
-    σv = 0,
-    μv = [1, .0, 0.0],
+    σv = [0.5, 0.3],
+    # σv = 0,
+    # μv = [0, .05],
     x₀ = x₀,
     still = still,
     vmax = 0.1,

@@ -426,7 +426,6 @@ function get_pairwise_distance_with_offset(
         )...
     )
 
-    @info "wtf" offset X offset_size δx X .- (offset_size .* δx)
     pairwise(metric, X .- (offset_size .* δx), X)
     # X̂ = by_column(x -> x .- offset.ψ(x), X)
     # pairwise(metric, X̂, X)
