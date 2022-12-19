@@ -29,23 +29,27 @@ d_s = SphericalDistance()
 # d_s = SphericalAngle()
 
 # kernel  
-k_s = LocalGlobalKernel(α = 2.5, σ = 1.5, β = 2.5)
+k_s = LocalGlobalKernel(α = 2.5, σ = 40.5, β = 2.5)
 
 # cover space
 cover = CoverSpace(S²)  # trivial cover space
 
 # define offset vector fields
-offsets = [p -> ψx(p), p -> -ψx(p), p -> ψy(p), p -> -ψy(p), p -> ψz(p), p -> -ψz(p)]
-offset_size = 0.05
+offsets = [
+    p -> ψx(p), p -> -ψx(p),
+    p -> ψy(p), p -> -ψy(p), 
+    p -> ψz(p), p -> -ψz(p)
+]
+offset_size = 0.1
 
 # define one forms
 Ω = [
-    OneForm(1, (x, y, z) -> -offset_size * ψx(x, y, z)),
     OneForm(1, (x, y, z) -> offset_size * ψx(x, y, z)),
-    OneForm(2, (x, y, z) -> -offset_size * ψy(x, y, z)),
+    OneForm(1, (x, y, z) -> -offset_size * ψx(x, y, z)),
     OneForm(2, (x, y, z) -> offset_size * ψy(x, y, z)),
-    OneForm(3, (x, y, z) -> -offset_size * ψz(x, y, z)),
+    OneForm(2, (x, y, z) -> -offset_size * ψy(x, y, z)),
     OneForm(3, (x, y, z) -> offset_size * ψz(x, y, z)),
+    OneForm(3, (x, y, z) -> -offset_size * ψz(x, y, z)),
 ]
 
 
@@ -61,5 +65,5 @@ spherecan = CAN(
     offset_size = offset_size,
     offsets = offsets,
     Ω = Ω,
-    α=40,
+    α=46,
 )

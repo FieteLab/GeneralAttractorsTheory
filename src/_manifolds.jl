@@ -88,18 +88,19 @@ tangent to the sphere and correpsonding to a rotation.
 ∂y = [0, 1, 0]
 ∂z = [0, 0, 1]
 
+
 normalize(x) = norm(x) > 0 ? x ./ norm(x) : x
 
 """ rotation around X axis """
-ψx(x, y, z) = (z * ∂y - y * ∂z) # |> normalize
+ψx(x, y, z)::Vector = (z * ∂y - y * ∂z) |> normalize
 ψx(p) = ψx(p...)
 
 """ rotation around Y axis """
-ψy(x, y, z) = (z * ∂x - x * ∂z) # |> normalize
+ψy(x, y, z)::Vector = (z * ∂x - x * ∂z) |> normalize
 ψy(p) = ψy(p...)
 
 """ rotation around Z axis """
-ψz(x, y, z) = (x * ∂y - y * ∂x) # |> normalize
+ψz(x, y, z)::Vector = (x * ∂y - y * ∂x) |> normalize
 ψz(p) = ψz(p...)
 
 φ = sphere_embedding

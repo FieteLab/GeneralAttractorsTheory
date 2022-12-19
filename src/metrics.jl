@@ -16,11 +16,6 @@ end
 SphericalDistance() = SphericalDistance(𝕊(2))
 
 (dist::SphericalDistance)(p1, p2) = mdist(dist.s, p1, p2)
-# (dist::SphericalDistance)(p1, p2) = begin
-#     c = max(p1 ⋅ p2, -1)
-#     c = min(c, 1)
-#     acos(c)
-# end
 Distances.eval_op(::SphericalDistance, ::Float64, ::Float64) = 1.0
 
 

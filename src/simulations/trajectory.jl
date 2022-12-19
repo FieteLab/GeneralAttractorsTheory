@@ -163,7 +163,7 @@ function Trajectory(
     μv = μv isa Number ? repeat([μv], n_vfields) : μv
     @assert length(σv) == n_vfields
     @assert length(μv) == n_vfields
-    @assert n_vfields >= d
+    # @assert n_vfields >= d
 
 
     # get starting point

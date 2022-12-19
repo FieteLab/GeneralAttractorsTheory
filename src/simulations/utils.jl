@@ -212,12 +212,12 @@ function custom_sphere_viz(simulation::Simulation, timems, v::Vector, φ; kwargs
         marker_z = s,
         title = "elapsed: $(round(timems)) ms",
         grid = false,
-        msa = .8,
+        msa = .4,
         msw = .5,
         clims = (-maximum(s) * 0.95, maximum(s) * 0.95),
         color=:bwr,
         ms = 3,
-        alpha = 0.8,
+        alpha = 0.9,
         label = nothing,
         colorbar = nothing,
         xlim=[-1.1, 1.1],
@@ -397,7 +397,11 @@ function plot_trajectory_and_decoded(trajectory::Trajectory, X̄::Matrix)
     if d == 2
         plot!(eachcol(X̄)..., lw = 3, color = :red, label = nothing)
     elseif d == 3
-        plot3d!(eachcol(X̄)..., lw = 3, color = :red, label = nothing)
+        plot3d!(eachcol(X̄)..., lw = 3, color = :red, label = nothing, 
+            xlim=[-1.1, 1.1],
+            ylim=[-1.1, 1.1],
+            zlim=[-1.1, 1.1],
+        )
     elseif d == 1
         plot!(X̄, lw = 3, color = :red, label = nothing)
     end

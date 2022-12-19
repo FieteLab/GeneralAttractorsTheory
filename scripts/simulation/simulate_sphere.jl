@@ -16,8 +16,9 @@ include("../networks/sphere.jl")
 
 # --------------------------------- simulate --------------------------------- #
 dt = 0.5
-duration = 500  # ms   
-x₀ = [1, 0, 0]
+duration = 800  # ms   
+# x₀ = [1, -1, 0]
+x₀ = rand(3)
 x₀ /= norm(x₀)
 still = 100  # initialization period                                                                             
 dmin = 0.5  # minimal distance from x₀ for state intialization
@@ -28,10 +29,12 @@ trajectory = Trajectory(
     spherecan;
     T = nframes,
     x₀ = x₀,
-    vmax = 0.01,
+    vmax = 0.005,
     still = still,
-    σv = 0,
-    μv = [0, 0, -1]
+    # σv = 0.2,
+    # μv = [0, .1, 0]
+    modality=:piecewise,
+    n_piecewise_segments = 5
 )
 
 plot(trajectory) |> display
@@ -44,7 +47,7 @@ activate = map(p -> euclidean(x₀, p) < dmin, eachcol(spherecan.X)) .* 1
 # simulate
 h, X̄ = @time run_simulation(
     simulation,
-    frame_every_n = 10,
+    frame_every_n = 20,
     discard_first_ms = 0,
     average_over_ms = 10,
     fps = 10,

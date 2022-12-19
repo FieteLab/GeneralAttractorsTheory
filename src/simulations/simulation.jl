@@ -64,20 +64,11 @@ end
 function velocity_input(
     ωᵢ::OneForm,
     v::Vector,
-    decoded_x::Vector,
     on_mfld_x::Vector,
     J::Matrix,
-    ψs::Vector{AbstractVectorField},
 )
 
     ωᵢ(on_mfld_x, J*v) 
-    # v[ωᵢ.i] * ωᵢ(on_mfld_x)[1]
-
-    # i = ωᵢ.i
-    # eᵢ = ψs[i]
-    # ê = J * eᵢ(decoded_x) # pushforward of the basis vector on the M mfld
-    # ωᵢ(on_mfld_x, ê) * v[i]  # one form on the N manifold
-
 end
 
 
@@ -111,7 +102,7 @@ function step!(simulation::Simulation, decoded_x::Vector, on_mfld_x::Vector, v::
     J = pushforward(can.C.ρ, decoded_x)
     V =
         can.α .* map(
-            i -> velocity_input(can.Ω[i], v, decoded_x, on_mfld_x, J, can.C.M.ψs),
+            i -> velocity_input(can.Ω[i], v, on_mfld_x, J),
             1:length(can.Ω),
         ) |> vec  # inputs vector of size 2d
 

@@ -126,9 +126,17 @@ end
 S² = Sphere(
     [-1, -1, -1],
     [1, 1, 1],
-    [VectorField(ψx), VectorField(ψy), VectorField(ψz)],
+    [
+        VectorField(ψx), 
+        VectorField(ψy), 
+        VectorField(ψz)
+    ],
     SphericalDistance(),
 )
+
+function apply_boundary_conditions!(x::Vector, ::Sphere)
+    return x ./ norm(x), ones(length(x))
+end
 
 # ---------------------------------------------------------------------------- #
 #                                    MOBIUS                                    #

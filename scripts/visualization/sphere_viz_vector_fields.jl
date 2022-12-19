@@ -15,13 +15,14 @@ scaling = .1
 X = fibonacci_sphere(600)
 metric = SphericalDistance()
 
-p = [1, 0, 0]
+p = [1, -1, 0]
+p /= norm(p)
 # plt = scatter3d(eachrow(X)...; xlim=[-1.1, 1.1], ylim=[-1.1, 1.1], zlim=[-1.1, 1.1], aspect_ratio=:equal)
 plt = scatter3d(xlim=[-1.1, 1.1], ylim=[-1.1, 1.1], zlim=[-1.1, 1.1], aspect_ratio=:equal, size=(800, 800))
 
 for x in eachcol(X)
     d = metric(x, p)
-    d > .5 && continue
+    d > .2 && continue
 
     for (col, ψ) in zip((:black, :red, :blue), (ψx, ψy, ψz))
         v = ψ(x) .* scaling
@@ -33,14 +34,14 @@ for x in eachcol(X)
         )
     end
 
+    v1 = ψx(x)
+    v2 = ψy(x)
+    v3 = ψz(x)
+    @info "dots" v1 ⋅ v2  v2 ⋅ v3  v3⋅v1
+    @info "norms" norm(v1) norm(v2) norm(v3)
 end
-scatter!([p[1]], [p[2]], [p[3]], ms=10, color=:red, camera=(90, 0))
+scatter!([p[1]], [p[2]], [p[3]], ms=10, alpha=.5, color=:red, camera=(45, 0))
 
-v = [-0.0051, -0.0086, 0.0] .* 20
-plot!(
-    [p[1], p[1]+v[1]],
-    [p[2], p[2]+v[2]],
-    [p[3], p[3]+v[3]],
-    lw=6, color=:black, label=nothing
-)
+
+
 plt
