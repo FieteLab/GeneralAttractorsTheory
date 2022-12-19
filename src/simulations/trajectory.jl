@@ -76,6 +76,18 @@ function get_closest_neuron(x, X, d)
     return X[:, argmin(Δ)]
 end
 
+"""
+Ensure a vector `v` has magnitude ∈ [-vmax, vmax]
+"""
+function enforce_vmax(v, vmax)
+    μ = norm(v)
+    return if μ > vmax
+        return v ./ μ .* vmax
+    else
+        v
+    end
+end
+
 
 # ---------------------------------------------------------------------------- #
 #                                  TRAJECTORY                                  #
@@ -150,6 +162,7 @@ function Trajectory(
         modality::Symbol = :random,
         n_piecewise_segments::Int = 3,
         scale::Number = 1,
+        smoothing_window=11,
     )   
     
     ψs::Vector = can.C.M.ψs # get manifold vector fields
@@ -180,7 +193,7 @@ function Trajectory(
         elseif modality == :constant
             ones(T) .* μv[i]
         else
-            x = random_variable(T, μv[i], σv[i]; smoothing_window = 11)
+            x = random_variable(T, μv[i], σv[i]; smoothing_window = smoothing_window) * scale
             clamp!(x, -vmax, vmax)
             ramp = [range(0, 1, length=100)..., ones(T-100)...]
             x .* ramp
@@ -201,8 +214,11 @@ function Trajectory(
     for t in 2:T
         x = X[t-1, :]
 
-        # get a velicirt vector
-        v = ∑ψ(x, t) * scale
+        # get a velocity vector
+        v = ∑ψ(x, t)
+
+        # make sure vmax magnitude is in range
+        # v = enforce_vmax(v, vmax)
 
         # update on mfld position
         x̂ = x + (v * dt)

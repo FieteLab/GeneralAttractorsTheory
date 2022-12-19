@@ -253,7 +253,7 @@ function Plots.plot(
                 traj_on_mf = remove_jumps_from_trajectory(simulation.trajectory.X̄)
                 plot!(
                     pop_activity,
-                    traj_on_mf[:, i], traj_on_mf[:, j],
+                    traj_on_mf[:, 1], traj_on_mf[:, 2],
                     lw = 3,
                     color = :red,
                     label = nothing,
@@ -423,6 +423,7 @@ function plot_on_mfld_trajectory_and_history(can, trajectory::Trajectory, h::His
             label = nothing,
             grid = false,
             aspect_ratio = :equal,
+            title = "on manifold trajectory"
         )
 
     S = h.S

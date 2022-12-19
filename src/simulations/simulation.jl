@@ -219,11 +219,11 @@ function run_simulation(
                     (time[framen] > discard_first_ms) &&
                     # (framen > simulation.trajectory.still) &&
                     begin
-                        try
+                        # try
                             plot(simulation, time[framen], framen, x, v, X̄, φ)
-                        catch e
-                            @warn "cacca" framen e
-                        end
+                        # catch e
+                        #     @warn "cacca" framen e
+                        # end
                         frame(anim)
                     end
             end

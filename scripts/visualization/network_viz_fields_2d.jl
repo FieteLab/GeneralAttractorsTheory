@@ -7,9 +7,9 @@ using Plots
 
 
 
-include("../networks/ring.jl")
+include("../networks/torus .jl")
 
-can = ringcan
+can = torus can
 scaling = 0.25
 colors = [
     MyterialColors.black,
