@@ -392,10 +392,13 @@ function plot_trajectory_and_decoded(trajectory::Trajectory, X̄::Matrix)
         title = "Decoded trajectory",
     )
 
-    scatter!([[x] for x in X[1, :]]..., ms = 5, color = :black, label = nothing)
+    # scatter!([[x] for x in X[1, :]]..., ms = 5, alpha=.2, color = :black, label = nothing)
+    scatter!([[x] for x in X[end, :]]..., ms = 5, alpha=.8, color = :white, msc=:black, msw=2, label = nothing)
 
     if d == 2
         plot!(eachcol(X̄)..., lw = 3, color = :red, label = nothing)
+        # scatter!([[x] for x in X̄[1, :]]..., ms = 5, alpha=.8, color = :red, label = nothing)
+        scatter!([[x] for x in X̄[end, :]]..., ms = 5, alpha=.8, color = :white, msc=:red, msw=2, label = nothing)
     elseif d == 3
         plot3d!(eachcol(X̄)..., lw = 3, color = :red, label = nothing, 
             xlim=[-1.1, 1.1],

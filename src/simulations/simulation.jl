@@ -68,19 +68,22 @@ function velocity_input(
     J::Matrix,
 )
 
-    ωᵢ(on_mfld_x, J*v) 
+    # ωᵢ(on_mfld_x, J*v) 
+    ωᵢ(on_mfld_x, v) 
 end
 
 
 function pushforward(ρ::Function, x::Vector)::Matrix
     J = jacobian(ρ, x)
 
+
     # perturb `x` if jacobian has nans
-    η = 0.01
-    while any(isnan.(J))
-        J = jacobian(ρ, x + rand(size(x)) .* η)
-        η *= 1.25
-    end
+    # η = 0.01
+    # while any(isnan.(J))
+    #     J = jacobian(ρ, x + rand(size(x)) .* η)
+    #     η *= 1.25
+    # end
+    J[isnan.(J)] .= 0
     return J
 end
 
@@ -184,15 +187,14 @@ function run_simulation(
             end
 
             # get trajectory data
-            x = simulation.trajectory.X[i, :]
-            v = simulation.trajectory.V[i, :]
+            v = simulation.trajectory.V[min(i+1, N), :]
 
             # decode manifold bump position
             s̄ = ∑ⱼ(simulation.S)
             if decoder_initialized
                 decoded_x, on_mfld_x = decoder(s̄, simulation.can)
             else
-                decoded_x, on_mfld_x = x, decode_peak_location(s̄, simulation.can)
+                decoded_x, on_mfld_x = simulation.trajectory.X[i, :], decode_peak_location(s̄, simulation.can)
             end
             X̄[i, :] = decoded_x
 

@@ -1,4 +1,7 @@
 import Term.Repr: @with_repr
+using Statistics
+
+
 # ----------------------------------- utils ---------------------------------- #
 """
     function piecewise_linear(
@@ -57,9 +60,10 @@ end
 1d white noise trace of length N, std `σ` and mean `μ`. Optionally smoothed.
 """
 function random_variable(N::Int, μ::Number, σ::Number; smoothing_window = nothing)
-    x = (rand(N) .- 0.5) .* σ .+ μ
-    isnothing(smoothing_window) || (x = moving_average(x, smoothing_window))
-    return x
+    v = (rand(N) .- 0.5) .* σ .+ μ
+
+   isnothing(smoothing_window) || (v = moving_average(v, smoothing_window))
+    return v
 end
 
 
@@ -83,6 +87,16 @@ function enforce_vmax(v, vmax)
     μ = norm(v)
     return if μ > vmax
         return v ./ μ .* vmax
+    else
+        v
+    end
+end
+
+
+function enforce_vmin(v, vmin)
+    μ = norm(v)
+    return if μ < vmin
+        return v ./ μ .* vmin
     else
         v
     end
@@ -182,6 +196,7 @@ function Trajectory(
     # get starting point
     x₀ = x₀ isa Number ? repeat([x₀], d) : x₀
     x₀ = !isnothing(x₀) ? x₀ : rand(M)
+    x₀ = get_closest_neuron(x₀, can.X, can.metric)
     @assert length(x₀) == d "Got x₀: $(x₀) and d=$d"
 
 
@@ -218,7 +233,8 @@ function Trajectory(
         v = ∑ψ(x, t)
 
         # make sure vmax magnitude is in range
-        # v = enforce_vmax(v, vmax)
+        v = enforce_vmax(v, vmax)
+        v = enforce_vmin(v, 0.01)
 
         # update on mfld position
         x̂ = x + (v * dt)
