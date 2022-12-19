@@ -453,6 +453,7 @@ function get_pairwise_distance_with_offset(
     offset_size::Number,
     φ::Function,
 )::Matrix
+    error("why was this called")
     # get coordinates in embedding space
     Y = by_column(φ, X)  # matrix q × n | q: embedding dimension, n: number of points
 

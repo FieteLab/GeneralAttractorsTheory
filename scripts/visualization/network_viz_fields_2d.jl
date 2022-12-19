@@ -7,9 +7,9 @@ using Plots
 
 
 
-include("../networks/mobius.jl")
+include("../networks/ring.jl")
 
-can = mobiuscan
+can = ringcan
 scaling = 0.25
 colors = [
     MyterialColors.black,
@@ -22,30 +22,39 @@ colors = [
 
 
 p = plot(
-    aspect_ratio = :equal,
+    # aspect_ratio = :equal,
     size = (600, 600),
     grid = false,
 )
 
 
 n = size(can.X, 2)
-for i in 1:15:n
+for i in 1:5:n
     x = can.X[:, i]
 
     for (j, offset) in enumerate(can.offsets)
         j % 2 == 0 && continue
 
         for (k, x) in enumerate(eachcol(can.X))
-            k % 12 != 0 && continue
-            scatter!([[x] for x in x]..., label=nothing, color=:black, ms=3)
+            # k % 12 != 0 && continue
+            # scatter!([[x] for x in x]..., label=nothing, color=:black, ms=3)
 
 
             v = offset.ψ(x) * scaling
-            plot!(
-                [x[1], x[1]+v[1]],
-                [x[2], x[2]+v[2]],
-                lw=4, color=colors[j], label=nothing
-            )
+
+            if can.d > 1
+                plot!(
+                    [x[1], x[1]+v[1]],
+                    [x[2], x[2]+v[2]],
+                    lw=4, color=colors[j], label=nothing
+                )
+            else
+                plot!(
+                    [x[1], x[1]],
+                    [0, v[1]],
+                    lw=4, color=colors[j], label=nothing
+                )
+            end
         end
     end
 

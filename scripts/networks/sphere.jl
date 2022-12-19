@@ -6,7 +6,7 @@ using GeneralAttractors
 using GeneralAttractors.Kernels
 using GeneralAttractors: lerp
 using GeneralAttractors.ManifoldUtils
-import GeneralAttractors.ManifoldUtils: sphere_embedding, ψx, ψy, ψz, fibonacci_sphere
+import GeneralAttractors.ManifoldUtils: sphere_embedding, sphere_ψx, sphere_ψy, sphere_ψz, fibonacci_sphere
 import GeneralAttractors.Can: OneForm
 
 
@@ -36,20 +36,20 @@ cover = CoverSpace(S²)  # trivial cover space
 
 # define offset vector fields
 offsets = [
-    p -> ψx(p), p -> -ψx(p),
-    p -> ψy(p), p -> -ψy(p), 
-    p -> ψz(p), p -> -ψz(p)
+    p -> sphere_ψx(p), p -> -sphere_ψx(p),
+    p -> sphere_ψy(p), p -> -sphere_ψy(p), 
+    p -> sphere_ψz(p), p -> -sphere_ψz(p)
 ]
 offset_size = 0.1
 
 # define one forms
 Ω = [
-    OneForm(1, (x, y, z) -> offset_size * ψx(x, y, z)),
-    OneForm(1, (x, y, z) -> -offset_size * ψx(x, y, z)),
-    OneForm(2, (x, y, z) -> offset_size * ψy(x, y, z)),
-    OneForm(2, (x, y, z) -> -offset_size * ψy(x, y, z)),
-    OneForm(3, (x, y, z) -> offset_size * ψz(x, y, z)),
-    OneForm(3, (x, y, z) -> -offset_size * ψz(x, y, z)),
+    OneForm(1, (x, y, z) -> offset_size * sphere_ψx(x, y, z)),
+    OneForm(1, (x, y, z) -> -offset_size * sphere_ψx(x, y, z)),
+    OneForm(2, (x, y, z) -> offset_size * sphere_ψy(x, y, z)),
+    OneForm(2, (x, y, z) -> -offset_size * sphere_ψy(x, y, z)),
+    OneForm(3, (x, y, z) -> offset_size * sphere_ψz(x, y, z)),
+    OneForm(3, (x, y, z) -> -offset_size * sphere_ψz(x, y, z)),
 ]
 
 

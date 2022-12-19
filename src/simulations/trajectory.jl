@@ -180,7 +180,7 @@ function Trajectory(
         elseif modality == :constant
             ones(T) .* μv[i]
         else
-            x = random_variable(T, μv[i], σv[i]; smoothing_window = 101)
+            x = random_variable(T, μv[i], σv[i]; smoothing_window = 11)
             clamp!(x, -vmax, vmax)
             ramp = [range(0, 1, length=100)..., ones(T-100)...]
             x .* ramp

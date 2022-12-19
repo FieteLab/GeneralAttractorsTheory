@@ -6,7 +6,7 @@ using GeneralAttractors
 using GeneralAttractors.Kernels
 using GeneralAttractors: lerp
 using GeneralAttractors.ManifoldUtils
-import GeneralAttractors.ManifoldUtils: Manifoldℝ², Torus, ℝ²_ψ1, ℝ²_ψ2
+import GeneralAttractors.ManifoldUtils: Manifoldℝ², Torus, torus_ψ1, torus_ψ2
 
 
 println(Panel("Creating torus attractor", style = "green", justify = :center))
@@ -57,18 +57,18 @@ k_t = LocalGlobalKernel(α = 2.5, σ = 1.5, β = 2.5)
 
 offset_size = 0.3
 offsets = [
-    p -> ℝ²_ψ1(p),
-    p -> -ℝ²_ψ1(p),
-    p -> ℝ²_ψ2(p),
-    p -> -ℝ²_ψ2(p),
+    p -> torus_ψ1(p),
+    p -> -torus_ψ1(p),
+    p -> torus_ψ2(p),
+    p -> -torus_ψ2(p),
 ]
 
 # one forms
 Ω = OneForm[
-    OneForm(1, (x, y) -> offset_size * ℝ²_ψ1(x, y)),
-    OneForm(1, (x, y) -> offset_size * -ℝ²_ψ1(x, y)),
-    OneForm(2, (x, y) -> offset_size * ℝ²_ψ2(x, y)),
-    OneForm(2, (x, y) -> offset_size * -ℝ²_ψ2(x, y)),
+    OneForm(1, (x, y) -> offset_size * torus_ψ1(x, y)),
+    OneForm(1, (x, y) -> offset_size * -torus_ψ1(x, y)),
+    OneForm(2, (x, y) -> offset_size * torus_ψ2(x, y)),
+    OneForm(2, (x, y) -> offset_size * -torus_ψ2(x, y)),
 ]
 
 # make network

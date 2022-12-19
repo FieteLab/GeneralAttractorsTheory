@@ -1,7 +1,7 @@
 using Plots
 using LinearAlgebra
 
-import GeneralAttractors.ManifoldUtils: S², fibonacci_sphere, ψx, ψy, ψz
+import GeneralAttractors.ManifoldUtils: S², fibonacci_sphere, sphere_ψx, sphere_ψy, sphere_ψz
 import GeneralAttractors: SphericalDistance
 """
 Visulize vector fields on the unit S²⊂ℝ³
@@ -24,7 +24,7 @@ for x in eachcol(X)
     d = metric(x, p)
     d > .2 && continue
 
-    for (col, ψ) in zip((:black, :red, :blue), (ψx, ψy, ψz))
+    for (col, ψ) in zip((:black, :red, :blue), (sphere_ψx, sphere_ψy, sphere_ψz))
         v = ψ(x) .* scaling
         plot!(
             [x[1], x[1]+v[1]],
@@ -34,9 +34,9 @@ for x in eachcol(X)
         )
     end
 
-    v1 = ψx(x)
-    v2 = ψy(x)
-    v3 = ψz(x)
+    v1 = sphere_ψx(x)
+    v2 = sphere_ψy(x)
+    v3 = sphere_ψz(x)
     @info "dots" v1 ⋅ v2  v2 ⋅ v3  v3⋅v1
     @info "norms" norm(v1) norm(v2) norm(v3)
 end
