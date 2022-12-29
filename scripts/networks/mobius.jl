@@ -6,7 +6,7 @@ using GeneralAttractors
 using GeneralAttractors.Kernels
 using GeneralAttractors: lerp
 using GeneralAttractors.ManifoldUtils
-import GeneralAttractors.ManifoldUtils: Manifoldℝ², Mobius, ψ_t, ψ_θ1, ψ_θ2
+import GeneralAttractors.ManifoldUtils: Manifoldℝ², Mobius, MB_ψ1, MB_ψ2, MB_ψ3
 import GeneralAttractors: MobiusEuclidean, mobius_embedding
 
 println(Panel("Creating Mobius attractor", style = "green", justify = :center))
@@ -29,29 +29,29 @@ cover = CoverSpace(mfld)
 d_m = MobiusEuclidean()
 
 # connectivity kernel
-k_m = LocalGlobalKernel(α = 1.25, σ = 1.5, β = 1.25)
+k_m = LocalGlobalKernel(α = 2.5, σ = 1.5, β = 2.5)
 
 
 # define offset vector fields
 offsets =
     [
-        p -> ψ_t(p),
-        p -> -ψ_t(p),
-        p -> ψ_θ1(p),
-        p -> -ψ_θ1(p),
-        p -> ψ_θ2(p), 
-        p -> -ψ_θ2(p)
+        p -> MB_ψ1(p),
+        p -> -MB_ψ1(p),
+        p -> MB_ψ2(p),
+        p -> -MB_ψ2(p),
+        # p -> MB_ψ3(p), 
+        # p -> -MB_ψ3(p)
     ]
-offset_size = 0.25
+offset_size = 0.2
 
 # define one forms
 Ω = [
-    OneForm(1, (t, θ) -> offset_size * ψ_t(t, θ)),
-    OneForm(2, (t, θ) -> -offset_size * ψ_t(t, θ)),
-    OneForm(3, (t, θ) -> offset_size * ψ_θ1(t, θ)),
-    OneForm(4, (t, θ) -> -offset_size * ψ_θ1(t, θ)),
-    OneForm(5, (t, θ) -> offset_size * ψ_θ2(t, θ)),
-    OneForm(6, (t, θ) -> -offset_size * ψ_θ2(t, θ)),
+    OneForm(1, (t, θ) -> offset_size * MB_ψ1(t, θ)),
+    OneForm(2, (t, θ) -> -offset_size * MB_ψ1(t, θ)),
+    OneForm(3, (t, θ) -> offset_size * MB_ψ2(t, θ)),
+    OneForm(4, (t, θ) -> -offset_size * MB_ψ2(t, θ)),
+    # OneForm(5, (t, θ) -> offset_size * MB_ψ3(t, θ)),
+    # OneForm(6, (t, θ) -> -offset_size * MB_ψ3(t, θ)),
 ]
 
 
@@ -68,5 +68,5 @@ mobiuscan = CAN(
     offsets = offsets,
     Ω = Ω,
     σ=:softrelu,
-    α = 7,
+    α = 35,
 )

@@ -1,7 +1,7 @@
 module Can
 import Base.Iterators: product as ×  # cartesian product
 import Distances: Metric, pairwise
-import LinearAlgebra: ⋅, I
+import LinearAlgebra: ⋅, I, norm
 import ForwardDiff: jacobian
 
 
@@ -141,7 +141,7 @@ mutable struct CAN <: AbstractCAN
     α::Number                           # scaling factor to make bump speed the same as input speed
 end
 
-Base.string(can::CAN) = "CAN (dim=$(length(can.n))) - n neurons: $(can.n)"
+Base.string(can::CAN) = "CAN $(can.name) (dim=$(length(can.n))) - n neurons: $(can.n)"
 Base.print(io::IO, can::CAN) = print(io, string(can))
 Base.show(io::IO, ::MIME"text/plain", can::CAN) = print(io, string(can))
 
@@ -214,7 +214,7 @@ function CAN(
     Ws::Vector{Matrix} = []
     for offset in offsets
         # get pairwise offset connectivity
-        D::Matrix = get_pairwise_distance(offset, X, metric, offset_size, φ)
+        D::Matrix = get_pairwise_distance_with_offset(offset, X, metric, offset_size, φ)
 
         # get connectivity matrix with kernel
         W = kernel.k.(D)
@@ -286,7 +286,7 @@ abstract type AbstractWeightOffset end
 """
 Compute pairwise distance between neurons after applying weights offsets.
 """
-function get_pairwise_distance end
+function get_pairwise_distance_with_offset end
 
 
 """
@@ -366,7 +366,7 @@ end
 
 
 
-function get_pairwise_distance(
+function get_pairwise_distance_with_offset(
     offset::ConstantOffset,
     X::Matrix,
     metric::Metric,
@@ -397,7 +397,7 @@ Construct offsets given a list of vector field functions
 function get_offsets(offsets::Vector{Function}, ::Int, n::Tuple)::Vector{FieldOffset}
     @assert length(offsets) >= 2length(n) "Got $(length(offsets)) offset fields, expected at least: $(2length(n))"
 
-    # get "base" offsets and use them as displacements for visuals
+    # get "base" offsets and use them as displacements FOR PLOTTING ONLY
     k = length(offsets)
     displacements = map(i -> 1.5 .* [cos(i * 2π / k), sin(i * 2π / k)], 1:k)
 
@@ -408,21 +408,33 @@ end
 """
 Get pairwise neurons distance given vector field offsets applied directly to the neurons lattice
 """
-function get_pairwise_distance(
+function get_pairwise_distance_with_offset(
     offset::FieldOffset,
     X::Matrix,
     metric::Metric,
     offset_size::Number,
     ::Nothing,
 )::Matrix
-    δx = by_column(offset.ψ, X)
+    # δx = by_column(offset.ψ, X)
+
+    # n = norm(δx)
+
+    δx = hcat(
+        map(
+            x -> offset.ψ(x),
+            eachcol(X)
+        )...
+    )
+
     pairwise(metric, X .- (offset_size .* δx), X)
+    # X̂ = by_column(x -> x .- offset.ψ(x), X)
+    # pairwise(metric, X̂, X)
 end
 
 
 """
 ---
-    get_pairwise_distance(
+    get_pairwise_distance_with_offset(
         offset::FieldOffset,
         X::Matrix,
         metric::Metric,
@@ -434,13 +446,14 @@ Offset vectors in the pairwise distance are computed on an embedding of
 the base manifold. Prior to computing the distance, neurons coordinates are 
 offset according to a vector given by a vector field defined over the embedded manifold. 
 """
-function get_pairwise_distance(
+function get_pairwise_distance_with_offset(
     offset::FieldOffset,
     X::Matrix,
     metric::Metric,
     offset_size::Number,
     φ::Function,
 )::Matrix
+    error("why was this called")
     # get coordinates in embedding space
     Y = by_column(φ, X)  # matrix q × n | q: embedding dimension, n: number of points
 

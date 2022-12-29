@@ -20,7 +20,8 @@ import ..ManifoldUtils:
     sphere_embedding,
     CoverSpace,
     Ring,
-    apply_boundary_conditions!
+    apply_boundary_conditions!,
+    AbstractVectorField
 
 export Simulation, run_simulation
 export Trajectory

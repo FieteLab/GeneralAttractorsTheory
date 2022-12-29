@@ -1,47 +1,38 @@
 using ForwardDiff: jacobian
 using LinearAlgebra
-
+using Distances: euclidean
 
 # ---------------------------------------------------------------------------- #
 #                                     RING                                     #
 # ---------------------------------------------------------------------------- #
 ring_ψ(x) = ring_ψ(x...)
-function ring_ψ(x::Number)
-    if x < π
-        p = min(max(0.1, x/π), .9)
-        return [0.05*p+(1-p)*1]
-    else
-        p = min(max(0.1, (x-π)/π), .9)
-        return [1*p+(1-p)*0.05]
-    end
-    
-end
-
+ring_ψ(x::Number) = (sin(x)+1.1)/2
 # ---------------------------------------------------------------------------- #
 #                                  PLANE/TORUS                                 #
 # ---------------------------------------------------------------------------- #
 
-ℝ²_ψ1(x) = ℝ²_ψ1(x...)
-ℝ²_ψ1(x, y) = [sin(x) + 2, 0]
+torus_ψ1(x) = torus_ψ1(x...)
+torus_ψ1(x, y) = [(
+    sin(x/2) + 1.1
+    )/2, -.2]
+# torus_ψ1(x, y) = [1, 1]
 
-
-ℝ²_ψ2(x) = ℝ²_ψ2(x...)
-# ℝ²_ψ2(x, y) = [0, sin(y) + 2]
-ℝ²_ψ2(x, y) = [0, 1]
-
+torus_ψ2(x) = torus_ψ2(x...)
+# torus_ψ2(x, y) = [-0.2, (sin(y/2) + 1.01)/2]
+torus_ψ2(x, y) =  [[0, 1] [-1, 0]]  * torus_ψ1(x, y)
 
 # ---------------------------------------------------------------------------- #
 #                                    MOBIUS                                    #
 # ---------------------------------------------------------------------------- #
-# -------------------- vector fields on the mobius domain -------------------- #
-ψ_t(t, θ) = [0, 1]
-ψ_t(p) = ψ_t(p...)
 
-ψ_θ1(t, θ) = [cos(θ*2), 0]
-ψ_θ1(p) = ψ_θ1(p...)
+""" constant """
+MB_ψ1(t, θ) = [0, 1]
+MB_ψ2(t, θ) = [1, 0]
+MB_ψ3(t, θ) = [-1, 0]
 
-ψ_θ2(t, θ) = [sin(θ*2), 0]
-ψ_θ2(p) = ψ_θ2(p...)
+MB_ψ1(p) = MB_ψ1(p...)
+MB_ψ2(p) = MB_ψ2(p...)
+MB_ψ3(p) = MB_ψ3(p...)
 
 
 
@@ -88,17 +79,20 @@ tangent to the sphere and correpsonding to a rotation.
 ∂y = [0, 1, 0]
 ∂z = [0, 0, 1]
 
+
+normalize(x) = norm(x) > 0 ? x ./ norm(x) : x
+
 """ rotation around X axis """
-ψx(x, y, z) = (z * ∂y - y * ∂z)
-ψx(p) = ψx(p...)
+sphere_ψx(x, y, z)::Vector = (z * ∂y - y * ∂z) |> normalize
+sphere_ψx(p) = sphere_ψx(p...)
 
 """ rotation around Y axis """
-ψy(x, y, z) = (z * ∂x - x * ∂z)
-ψy(p) = ψy(p...)
+sphere_ψy(x, y, z)::Vector = (z * ∂x - x * ∂z) |> normalize
+sphere_ψy(p) = sphere_ψy(p...)
 
 """ rotation around Z axis """
-ψz(x, y, z) = (x * ∂y - y * ∂x)
-ψz(p) = ψz(p...)
+sphere_ψz(x, y, z)::Vector = (x * ∂y - y * ∂x) |> normalize
+sphere_ψz(p) = sphere_ψz(p...)
 
 φ = sphere_embedding
 

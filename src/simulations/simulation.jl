@@ -64,21 +64,26 @@ end
 function velocity_input(
     ωᵢ::OneForm,
     v::Vector,
-    x::Vector,
+    on_mfld_x::Vector,
+    J::Matrix,
 )
 
-    ωᵢ(x, v)/ (norm(ωᵢ(x)))
-    # v[ωᵢ.i] * sign(ωᵢ(x, v))
+    # ωᵢ(on_mfld_x, J*v) 
+    ωᵢ(on_mfld_x, v) 
 end
 
 
 function pushforward(ρ::Function, x::Vector)::Matrix
     J = jacobian(ρ, x)
 
+
     # perturb `x` if jacobian has nans
-    while any(isnan.(J))
-        J = jacobian(ρ, x + rand(size(x)) .* 0.1)
-    end
+    # η = 0.01
+    # while any(isnan.(J))
+    #     J = jacobian(ρ, x + rand(size(x)) .* η)
+    #     η *= 1.25
+    # end
+    J[isnan.(J)] .= 0
     return J
 end
 
@@ -86,9 +91,9 @@ end
     step!(simulation::Simulation, x::Vector, v::Vector) 
 
 Step the simulation dynamics given that the "particle" is at `x`
-and moving with velocity vector `x`.
+and moving with velocity vector `v`.
 """
-function step!(simulation::Simulation, x::Vector, v::Vector; s₀ = nothing)
+function step!(simulation::Simulation, decoded_x::Vector, on_mfld_x::Vector, v::Vector; s₀ = nothing)
     # prep variables
     can = simulation.can
     b₀ = simulation.b₀
@@ -97,15 +102,16 @@ function step!(simulation::Simulation, x::Vector, v::Vector; s₀ = nothing)
     d = size(S, 2)
 
     # get velocity input
-    J = pushforward(can.C.ρ, x)
+    J = pushforward(can.C.ρ, decoded_x)
     V =
         can.α .* map(
-            o -> velocity_input(o, v, x),
-            can.Ω,
+            i -> velocity_input(can.Ω[i], v, on_mfld_x, J),
+            1:length(can.Ω),
         ) |> vec  # inputs vector of size 2d
-    # V = v
-    r(x) = round(x; digits=4)
-    # @info "data" r.(v) r.(V)
+
+    # r(x) = round(x; digits=4)
+    # println("\n\n" * string(r.(v)))
+    # println(string(r.(V)))
 
     # update each population with each population's input
     for i = 1:d, j = 1:d
@@ -181,20 +187,22 @@ function run_simulation(
             end
 
             # get trajectory data
-            x = simulation.trajectory.X[i, :]
-            v = simulation.trajectory.V[i, :]
+            v = simulation.trajectory.V[min(i+1, N), :]
 
             # decode manifold bump position
-            decoder_initialized && (X̄[i, :] = decoder(∑ⱼ(simulation.S), simulation.can))
-            decoder_initialized || (X̄[i, :] = x)
+            s̄ = ∑ⱼ(simulation.S)
+            if decoder_initialized
+                decoded_x, on_mfld_x = decoder(s̄, simulation.can)
+            else
+                decoded_x, on_mfld_x = simulation.trajectory.X[i, :], decode_peak_location(s̄, simulation.can)
+            end
+            X̄[i, :] = decoded_x
 
             # step simulation
-            x̂ = decoder_initialized ? decoder.x : x
-            # x̂ = x
-            S̄ = step!(simulation, x̂, v; s₀ = s₀)
+            S̄ = step!(simulation, decoded_x, on_mfld_x, v; s₀ = s₀)
 
             # initialize decoder if necessary
-            if i >= simulation.trajectory.still && !decoder_initialized
+            if (i >= simulation.trajectory.still + 0) && !decoder_initialized
                 # prep decoder
                 decoder = Decoder(
                     simulation.trajectory.X[i, :],
@@ -213,11 +221,11 @@ function run_simulation(
                     (time[framen] > discard_first_ms) &&
                     # (framen > simulation.trajectory.still) &&
                     begin
-                        try
+                        # try
                             plot(simulation, time[framen], framen, x, v, X̄, φ)
-                        catch e
-                            @warn "cacca" framen e
-                        end
+                        # catch e
+                        #     @warn "cacca" framen e
+                        # end
                         frame(anim)
                     end
             end

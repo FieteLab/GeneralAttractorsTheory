@@ -1,4 +1,4 @@
-using Distances: UnionMetric, PeriodicEuclidean, euclidean, Metric
+using Distances: euclidean, Metric
 import Distances
 import LinearAlgebra: ⋅
 import Manifolds: Sphere as 𝕊
@@ -15,12 +15,7 @@ end
 
 SphericalDistance() = SphericalDistance(𝕊(2))
 
-# (dist::SphericalDistance)(p1, p2) = mdist(dist.s, p1, p2)
-(dist::SphericalDistance)(p1, p2) = begin
-    c = max(p1 ⋅ p2, -1)
-    c = min(c, 1)
-    acos(c)
-end
+(dist::SphericalDistance)(p1, p2) = mdist(dist.s, p1, p2)
 Distances.eval_op(::SphericalDistance, ::Float64, ::Float64) = 1.0
 
 
@@ -71,48 +66,6 @@ struct MobiusEuclidean <: UnionMetric
 end
 
 MobiusEuclidean() = MobiusEuclidean(1.0, π, PeriodicEuclidean([Inf, 2π]))
-
-# """ Parametrized line in ℝ² """
-# line(p, q, t) = [
-#     t*p[1]+(1-t)*q[1],
-#     t*p[2]+(1-t)*q[2],
-# ]
-
-# """ Length on a line in ℝ² """
-# # ℓ(l::Matrix) = sum(
-# #     sqrt.(diff(l[1, :]).^2 + diff(l[2, :]).^2)
-# # )
-# ℓ(l::Matrix) = sum(
-#     sqrt.(diff(l[1, :]).^2 + diff(l[2, :]).^2 + diff(l[3, :]).^2)
-# )
-
-# function (dist::MobiusEuclidean)(p, q)
-#     # first get a direct line between p,q
-#     l1 = hcat(
-#         map(
-#             t->line(p, q, t), 0:.01:1
-#         )...
-#     )
-
-#     # then get two lines segments going around the "other side"
-#     l2_a = hcat(
-#         map(
-#             t->line(p, [0, q[2]-2π], t), 0:.01:1
-#         )...
-#     )
-
-#     stopper = findfirst(l2_a[2, :] .>= 0.0)
-#     l2_a = l2_a[:, stopper:end]
-#     l2_b = hcat(
-#         map(
-#             t->line([-l2_a[1, 1], 2π], q, t), 0:.01:1
-#         )...
-#     )
-
-#     # then get the smallest length between the two lines
-#     return min((ℓ ∘ mobius_embedding)(l1), (ℓ ∘ mobius_embedding)(l2_a) + (ℓ ∘ mobius_embedding)(l2_b))
-# end
-
 
 function (dist::MobiusEuclidean)(q, p)
     @inbounds begin

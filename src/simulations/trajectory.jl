@@ -1,4 +1,7 @@
 import Term.Repr: @with_repr
+using Statistics
+
+
 # ----------------------------------- utils ---------------------------------- #
 """
     function piecewise_linear(
@@ -38,13 +41,14 @@ Prepend an initial stationary pahse to a trajectory.
 Used to let the network settle in into a selected
 state before starting a simulation with velocity inputs.
 """
-function add_initial_still_phase(X::Matrix, V::Matrix, still, x₀)
+function add_initial_still_phase(X::Matrix, X̄::Matrix, V::Matrix, still, x₀)
     standing = zeros(still, length(x₀))
     for i = 1:length(x₀)
         standing[:, i] .= x₀[i]
     end
 
     X = vcat(standing, X)
+    X̄ = vcat(standing, X̄)
     V = vcat(zeros(still, length(x₀)), V)
     return X, V
 end
@@ -56,12 +60,47 @@ end
 1d white noise trace of length N, std `σ` and mean `μ`. Optionally smoothed.
 """
 function random_variable(N::Int, μ::Number, σ::Number; smoothing_window = nothing)
-    x = (rand(N) .- 0.5) .* σ .+ μ
-    isnothing(smoothing_window) || (x = moving_average(x, smoothing_window))
-    return x
+    v = (rand(N) .- 0.5) .* σ .+ μ
+
+   isnothing(smoothing_window) || (v = moving_average(v, smoothing_window))
+    return v
 end
 
 
+
+"""
+    get_closest_neuron(x, X)
+
+Given a point x in a manifold get the coordinates
+x̂ ∈ X of the closest neuron given a manifold
+metric `d`.
+"""
+function get_closest_neuron(x, X, d)
+    Δ = map(x̂ -> d(x̂, x), eachcol(X))
+    return X[:, argmin(Δ)]
+end
+
+"""
+Ensure a vector `v` has magnitude ∈ [-vmax, vmax]
+"""
+function enforce_vmax(v, vmax)
+    μ = norm(v)
+    return if μ > vmax
+        return v ./ μ .* vmax
+    else
+        v
+    end
+end
+
+
+function enforce_vmin(v, vmin)
+    μ = norm(v)
+    return if μ < vmin
+        return v ./ μ .* vmin
+    else
+        v
+    end
+end
 
 
 # ---------------------------------------------------------------------------- #
@@ -78,6 +117,7 @@ X (T×d) is the coordinates of the trajectory's trace.
 @with_repr struct Trajectory
     M::AbstractManifold
     X::Matrix
+    X̄::Matrix   # on manifold trajectory
     V::Matrix
     still::Int # number of warmup frames at the start
 end
@@ -136,9 +176,10 @@ function Trajectory(
         modality::Symbol = :random,
         n_piecewise_segments::Int = 3,
         scale::Number = 1,
+        smoothing_window=11,
     )   
     
-    ψs::Vector = M.ψs # get manifold vector fields
+    ψs::Vector = can.C.M.ψs # get manifold vector fields
     n_vfields = length(ψs)
 
     # get manifold dimensionality
@@ -149,13 +190,14 @@ function Trajectory(
     μv = μv isa Number ? repeat([μv], n_vfields) : μv
     @assert length(σv) == n_vfields
     @assert length(μv) == n_vfields
-    @assert n_vfields >= d
+    # @assert n_vfields >= d
 
 
     # get starting point
     x₀ = x₀ isa Number ? repeat([x₀], d) : x₀
     x₀ = !isnothing(x₀) ? x₀ : rand(M)
-    @assert length(x₀) == d
+    x₀ = get_closest_neuron(x₀, can.X, can.metric)
+    @assert length(x₀) == d "Got x₀: $(x₀) and d=$d"
 
 
     # get velocity vector magnitude in components at each frame
@@ -166,9 +208,10 @@ function Trajectory(
         elseif modality == :constant
             ones(T) .* μv[i]
         else
-            x = random_variable(T, μv[i], σv[i]; smoothing_window = 101)
+            x = random_variable(T, μv[i], σv[i]; smoothing_window = smoothing_window) * scale
             clamp!(x, -vmax, vmax)
-            x
+            ramp = [range(0, 1, length=100)..., ones(T-100)...]
+            x .* ramp
         end
         push!(Vs, v)
     end
@@ -179,47 +222,42 @@ function Trajectory(
     """
     ∑ψ(p, t) = map(i -> Vs[i][t] * ψs[i](p), 1:n_vfields) |> sum
 
-    # get position and velocity vectors
+
+    # first, generate a trajectory on the M mfld
     X, V = Matrix(reshape(zeros(T, d), T, d)), Matrix(reshape(zeros(T, d), T, d))
-    X[1, :] = get_closest_neuron(x₀, can.X, can.metric)
-    x_mfd = x₀ # keep track of where on the manifold we are
-    for t = 2:T
-        # get velocity vector `v` at time `t` given vfields at position `x`.
+    X[1, :] =  x₀
+    for t in 2:T
         x = X[t-1, :]
+
+        # get a velocity vector
         v = ∑ψ(x, t)
-        # v = norm(v) > vmax ? v / norm(v) * vmax : v
-        v *= scale
 
-        # get position at next time step
+        # make sure vmax magnitude is in range
+        v = enforce_vmax(v, vmax)
+        v = enforce_vmin(v, 0.01)
+
+        # update on mfld position
         x̂ = x + (v * dt)
-        x̂, v_correction = apply_boundary_conditions!(x̂, M)
-        x_mfd = x_mfd + (v * dt)
-        if can.C.M != can.C.N
-            x_mfd, _ = apply_boundary_conditions!(x_mfd, can.C.N)
-        end
-
-        # store results
+        x̂, v_correction = apply_boundary_conditions!(x̂, can.C.M)
+        
+        # store
         X[t, :] = x̂
         V[t-1, :] = v .* v_correction
-        # V[t, :] = [Vs[1][t]]
+    end
+
+    # if the M and N manifolds are the same, we're done
+    if can.C.M == can.C.N
+        X̄ = X
+    else
+        # reconstruct the N mfld trajecotry using the cover map ρ
+        X̄ = by_column(can.C.ρ, Matrix(X'))' |> Matrix
     end
 
     # add a still phase
     still > 0 && begin
-        X, V = add_initial_still_phase(X, V, still, x₀)
+        X, V = add_initial_still_phase(X, X̄, V, still, x₀)
     end
-    return Trajectory(M, X, V, still)
+    return Trajectory(M, X, X̄, V, still)
 end
 
 
-"""
-    get_closest_neuron(x, X)
-
-Given a point x in a manifold get the coordinates
-x̂ ∈ X of the closest neuron given a manifold
-metric `d`.
-"""
-function get_closest_neuron(x, X, d)
-    Δ = map(x̂ -> d(x̂, x), eachcol(X))
-    return X[:, argmin(Δ)]
-end

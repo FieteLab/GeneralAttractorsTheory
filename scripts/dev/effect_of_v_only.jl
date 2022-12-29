@@ -11,7 +11,7 @@ using GeneralAttractors.ManifoldUtils
 using GeneralAttractors.Analysis
 import GeneralAttractors.Analysis.ManifoldAnalysis: population_average
 import GeneralAttractors.Simulations: decode_peak_location, plot_trajectory_and_decoded
-
+import GeneralAttractors.Analysis: get_bump_speed
 
 include("../networks/torus.jl")
 
@@ -22,8 +22,10 @@ and input velocities to see how it affects the bump speed
 
 SIMULATE = true
 fld_name = "torus_v_only"
+can = toruscan
+
 dt = 0.5
-V = range(0.001, 1.0, length = 5) # speed stimuli
+V = range(0.001, 0.05, length = 7) # speed stimuli
 
 
 # ------------------------------ run simulations ----------------------------- #
@@ -43,39 +45,24 @@ if SIMULATE
         "\n"^6 / hLine() |> print
         println(Panel("Running sim $j/$(length(V))", style = "red", justify = :center))
 
-
-        can = CAN(
-            "torus",
-            cover,
-            n,
-            ξ_t,
-            d_t,
-            k_t;
-            offset_size = 1.5,
-            # Ω = Ω
-        )
         TJ = Trajectory(
             can;
             T = nframes,
             dt = dt,
-            σv = v,
             μv = v,
             vmax = v,
-            σθ = 0.0,
-            θ₀ = 0,
-            x₀ = 1,
-            y₀ = 1,
             still = still,
+            modality=:constant
         )
 
 
-        simulation = Simulation(can, TJ; η = 0.0, b₀ = 7.0)
+        simulation = Simulation(can, TJ; η = 0.0, b₀ = 7.0, τ=5)
 
         # run
         h, X̄ = @time run_simulation(
             simulation;
             frame_every_n = nothing,
-            discard_first_ms = 50,
+            discard_first_ms = still,
             average_over_ms = 1,
             fps = 10,
             s₀ = 1.0 .* activate,
@@ -87,38 +74,15 @@ if SIMULATE
 end
 
 
-# ------------------------------- run analysis ------------------------------- #
-can = CAN("torus", cover, n, ξ_t, d_t, k_t; offset_size = 0.1)
-
-
-
-function ∑(x)
-    n, _, m = size(x)
-    real.(reshape(mean(x, dims = 2), (n, m)))
-end
-
 
 S = []
 trajectory_V = []
 for v in V
-    # get trjectory's speed
-    X = load_data(fld_name, "v_$(v)_torus_sim_trajectory_X")
-    traj_v = sum(diff(X[:, 1])) / (size(X, 1) * dt)
-    push!(trajectory_V, traj_v)
+    sim_name = "v_$(v)_torus"
+    push!(trajectory_V, v)
 
     # load state history
-    history = load_simulation_history(fld_name, "v_$(v)_torus_history")
-    s = ∑(history.S)[:, 30:end]
-
-    # get peak location speed
-    peak_location = hcat(map(st -> decode_peak_location(st, can), eachcol(s))...)
-
-    on_mfld_speed = map(
-        i -> can.metric(peak_location[:, i], peak_location[:, i-1]),
-        2:size(peak_location, 2),
-    )
-    average_speed = sum(on_mfld_speed) / (length(on_mfld_speed) * dt)  # tot displacement over time
-    push!(S, average_speed / (0.5))
+    push!(S, get_bump_speed(can, fld_name, sim_name*"_history"))
 end
 
 

@@ -1,6 +1,7 @@
 using GeneralAttractors
 using Plots
 using Term: STACKTRACE_HIDDEN_MODULES
+import GeneralAttractors: by_column
 
 STACKTRACE_HIDDEN_MODULES[] = ["Plots"]
 
@@ -9,9 +10,9 @@ include("../networks/mobius.jl")
 X = mobiuscan.X
 M = by_column(mobius_embedding, X)
 
-idx = 9
+idx = 610
 plts = []
-for i = [1, 3, 6]
+for i = [1, 3]
     conn = mobiuscan.Ws[i][idx, :] #  .- spherecan_noffset.Ws[i][idx, :]
     p = Plots.scatter3d(
         eachrow(M)...,
@@ -21,7 +22,7 @@ for i = [1, 3, 6]
         msw = 0,
         alpha = 1,
         label = nothing,
-        camera = (90, 15),
+        camera = (90, 0),
         color = :bwr,
         xlim = [0, 1.5],
     )
@@ -37,4 +38,4 @@ for i = [1, 3, 6]
     push!(plts, p)
 end
 
-plot(plts..., layout = (2, 2), size = (1000, 600), colorbar = nothing)
+plot(plts..., layout = (3, 1), size = (800, 1000), colorbar = nothing)

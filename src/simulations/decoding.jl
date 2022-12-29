@@ -46,15 +46,14 @@ that are closest to it.
 function (dec::Decoder)(s::Vector, can::AbstractCAN)
     # get the position of activity bump in neural mfld coordinates
     n̂ = decode_peak_location(s, can)
-    can.C.M == can.C.N && return n̂
+    can.C.M == can.C.N && return (n̂, n̂)
 
     # get Δn relative to previous bump coordinates
     Δn = n̂ .- dec.n
 
     if norm(Δn) < 1
         # for small on-mfld movement, just look at the change in coordinates
-        dec.x += Δn * dec.α
-        dec.x̂ += Δn
+        dec.x += Δn
         dec.n = n̂
     else
         # for large Δn look at the pre-image of n in the variable manifold given cover map
@@ -62,11 +61,10 @@ function (dec::Decoder)(s::Vector, can::AbstractCAN)
 
         # get the point closest to the latest decoded location (minus manifold shift)
         d = map(
-            i -> can.C.M.metric(dec.x̂ - dec.Δ, candidates[:, i]),
+            i -> can.C.M.metric(dec.x - dec.Δ, candidates[:, i]),
             1:size(candidates, 2),
         )
         selected = argmin(d)
-        @debug "decoding recalibration triggered" d[selected]
 
         # find potential errors in decoding
         if d[selected] > 2.5
@@ -74,16 +72,11 @@ function (dec::Decoder)(s::Vector, can::AbstractCAN)
             @warn "Decoding problems" r.(dec.x) r.(dec.n) r.(n̂) dec.Δ
         end
 
-        # get change in latent representation with no scaling
-        x̂ = candidates[:, selected] + dec.Δ
-        Δx̂ = x̂ .- dec.x̂
-
-        # set it as the new "decoded" position using scaling
-        dec.x += Δx̂ * dec.α
-        dec.x̂ = x̂
+        # set the new point as the next decoded point
+        dec.x = candidates[:, selected] # + dec.Δ
 
         # update stored representation of n̂ location on neural manifold
         dec.n = n̂
     end
-    return dec.x
+    return dec.x, n̂
 end

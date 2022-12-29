@@ -32,12 +32,12 @@ trajectory = Trajectory(
     ringcan;
     T = nframes,
     dt = dt,
-    σv = 0.1,
+    σv = 0.5,
     μv = 0.0,
     x₀ = θ₀,
     still = still,
-    vmax = 0.01,
-    scale=2,
+    vmax = 0.03,
+    # scale=2,
 )
 simulation = Simulation(ringcan, trajectory; η = 0, b₀ = 0.1, τ = 10.0)
 

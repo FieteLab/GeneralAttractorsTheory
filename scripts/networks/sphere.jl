@@ -6,7 +6,7 @@ using GeneralAttractors
 using GeneralAttractors.Kernels
 using GeneralAttractors: lerp
 using GeneralAttractors.ManifoldUtils
-import GeneralAttractors.ManifoldUtils: sphere_embedding, ψx, ψy, ψz, fibonacci_sphere
+import GeneralAttractors.ManifoldUtils: sphere_embedding, sphere_ψx, sphere_ψy, sphere_ψz, fibonacci_sphere
 import GeneralAttractors.Can: OneForm
 
 
@@ -15,7 +15,7 @@ println(Panel("Creating sphere attractor", style = "green", justify = :center))
 
 
 # number of neurons
-m = 64
+m = 40
 n = m^2
 
 # get neurons on S² ⊂ ℝ³
@@ -26,26 +26,30 @@ I = [(i,) for i = 1:size(X, 2)]
 
 # distance metric on the unit sphere
 d_s = SphericalDistance()
+# d_s = SphericalAngle()
 
 # kernel  
-k_s = LocalGlobalKernel(α = 0.5, σ = 0.5, β = 0.5)
+k_s = LocalGlobalKernel(α = 2.5, σ = 40.5, β = 2.5)
 
 # cover space
 cover = CoverSpace(S²)  # trivial cover space
 
 # define offset vector fields
-offsets = [p -> ψx(p), p -> -ψx(p), p -> ψy(p), p -> -ψy(p), p -> ψz(p), p -> -ψz(p)]
-offset_size = 0.15
+offsets = [
+    p -> sphere_ψx(p), p -> -sphere_ψx(p),
+    p -> sphere_ψy(p), p -> -sphere_ψy(p), 
+    p -> sphere_ψz(p), p -> -sphere_ψz(p)
+]
+offset_size = 0.1
 
 # define one forms
-α = 1 / offset_size .* 2
 Ω = [
-    OneForm(1, (x, y, z) -> α * ψx(x, y, z)),
-    OneForm(2, (x, y, z) -> -α * ψx(x, y, z)),
-    OneForm(3, (x, y, z) -> α * ψy(x, y, z)),
-    OneForm(4, (x, y, z) -> -α * ψy(x, y, z)),
-    OneForm(5, (x, y, z) -> α * ψz(x, y, z)),
-    OneForm(6, (x, y, z) -> -α * ψz(x, y, z)),
+    OneForm(1, (x, y, z) -> offset_size * sphere_ψx(x, y, z)),
+    OneForm(1, (x, y, z) -> -offset_size * sphere_ψx(x, y, z)),
+    OneForm(2, (x, y, z) -> offset_size * sphere_ψy(x, y, z)),
+    OneForm(2, (x, y, z) -> -offset_size * sphere_ψy(x, y, z)),
+    OneForm(3, (x, y, z) -> offset_size * sphere_ψz(x, y, z)),
+    OneForm(3, (x, y, z) -> -offset_size * sphere_ψz(x, y, z)),
 ]
 
 
@@ -61,4 +65,5 @@ spherecan = CAN(
     offset_size = offset_size,
     offsets = offsets,
     Ω = Ω,
+    α=46,
 )
