@@ -97,7 +97,8 @@ X (T×d) is the coordinates of the trajectory's trace.
 end
 
 
-Trajectory(can::AbstractCAN, args...; kwargs...) = Trajectory(can, can.C.M, args...; kwargs...)
+Trajectory(can::AbstractCAN, args...; kwargs...) =
+    Trajectory(can, can.C.M, args...; kwargs...)
 
 
 
@@ -138,20 +139,20 @@ Arguments:
 
 """
 function Trajectory(
-        can::AbstractCAN,
-        M::AbstractManifold;
-        T::Int = 250,
-        dt::Float64 = 0.5,
-        σv::Union{Number,Vector} = 1,  # variability of each speed field
-        μv::Union{Number,Vector} = 0,  # bias of each speed field
-        x₀::Union{Nothing,Number,Vector} = nothing,
-        still::Int = 0,
-        vmax::Number = 0.075,
-        modality::Symbol = :random,
-        n_piecewise_segments::Int = 3,
-        scale::Number = 1,
-    )   
-    
+    can::AbstractCAN,
+    M::AbstractManifold;
+    T::Int = 250,
+    dt::Float64 = 0.5,
+    σv::Union{Number,Vector} = 1,  # variability of each speed field
+    μv::Union{Number,Vector} = 0,  # bias of each speed field
+    x₀::Union{Nothing,Number,Vector} = nothing,
+    still::Int = 0,
+    vmax::Number = 0.075,
+    modality::Symbol = :random,
+    n_piecewise_segments::Int = 3,
+    scale::Number = 1,
+)
+
     ψs::Vector = can.C.M.ψs # get manifold vector fields
     n_vfields = length(ψs)
 
@@ -182,7 +183,7 @@ function Trajectory(
         else
             x = random_variable(T, μv[i], σv[i]; smoothing_window = 101)
             clamp!(x, -vmax, vmax)
-            ramp = [range(0, 1, length=100)..., ones(T-100)...]
+            ramp = [range(0, 1, length = 100)..., ones(T - 100)...]
             x .* ramp
         end
         push!(Vs, v)
@@ -197,8 +198,8 @@ function Trajectory(
 
     # first, generate a trajectory on the M mfld
     X, V = Matrix(reshape(zeros(T, d), T, d)), Matrix(reshape(zeros(T, d), T, d))
-    X[1, :] =  x₀
-    for t in 2:T
+    X[1, :] = x₀
+    for t = 2:T
         x = X[t-1, :]
 
         # get a velicirt vector
@@ -207,7 +208,7 @@ function Trajectory(
         # update on mfld position
         x̂ = x + (v * dt)
         x̂, v_correction = apply_boundary_conditions!(x̂, can.C.M)
-        
+
         # store
         X[t, :] = x̂
         V[t-1, :] = v .* v_correction
@@ -227,5 +228,3 @@ function Trajectory(
     end
     return Trajectory(M, X, X̄, V, still)
 end
-
-

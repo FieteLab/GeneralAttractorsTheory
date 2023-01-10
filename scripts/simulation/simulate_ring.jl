@@ -24,7 +24,7 @@ still = 50  # initialization period
 θ₀ = 5 # initialize state at position
 d = ringcan.metric.(θ₀, ringcan.X[1, :])
 activate = zeros(length(d))
-activate[d .< .4] .= 1
+activate[d.<0.4] .= 1
 
 # initialize trajectory and simulation
 nframes = (Int ∘ round)(duration / dt)

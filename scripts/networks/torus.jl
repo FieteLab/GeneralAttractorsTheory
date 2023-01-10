@@ -36,7 +36,7 @@ function ρⁱ(x, y; n = 50)
     end
     return pts
 end
-ρⁱ(w::Vector; n=6) = ρⁱ(w...; n=n)
+ρⁱ(w::Vector; n = 6) = ρⁱ(w...; n = n)
 
 cover = CoverSpace(Manifoldℝ²(100), Torus(), ρ, ρⁱ)
 
@@ -56,12 +56,7 @@ k_t = LocalGlobalKernel(α = 2.5, σ = 1.5, β = 2.5)
 
 
 offset_size = 0.3
-offsets = [
-    p -> ℝ²_ψ1(p),
-    p -> -ℝ²_ψ1(p),
-    p -> ℝ²_ψ2(p),
-    p -> -ℝ²_ψ2(p),
-]
+offsets = [p -> ℝ²_ψ1(p), p -> -ℝ²_ψ1(p), p -> ℝ²_ψ2(p), p -> -ℝ²_ψ2(p)]
 
 # one forms
 Ω = OneForm[

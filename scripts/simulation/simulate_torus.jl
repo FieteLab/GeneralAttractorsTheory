@@ -4,13 +4,14 @@ using Plots
 using GeneralAttractors
 using GeneralAttractors.Simulations
 using Term
-install_term_stacktrace(hide_frames=true)
+install_term_stacktrace(hide_frames = true)
 
 using Distances
 using GeneralAttractors.Kernels
 using GeneralAttractors: lerp
 using GeneralAttractors.ManifoldUtils
-import GeneralAttractors.Simulations: plot_trajectory_and_decoded, plot_on_mfld_trajectory_and_history
+import GeneralAttractors.Simulations:
+    plot_trajectory_and_decoded, plot_on_mfld_trajectory_and_history
 
 include("../networks/torus.jl")
 

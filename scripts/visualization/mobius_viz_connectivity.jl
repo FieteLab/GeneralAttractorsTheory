@@ -12,7 +12,7 @@ M = by_column(mobius_embedding, X)
 
 idx = 610
 plts = []
-for i = [1, 3]
+for i in [1, 3]
     conn = mobiuscan.Ws[i][idx, :] #  .- spherecan_noffset.Ws[i][idx, :]
     p = Plots.scatter3d(
         eachrow(M)...,
@@ -27,13 +27,7 @@ for i = [1, 3]
         xlim = [0, 1.5],
     )
 
-    scatter3d!(
-        [M[1, idx]],
-        [M[2, idx]],
-        [M[3, idx]],
-        ms = 8,
-        color = :black,
-    )
+    scatter3d!([M[1, idx]], [M[2, idx]], [M[3, idx]], ms = 8, color = :black)
 
     push!(plts, p)
 end

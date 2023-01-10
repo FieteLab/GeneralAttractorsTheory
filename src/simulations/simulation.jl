@@ -61,14 +61,9 @@ end
 ∑ⱼ(x) = sum(x, dims = 2) |> vec
 
 
-function velocity_input(
-    ωᵢ::OneForm,
-    v::Vector,
-    on_mfld_x::Vector,
-    J::Matrix,
-)
+function velocity_input(ωᵢ::OneForm, v::Vector, on_mfld_x::Vector, J::Matrix)
 
-    ωᵢ(on_mfld_x, J*v) 
+    ωᵢ(on_mfld_x, J * v)
 end
 
 
@@ -90,7 +85,13 @@ end
 Step the simulation dynamics given that the "particle" is at `x`
 and moving with velocity vector `v`.
 """
-function step!(simulation::Simulation, decoded_x::Vector, on_mfld_x::Vector, v::Vector; s₀ = nothing)
+function step!(
+    simulation::Simulation,
+    decoded_x::Vector,
+    on_mfld_x::Vector,
+    v::Vector;
+    s₀ = nothing,
+)
     # prep variables
     can = simulation.can
     b₀ = simulation.b₀
@@ -100,11 +101,7 @@ function step!(simulation::Simulation, decoded_x::Vector, on_mfld_x::Vector, v::
 
     # get velocity input
     J = pushforward(can.C.ρ, decoded_x)
-    V =
-        can.α .* map(
-            i -> velocity_input(can.Ω[i], v, on_mfld_x, J),
-            1:length(can.Ω),
-        ) |> vec  # inputs vector of size 2d
+    V = can.α .* map(i -> velocity_input(can.Ω[i], v, on_mfld_x, J), 1:length(can.Ω)) |> vec  # inputs vector of size 2d
 
     # r(x) = round(x; digits=4)
     # println("\n\n" * string(r.(v)))

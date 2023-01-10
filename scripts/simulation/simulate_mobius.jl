@@ -32,7 +32,7 @@ trajectory = Trajectory(
     dt = dt,
     # σv = [0.5, 0.3],
     σv = 0,
-    μv = [0.1, .0],
+    μv = [0.1, 0.0],
     x₀ = x₀,
     still = still,
     vmax = 0.1,
@@ -40,11 +40,10 @@ trajectory = Trajectory(
 plot(trajectory) |> display
 
 
-simulation = Simulation(mobiuscan, trajectory; 
-        η = 0.0, b₀ = 0.5, τ = 5.0)
+simulation = Simulation(mobiuscan, trajectory; η = 0.0, b₀ = 0.5, τ = 5.0)
 
 
-        
+
 # run
 h, X̄ = @time run_simulation(
     simulation;

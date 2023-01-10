@@ -19,7 +19,10 @@ x1, x2 = X[1, :], X[2, :]
 
 
 plot(
-    scatter3d(eachrow(M)..., marker_z=x1, label=nothing, title="X"),
-    scatter3d(eachrow(M)..., marker_z=x2, label=nothing, title="Y"),
-    layout=(2, 1), size=(400, 800), camera=(40, 30), msw=.25
+    scatter3d(eachrow(M)..., marker_z = x1, label = nothing, title = "X"),
+    scatter3d(eachrow(M)..., marker_z = x2, label = nothing, title = "Y"),
+    layout = (2, 1),
+    size = (400, 800),
+    camera = (40, 30),
+    msw = 0.25,
 )

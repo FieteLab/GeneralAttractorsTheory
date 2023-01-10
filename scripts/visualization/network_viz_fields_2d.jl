@@ -17,19 +17,16 @@ colors = [
     MyterialColors.red,
     MyterialColors.red,
     MyterialColors.green,
-    MyterialColors.green]
+    MyterialColors.green,
+]
 
 
 
-p = plot(
-    aspect_ratio = :equal,
-    size = (600, 600),
-    grid = false,
-)
+p = plot(aspect_ratio = :equal, size = (600, 600), grid = false)
 
 
 n = size(can.X, 2)
-for i in 1:15:n
+for i = 1:15:n
     x = can.X[:, i]
 
     for (j, offset) in enumerate(can.offsets)
@@ -37,14 +34,16 @@ for i in 1:15:n
 
         for (k, x) in enumerate(eachcol(can.X))
             k % 12 != 0 && continue
-            scatter!([[x] for x in x]..., label=nothing, color=:black, ms=3)
+            scatter!([[x] for x in x]..., label = nothing, color = :black, ms = 3)
 
 
             v = offset.ψ(x) * scaling
             plot!(
-                [x[1], x[1]+v[1]],
-                [x[2], x[2]+v[2]],
-                lw=4, color=colors[j], label=nothing
+                [x[1], x[1] + v[1]],
+                [x[2], x[2] + v[2]],
+                lw = 4,
+                color = colors[j],
+                label = nothing,
             )
         end
     end

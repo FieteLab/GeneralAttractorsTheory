@@ -147,16 +147,16 @@ function plot_distance_function(d::Union{SphericalDistance,SphericalAngle}; kwar
     function fibonacci_sphere(n = 1000)
         points = zeros(3, n)
         ϕ = π * (3 - √5)  # golden angle in radians
-    
+
         for i = 1:n
             y = 1 - (i / float(n - 1)) * 2  # y goes from 1 to -1
             radius = √(Complex(1 - y * y)) |> real  # radius at y
-    
+
             θ = ϕ * i  # golden angle increment
-    
+
             x = cos(θ) * radius
             z = sin(θ) * radius
-    
+
             points[:, i] = [x, y, z]
         end
         return points
@@ -168,8 +168,8 @@ function plot_distance_function(d::Union{SphericalDistance,SphericalAngle}; kwar
     plts = []
     for p in vips
         Δx = [evaluate(d, p, x) for x in eachcol(X)]
-        plt = scatter3d(eachrow(X)..., marker_z=Δx)
-        scatter3d!(plt, [p[1]], [p[2]], [p[3]], ms=10, color=:red)
+        plt = scatter3d(eachrow(X)..., marker_z = Δx)
+        scatter3d!(plt, [p[1]], [p[2]], [p[3]], ms = 10, color = :red)
         push!(plts, plt)
     end
 
@@ -421,42 +421,62 @@ end
 
 
 function plot_can_vector_fields!(plt, can, vel, x_actual, x_decoded)
-    if can.d ==1
+    if can.d == 1
         x0, x1 = minimum(can.X), maximum(can.X)
-        for x in range(x0, x1, length=50)
+        for x in range(x0, x1, length = 50)
             # y = can.Ω[1]([x])[1][1] * 4
 
             y = can.offsets[1](x)[1]
-            y = y>0 ? y/y : y
-            plot!(plt, [x, x], [0, y], 
-                ylim=[0, 2],
-                lw=2, color=:red, alpha=.5, label=nothing)
+            y = y > 0 ? y / y : y
+            plot!(
+                plt,
+                [x, x],
+                [0, y],
+                ylim = [0, 2],
+                lw = 2,
+                color = :red,
+                alpha = 0.5,
+                label = nothing,
+            )
         end
 
-        plot!(plt, [x_actual[1], x_actual[1]], [0, 1.5],
-            lw=4, color=:black, label=nothing
+        plot!(
+            plt,
+            [x_actual[1], x_actual[1]],
+            [0, 1.5],
+            lw = 4,
+            color = :black,
+            label = nothing,
         )
-        plot!(plt, [x_decoded[1], x_decoded[1]], [0, 1.5],
-            lw=4, color=:red, label=nothing
+        plot!(
+            plt,
+            [x_decoded[1], x_decoded[1]],
+            [0, 1.5],
+            lw = 4,
+            color = :red,
+            label = nothing,
         )
         return
     end
     return
     n = size(can.X, 2)
     scaling = 25.0
-    
+
     colors = [white, white, red, red, green, green]
-    for i in 1:4:n
+    for i = 1:4:n
         x = can.X[:, i]
-        scatter!(plt, [[x] for x in x]..., label=nothing, color=:black, ms=3)
+        scatter!(plt, [[x] for x in x]..., label = nothing, color = :black, ms = 3)
 
         for (j, o) in enumerate(can.Ω)
             j % 2 == 0 && continue
-            v = o(x) * vel[(Int ∘ ceil)(j/2)]
-            plot!(plt,
-                [x[1], x[1]+v[1]*scaling],
-                [x[2], x[2]+v[2]*scaling],
-                lw=2, color=colors[j], label=nothing
+            v = o(x) * vel[(Int ∘ ceil)(j / 2)]
+            plot!(
+                plt,
+                [x[1], x[1] + v[1] * scaling],
+                [x[2], x[2] + v[2] * scaling],
+                lw = 2,
+                color = colors[j],
+                label = nothing,
             )
         end
     end

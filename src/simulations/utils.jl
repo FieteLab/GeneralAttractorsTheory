@@ -5,8 +5,8 @@ a periodic dimension. This removes those jumps
 by setting them to NaN so that they don't showup in plots.
 """
 function remove_jumps_from_trajectory(X::Matrix)
-    Δ = [0, norm.(eachrow(diff(X, dims=1)))...]
-    X[Δ .>= 2, :] .*= NaN
+    Δ = [0, norm.(eachrow(diff(X, dims = 1)))...]
+    X[Δ.>=2, :] .*= NaN
     X
 end
 
@@ -24,7 +24,8 @@ function Plots.plot(traj::Trajectory)
         i, j = (1, 2)
 
         p1 = plot(
-            X[:, i], X[:, j],
+            X[:, i],
+            X[:, j],
             lw = 3,
             color = :black,
             label = nothing,
@@ -32,9 +33,10 @@ function Plots.plot(traj::Trajectory)
             grid = false,
             aspect_ratio = :equal,
         )
-    
+
         p2 = plot(
-            X̄[:, i], X̄[:, j],
+            X̄[:, i],
+            X̄[:, j],
             lw = 3,
             color = :red,
             label = nothing,
@@ -74,25 +76,30 @@ function Plots.plot(traj::Trajectory, i::Int; xmin = nothing, xmax = nothing)
     if traj.M isa Mobius
         xmin = isnothing(xmin) ? traj.M.xmin : xmin
         xmax = isnothing(xmax) ? traj.M.xmax : xmax
-    else    
-        xmin = isnothing(xmin) ? minimum(traj.X, dims = 1) .- abs.(minimum(traj.X, dims = 1) * 1.1) : xmin
-        xmax = isnothing(xmax) ? maximum(traj.X, dims = 1) .+ maximum(traj.X, dims = 1) * 1.1 : xmax
+    else
+        xmin =
+            isnothing(xmin) ?
+            minimum(traj.X, dims = 1) .- abs.(minimum(traj.X, dims = 1) * 1.1) : xmin
+        xmax =
+            isnothing(xmax) ? maximum(traj.X, dims = 1) .+ maximum(traj.X, dims = 1) * 1.1 :
+            xmax
     end
 
-    t0 = traj.M isa Mobius ? max(1, i-200) : 1
+    t0 = traj.M isa Mobius ? max(1, i - 200) : 1
     X = remove_jumps_from_trajectory(traj.X)
     if d == 2
         k, j = 1, 2
         plt = plot(
-            X[t0:i, k], X[t0:i, j],
+            X[t0:i, k],
+            X[t0:i, j],
             lw = 6,
             color = :black,
             grid = false,
             aspect_ratio = :equal,
             label = nothing,
             camera = (0.075 * i, 20),
-            xlim=[xmin[k], xmax[k]],
-            ylim=[xmin[j], xmax[j]],
+            xlim = [xmin[k], xmax[k]],
+            ylim = [xmin[j], xmax[j]],
         )
     elseif d == 1
         plt = plot(
@@ -111,9 +118,9 @@ function Plots.plot(traj::Trajectory, i::Int; xmin = nothing, xmax = nothing)
             grid = false,
             aspect_ratio = :equal,
             label = nothing,
-            xlim=[-1.1, 1.1],
-            ylim=[-1.1, 1.1],
-            zlim=[-1.1, 1.1],
+            xlim = [-1.1, 1.1],
+            ylim = [-1.1, 1.1],
+            zlim = [-1.1, 1.1],
             camera = (0.075 * i, 20),
         )
     end
@@ -191,12 +198,12 @@ function simulation_frame_2dcan(
         msa = 0,
         msw = 0,
         clims = (-maximum(s) * 0.95, maximum(s) * 0.95),
-        color=:bwr,
+        color = :bwr,
         ms = 6,
         alpha = 0.8,
         label = nothing,
         colorbar = nothing,
-        camera=(90, 0),
+        camera = (90, 0),
     )
 
     return plt
@@ -212,17 +219,17 @@ function custom_sphere_viz(simulation::Simulation, timems, v::Vector, φ; kwargs
         marker_z = s,
         title = "elapsed: $(round(timems)) ms",
         grid = false,
-        msa = .4,
-        msw = .5,
+        msa = 0.4,
+        msw = 0.5,
         clims = (-maximum(s) * 0.95, maximum(s) * 0.95),
-        color=:bwr,
+        color = :bwr,
         ms = 3,
         alpha = 0.9,
         label = nothing,
         colorbar = nothing,
-        xlim=[-1.1, 1.1],
-        ylim=[-1.1, 1.1],
-        zlim=[-1.1, 1.1],
+        xlim = [-1.1, 1.1],
+        ylim = [-1.1, 1.1],
+        zlim = [-1.1, 1.1],
     )
 
     return plt
@@ -248,12 +255,13 @@ function Plots.plot(
             pop_activity = custom_sphere_viz(simulation, timems, v, φ; kwargs...)
         else
             pop_activity = simulation_frame_2dcan(simulation, timems, v, φ; kwargs...)
-            
+
             isa(simulation.can.C.M, Mobius) || begin
                 traj_on_mf = remove_jumps_from_trajectory(simulation.trajectory.X̄)
                 plot!(
                     pop_activity,
-                    traj_on_mf[:, i], traj_on_mf[:, j],
+                    traj_on_mf[:, i],
+                    traj_on_mf[:, j],
                     lw = 3,
                     color = :red,
                     label = nothing,
@@ -265,7 +273,7 @@ function Plots.plot(
     end
 
     # plot vectori field over population activity
-    plot_can_vector_fields!(pop_activity, simulation.can, v, x, X̄[framen,:])
+    plot_can_vector_fields!(pop_activity, simulation.can, v, x, X̄[framen, :])
 
 
     # plot trajectory
@@ -314,7 +322,7 @@ function Plots.plot(
 
         # i, j = simulation.can.name == "mobius" ? (2, 1) : (1, 2)
         i, j = 1, 2
-        
+
         # plot decoded trajectory
         framen > (50 + 2) && begin
             plot!(
@@ -324,7 +332,7 @@ function Plots.plot(
                 color = :red,
                 label = nothing,
                 alpha = 0.6,
-                lw=4,
+                lw = 4,
             )
         end
         scatter!(
@@ -347,7 +355,7 @@ function Plots.plot(
         scatter!(traj, [framen], [_X̄[framen, 1]], ms = 7, color = :red, label = nothing)
 
         # main figure
-        plot(traj, pop_activity, size = (1000, 800), layout = (2, 1), ylim=[0, 2π])
+        plot(traj, pop_activity, size = (1000, 800), layout = (2, 1), ylim = [0, 2π])
     else
         traj = Plots.plot(tj, framen)
 
@@ -397,10 +405,14 @@ function plot_trajectory_and_decoded(trajectory::Trajectory, X̄::Matrix)
     if d == 2
         plot!(eachcol(X̄)..., lw = 3, color = :red, label = nothing)
     elseif d == 3
-        plot3d!(eachcol(X̄)..., lw = 3, color = :red, label = nothing, 
-            xlim=[-1.1, 1.1],
-            ylim=[-1.1, 1.1],
-            zlim=[-1.1, 1.1],
+        plot3d!(
+            eachcol(X̄)...,
+            lw = 3,
+            color = :red,
+            label = nothing,
+            xlim = [-1.1, 1.1],
+            ylim = [-1.1, 1.1],
+            zlim = [-1.1, 1.1],
         )
     elseif d == 1
         plot!(X̄, lw = 3, color = :red, label = nothing)
@@ -413,30 +425,34 @@ end
 Plot a trajectory's on-manifold trace and the neural data's one.
 """
 function plot_on_mfld_trajectory_and_history(can, trajectory::Trajectory, h::History)
-    i,j = trajectory.M isa Mobius ? (2, 1) : (1, 2)
+    i, j = trajectory.M isa Mobius ? (2, 1) : (1, 2)
     X̄ = remove_jumps_from_trajectory(trajectory.X̄)
 
     p = plot(
-            X̄[:, i], X̄[:, j],
-            lw = 3,
-            color = :black,
-            label = nothing,
-            grid = false,
-            aspect_ratio = :equal,
-        )
+        X̄[:, i],
+        X̄[:, j],
+        lw = 3,
+        color = :black,
+        label = nothing,
+        grid = false,
+        aspect_ratio = :equal,
+    )
 
     S = h.S
     n, _, m = size(S)
     S = real.(reshape(sum(S, dims = 2), (n, m)))
-    peak_location = Matrix(hcat(map(st -> decode_peak_location(st, can), eachcol(S))...)')  |> remove_jumps_from_trajectory
+    peak_location =
+        Matrix(hcat(map(st -> decode_peak_location(st, can), eachcol(S))...)') |>
+        remove_jumps_from_trajectory
 
-    plot!(      
-            p,
-            peak_location[:, i], peak_location[:, j],
-            lw = 3,
-            color = :red,
-            label = nothing,
-        )
+    plot!(
+        p,
+        peak_location[:, i],
+        peak_location[:, j],
+        lw = 3,
+        color = :red,
+        label = nothing,
+    )
     p
 end
 

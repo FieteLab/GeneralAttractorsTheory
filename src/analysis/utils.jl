@@ -20,6 +20,6 @@ function get_bump_speed(can, fld_name::String, sim_name::String)::Float64
         i -> can.metric(peak_location[:, i], peak_location[:, i-1]),
         2:size(peak_location, 2),
     )
-    average_speed = sum(on_mfld_speed) / (length(on_mfld_speed) * history.Δt) 
+    average_speed = sum(on_mfld_speed) / (length(on_mfld_speed) * history.Δt)
     return average_speed
 end

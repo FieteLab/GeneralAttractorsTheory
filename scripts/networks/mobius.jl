@@ -19,11 +19,10 @@ mfld = Mobius()
 cover = CoverSpace(mfld)
 
 # coordinates function (from neurons index to lattice coordintes)
-ξ_m(i::Int, j::Int)::Vector =
-    [
-        lerp(i, n[1], mfld.xmin[1], mfld.xmax[1]), 
-        lerp(j, n[2], mfld.xmin[2], mfld.xmax[2] - mfld.xmax[2] / n[2])
-    ]  
+ξ_m(i::Int, j::Int)::Vector = [
+    lerp(i, n[1], mfld.xmin[1], mfld.xmax[1]),
+    lerp(j, n[2], mfld.xmin[2], mfld.xmax[2] - mfld.xmax[2] / n[2]),
+]
 
 # metric
 d_m = MobiusEuclidean()
@@ -33,15 +32,14 @@ k_m = LocalGlobalKernel(α = 2.5, σ = 1.5, β = 2.5)
 
 
 # define offset vector fields
-offsets =
-    [
-        p -> MB_ψ1(p),
-        p -> -MB_ψ1(p),
-        p -> MB_ψ2(p),
-        p -> -MB_ψ2(p),
-        # p -> MB_ψ3(p), 
-        # p -> -MB_ψ3(p)
-    ]
+offsets = [
+    p -> MB_ψ1(p),
+    p -> -MB_ψ1(p),
+    p -> MB_ψ2(p),
+    p -> -MB_ψ2(p),
+    # p -> MB_ψ3(p), 
+    # p -> -MB_ψ3(p)
+]
 offset_size = 0.2
 
 # define one forms
@@ -67,6 +65,6 @@ mobiuscan = CAN(
     offset_size = offset_size,
     offsets = offsets,
     Ω = Ω,
-    σ=:softrelu,
+    σ = :softrelu,
     α = 35,
 )

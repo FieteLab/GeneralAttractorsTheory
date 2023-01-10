@@ -33,8 +33,8 @@ trajectory = Trajectory(
     still = still,
     # σv = 0.2,
     # μv = [0, .1, 0]
-    modality=:piecewise,
-    n_piecewise_segments = 5
+    modality = :piecewise,
+    n_piecewise_segments = 5,
 )
 
 plot(trajectory) |> display

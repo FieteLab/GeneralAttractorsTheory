@@ -419,12 +419,7 @@ function get_pairwise_distance_with_offset(
 
     # n = norm(δx)
 
-    δx = hcat(
-        map(
-            x -> offset.ψ(x),
-            eachcol(X)
-        )...
-    )
+    δx = hcat(map(x -> offset.ψ(x), eachcol(X))...)
 
     pairwise(metric, X .- (offset_size .* δx), X)
     # X̂ = by_column(x -> x .- offset.ψ(x), X)

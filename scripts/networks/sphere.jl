@@ -35,11 +35,7 @@ k_s = LocalGlobalKernel(α = 2.5, σ = 40.5, β = 2.5)
 cover = CoverSpace(S²)  # trivial cover space
 
 # define offset vector fields
-offsets = [
-    p -> ψx(p), p -> -ψx(p),
-    p -> ψy(p), p -> -ψy(p), 
-    p -> ψz(p), p -> -ψz(p)
-]
+offsets = [p -> ψx(p), p -> -ψx(p), p -> ψy(p), p -> -ψy(p), p -> ψz(p), p -> -ψz(p)]
 offset_size = 0.1
 
 # define one forms
@@ -65,5 +61,5 @@ spherecan = CAN(
     offset_size = offset_size,
     offsets = offsets,
     Ω = Ω,
-    α=46,
+    α = 46,
 )

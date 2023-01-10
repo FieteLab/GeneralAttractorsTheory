@@ -42,14 +42,14 @@ function run_all_sims()
             d = map(i -> toruscan.metric(x₀, toruscan.X[:, i]), 1:size(toruscan.X, 2))
             activate = zeros(length(d))
             activate[d.<0.5] .= 1
-        
+
         elseif mfld == "ring"
             can = CAN("ring", cover, n, ξ_r, d_r, k_r; offset_size = δ, σ = σ)
-            x₀ = [π/2] # initialize state at position
+            x₀ = [π / 2] # initialize state at position
             d = ringcan.metric.(x₀[1], ringcan.X[1, :])
             activate = zeros(length(d))
-            activate[d .< .4] .= 1
-        
+            activate[d.<0.4] .= 1
+
         else
             error()
         end
@@ -74,7 +74,7 @@ function run_all_sims()
                     vmax = 2v,
                     x₀ = x₀,
                     still = still,
-                    modality=:constant,
+                    modality = :constant,
                 )
                 simulation = Simulation(can, TJ; η = 0.0, b₀ = b, τ = τ)
 

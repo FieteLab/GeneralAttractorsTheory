@@ -65,10 +65,13 @@ apply_boundary_conditions!(x, ::AbstractManifold) = (x, ones(length(x)))
     ψs::Vector{AbstractVectorField}
     metric::Metric
 end
-Ring() = Ring([0], [2π], 
+Ring() = Ring(
+    [0],
+    [2π],
     # [VectorField(ring_ψ)], 
     [ConstantVectorField(1, 1)],
-    PeriodicEuclidean([2π]))
+    PeriodicEuclidean([2π]),
+)
 
 apply_boundary_conditions!(x, ::Ring) = mod.(x, 2π), 1
 
@@ -126,11 +129,7 @@ end
 S² = Sphere(
     [-1, -1, -1],
     [1, 1, 1],
-    [
-        VectorField(ψx), 
-        VectorField(ψy), 
-        VectorField(ψz)
-    ],
+    [VectorField(ψx), VectorField(ψy), VectorField(ψz)],
     SphericalDistance(),
 )
 
@@ -150,7 +149,7 @@ end
 
 Mobius() = Mobius(
     [-0.75, 0],
-    [ 0.75, 2π],
+    [0.75, 2π],
     [VectorField(MB_ψ1), VectorField(MB_ψ2)],
     # [ConstantVectorField(2, 1), ConstantVectorField(2, 2)],
     MobiusEuclidean(),

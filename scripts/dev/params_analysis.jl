@@ -107,7 +107,7 @@ p2 = plot(
 
 for (color, v) in zip(vcolors, V)
     for (j, b) in enumerate(B)
-        _data = data[(data.v .== v).&(data.b.==b), :]
+        _data = data[(data.v.==v).&(data.b.==b), :]
         p = j == 1 ? p1 : p2
         plot!(
             p,
@@ -122,11 +122,13 @@ for (color, v) in zip(vcolors, V)
             [minimum(_data.s), maximum(_data.s)],
             lw = 2,
             color = color,
-            ls=:dash, alpha=.4, label=nothing
+            ls = :dash,
+            alpha = 0.4,
+            label = nothing,
         )
     end
 end
-plot(p1,  size = (800, 800)) |> display
+plot(p1, size = (800, 800)) |> display
 
 
 p1 = plot(
@@ -135,28 +137,22 @@ p1 = plot(
     # aspect_ratio = :equal,
     # title = title * " b₀ = $(round(B[1], digits=1))",
 )
-vmin , vmax = V[1], V[2]
+vmin, vmax = V[1], V[2]
 for (color, d) in zip(dcolors, D)
     for (j, b) in enumerate(B)
-        _data = data[(data.δ .== d).&(data.b.==b), :]
+        _data = data[(data.δ.==d).&(data.b.==b), :]
 
-        s_min = _data[_data.v .== vmin, :].s[1]
-        s_max = _data[_data.v .== vmax, :].s[1]
+        s_min = _data[_data.v.==vmin, :].s[1]
+        s_max = _data[_data.v.==vmax, :].s[1]
 
 
-        scatter!(
-            p1,
-            [d], [s_max/s_min],
-            lw = 2,
-            color = color,
-            label = nothing,
-        )
+        scatter!(p1, [d], [s_max / s_min], lw = 2, color = color, label = nothing)
     end
 end
 
 
 # plot(p1, p2, size = (1000, 800)) |> display
-plot(p1,  size = (800, 800)) |> display
+plot(p1, size = (800, 800)) |> display
 
 
 # # ------------------------ plot v/s for different b\_0 ----------------------- #
