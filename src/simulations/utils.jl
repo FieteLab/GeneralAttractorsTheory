@@ -260,8 +260,7 @@ function Plots.plot(
                 traj_on_mf = remove_jumps_from_trajectory(simulation.trajectory.X̄)
                 plot!(
                     pop_activity,
-                    traj_on_mf[:, i],
-                    traj_on_mf[:, j],
+                    traj_on_mf[:, 1], traj_on_mf[:, 2],
                     lw = 3,
                     color = :red,
                     label = nothing,
@@ -400,10 +399,13 @@ function plot_trajectory_and_decoded(trajectory::Trajectory, X̄::Matrix)
         title = "Decoded trajectory",
     )
 
-    scatter!([[x] for x in X[1, :]]..., ms = 5, color = :black, label = nothing)
+    # scatter!([[x] for x in X[1, :]]..., ms = 5, alpha=.2, color = :black, label = nothing)
+    scatter!([[x] for x in X[end, :]]..., ms = 5, alpha=.8, color = :white, msc=:black, msw=2, label = nothing)
 
     if d == 2
         plot!(eachcol(X̄)..., lw = 3, color = :red, label = nothing)
+        # scatter!([[x] for x in X̄[1, :]]..., ms = 5, alpha=.8, color = :red, label = nothing)
+        scatter!([[x] for x in X̄[end, :]]..., ms = 5, alpha=.8, color = :white, msc=:red, msw=2, label = nothing)
     elseif d == 3
         plot3d!(
             eachcol(X̄)...,
@@ -429,6 +431,7 @@ function plot_on_mfld_trajectory_and_history(can, trajectory::Trajectory, h::His
     X̄ = remove_jumps_from_trajectory(trajectory.X̄)
 
     p = plot(
+<<<<<<< HEAD
         X̄[:, i],
         X̄[:, j],
         lw = 3,
@@ -437,6 +440,16 @@ function plot_on_mfld_trajectory_and_history(can, trajectory::Trajectory, h::His
         grid = false,
         aspect_ratio = :equal,
     )
+=======
+            X̄[:, i], X̄[:, j],
+            lw = 3,
+            color = :black,
+            label = nothing,
+            grid = false,
+            aspect_ratio = :equal,
+            title = "on manifold trajectory"
+        )
+>>>>>>> e32796b23490a9e899a5b1c217fff1623acd7320
 
     S = h.S
     n, _, m = size(S)

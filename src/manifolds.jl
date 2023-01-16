@@ -107,7 +107,7 @@ Torus() = Torus(
     [0, 2π],
     [0, 2π],
     [ConstantVectorField(2, 1), ConstantVectorField(2, 2)],
-    # [VectorField(ℝ²_ψ1), VectorField(ℝ²_ψ2)],
+    # [VectorField(torus_ψ1), VectorField(torus_ψ2)],
     PeriodicEuclidean([2π, 2π]),
 )
 T = Torus()
@@ -129,7 +129,11 @@ end
 S² = Sphere(
     [-1, -1, -1],
     [1, 1, 1],
-    [VectorField(ψx), VectorField(ψy), VectorField(ψz)],
+    [
+        VectorField(sphere_ψx), 
+        VectorField(sphere_ψy), 
+        VectorField(sphere_ψz)
+    ],
     SphericalDistance(),
 )
 

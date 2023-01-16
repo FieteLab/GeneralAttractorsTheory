@@ -25,22 +25,18 @@ k_r = LocalGlobalKernel(α = 2.5, σ = 0.25, β = 2.5)
 cover = CoverSpace(Ring())
 
 # offsets and one forms
-offset_size = 0.1
-offsets = [p -> ring_ψ(p), p -> -ring_ψ(p)]
+offset_size = .15
+offsets = [
+    p -> ring_ψ(p),
+    p -> -ring_ψ(p)
+]
 
 Ω = OneForm[OneForm(1, (x) -> ring_ψ(x)), OneForm(1, (x) -> -ring_ψ(x))]
 
 # make network
-ringcan = CAN(
-    "ring",
-    cover,
-    n,
-    ξ_r,
-    d_r,
-    k_r;
-    offsets = offsets,
-    Ω = Ω,
-    offset_size = offset_size,
-    σ = :softrelu,
-    α = 60,
-) # 120
+ringcan = CAN("ring", cover, n, ξ_r, d_r, k_r; 
+    # offsets = offsets,
+    # Ω = Ω,
+    offset_size = offset_size, 
+    σ = :softrelu, 
+    α = 25) # 120

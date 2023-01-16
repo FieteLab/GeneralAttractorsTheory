@@ -6,27 +6,20 @@ using Distances: euclidean
 #                                     RING                                     #
 # ---------------------------------------------------------------------------- #
 ring_ψ(x) = ring_ψ(x...)
-function ring_ψ(x::Number)
-    if x < π
-        p = min(max(0.1, x / π), 0.9)
-        return [0.05 * p + (1 - p) * 1]
-    else
-        p = min(max(0.1, (x - π) / π), 0.9)
-        return [1 * p + (1 - p) * 0.05]
-    end
-end
-
+ring_ψ(x::Number) = (sin(x)+1.1)/2
 # ---------------------------------------------------------------------------- #
 #                                  PLANE/TORUS                                 #
 # ---------------------------------------------------------------------------- #
 
-ℝ²_ψ1(x) = ℝ²_ψ1(x...)
-ℝ²_ψ1(x, y) = [(sin(x / 2) + 1.1) / 2, -0.2]
-# ℝ²_ψ1(x, y) = [1, 1]
+torus_ψ1(x) = torus_ψ1(x...)
+torus_ψ1(x, y) = [(
+    sin(x/2) + 1.1
+    )/2, -.2]
+# torus_ψ1(x, y) = [1, 1]
 
-ℝ²_ψ2(x) = ℝ²_ψ2(x...)
-# ℝ²_ψ2(x, y) = [-0.2, (sin(y/2) + 1.01)/2]
-ℝ²_ψ2(x, y) = [[0, 1] [-1, 0]] * ℝ²_ψ1(x, y)
+torus_ψ2(x) = torus_ψ2(x...)
+# torus_ψ2(x, y) = [-0.2, (sin(y/2) + 1.01)/2]
+torus_ψ2(x, y) =  [[0, 1] [-1, 0]]  * torus_ψ1(x, y)
 
 # ---------------------------------------------------------------------------- #
 #                                    MOBIUS                                    #
@@ -90,16 +83,16 @@ tangent to the sphere and correpsonding to a rotation.
 normalize(x) = norm(x) > 0 ? x ./ norm(x) : x
 
 """ rotation around X axis """
-ψx(x, y, z)::Vector = (z * ∂y - y * ∂z) |> normalize
-ψx(p) = ψx(p...)
+sphere_ψx(x, y, z)::Vector = (z * ∂y - y * ∂z) |> normalize
+sphere_ψx(p) = sphere_ψx(p...)
 
 """ rotation around Y axis """
-ψy(x, y, z)::Vector = (z * ∂x - x * ∂z) |> normalize
-ψy(p) = ψy(p...)
+sphere_ψy(x, y, z)::Vector = (z * ∂x - x * ∂z) |> normalize
+sphere_ψy(p) = sphere_ψy(p...)
 
 """ rotation around Z axis """
-ψz(x, y, z)::Vector = (x * ∂y - y * ∂x) |> normalize
-ψz(p) = ψz(p...)
+sphere_ψz(x, y, z)::Vector = (x * ∂y - y * ∂x) |> normalize
+sphere_ψz(p) = sphere_ψz(p...)
 
 φ = sphere_embedding
 
