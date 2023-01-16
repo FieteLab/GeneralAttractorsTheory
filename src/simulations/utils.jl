@@ -431,16 +431,6 @@ function plot_on_mfld_trajectory_and_history(can, trajectory::Trajectory, h::His
     X̄ = remove_jumps_from_trajectory(trajectory.X̄)
 
     p = plot(
-<<<<<<< HEAD
-        X̄[:, i],
-        X̄[:, j],
-        lw = 3,
-        color = :black,
-        label = nothing,
-        grid = false,
-        aspect_ratio = :equal,
-    )
-=======
             X̄[:, i], X̄[:, j],
             lw = 3,
             color = :black,
@@ -449,7 +439,6 @@ function plot_on_mfld_trajectory_and_history(can, trajectory::Trajectory, h::His
             aspect_ratio = :equal,
             title = "on manifold trajectory"
         )
->>>>>>> e32796b23490a9e899a5b1c217fff1623acd7320
 
     S = h.S
     n, _, m = size(S)

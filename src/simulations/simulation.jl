@@ -61,25 +61,11 @@ end
 ∑ⱼ(x) = sum(x, dims = 2) |> vec
 
 
-function velocity_input(ωᵢ::OneForm, v::Vector, on_mfld_x::Vector, J::Matrix)
-    # ωᵢ(on_mfld_x, J*v) 
+function velocity_input(ωᵢ::OneForm, v::Vector, on_mfld_x::Vector)
     ωᵢ(on_mfld_x, v) 
 end
 
 
-function pushforward(ρ::Function, x::Vector)::Matrix
-    J = jacobian(ρ, x)
-
-
-    # perturb `x` if jacobian has nans
-    # η = 0.01
-    # while any(isnan.(J))
-    #     J = jacobian(ρ, x + rand(size(x)) .* η)
-    #     η *= 1.25
-    # end
-    J[isnan.(J)] .= 0
-    return J
-end
 
 """
     step!(simulation::Simulation, x::Vector, v::Vector) 
@@ -102,8 +88,7 @@ function step!(
     d = size(S, 2)
 
     # get velocity input
-    J = pushforward(can.C.ρ, decoded_x)
-    V = can.α .* map(i -> velocity_input(can.Ω[i], v, on_mfld_x, J), 1:length(can.Ω)) |> vec  # inputs vector of size 2d
+    V = can.α .* map(i -> velocity_input(can.Ω[i], v, on_mfld_x), 1:length(can.Ω)) |> vec  # inputs vector of size 2d
 
     # r(x) = round(x; digits=4)
     # println("\n\n" * string(r.(v)))
