@@ -27,7 +27,7 @@ Holds information necessary for running a simulation.
     can::AbstractCAN
     trajectory::Trajectory
     S::SparseMatrixCSC               # n_neurons x 2d - state of all neurons
-    W::Vector{SparseMatrixCSC}       # all connection weights
+    W::Union{Nothing, Vector{SparseMatrixCSC} }      # all connection weights
     Ṡ::SparseMatrixCSC
     b₀::Float64 = 1.0       # baseline input activity
     η::Float64 = 0.1       # noise scale
@@ -40,7 +40,7 @@ Base.print(io::IO, sim::Simulation) = print(io, string(sim))
 Base.show(io::IO, ::MIME"text/plain", sim::Simulation) = print(io, string(sim))
 
 function Simulation(can::AbstractCAN, trajectory::Trajectory; kwargs...)
-    n_pops = length(can.offsets)
+    n_pops = hasfield(can, :offsetse) ?  length(can.offsets) : 1
 
     # initialize activity matrices
     N = *(can.n...)
@@ -48,8 +48,12 @@ function Simulation(can::AbstractCAN, trajectory::Trajectory; kwargs...)
     Ṡ = spzeros(Float64, N, n_pops)
 
     # get all connection weights
-    W = sparse.(map(x -> Float64.(x), can.Ws))
-    droptol!.(W, 0.001)
+    W = if n_pops > 1
+        sparse.(map(x -> Float64.(x), can.Ws))
+        droptol!.(W, 0.001)
+    else
+        nothing
+    end
 
     return Simulation(can = can, trajectory = trajectory, S = S, Ṡ = Ṡ, W = W; kwargs...)
 end
@@ -75,7 +79,6 @@ and moving with velocity vector `v`.
 """
 function step!(
     simulation::Simulation,
-    decoded_x::Vector,
     on_mfld_x::Vector,
     v::Vector;
     s₀ = nothing,
@@ -120,6 +123,40 @@ function step!(
 end
 
 
+
+function step!(
+    simulation::Simulation,
+    ::Vector,
+    ::Nothing;
+    s₀ = nothing,
+)
+    # prep variables
+    can = simulation.can
+    b₀ = simulation.b₀
+    S, W = simulation.S, simulation.can.W
+    Ṡ = simulation.Ṡ .* 0.0
+
+
+    # get baseline and noise inputs
+    input = simulation.η > 0 ? (rand(Float64, size(S, 1)) .* simulation.η) .+ b₀ : b₀
+
+    # enforce initial condition
+    isnothing(s₀) || (S[:, i] .*= s₀)
+
+    # get activation
+    Ṡ = W * S .+ input
+
+    # update activity
+    simulation.S += (can.σ.(Ṡ) - S) / (simulation.τ)
+
+    # remove bad entries
+    droptol!(simulation.S, 0.001)
+    droptol!(simulation.Ṡ, 0.001)
+    simulation.S = sparse(simulation.S)
+    simulation.Ṡ = sparse(simulation.Ṡ)
+
+    return simulation.S  # return the sum of all activations
+end
 
 
 # ---------------------------------------------------------------------------- #
@@ -168,7 +205,7 @@ function run_simulation(
             end
 
             # get trajectory data
-            v = simulation.trajectory.V[min(i+1, N), :]
+            v = isnothing(simulation.trajectory.V) ? nothing : simulation.trajectory.V[min(i+1, N), :]
 
             # decode manifold bump position
             s̄ = ∑ⱼ(simulation.S)
@@ -180,7 +217,7 @@ function run_simulation(
             X̄[i, :] = decoded_x
 
             # step simulation
-            S̄ = step!(simulation, decoded_x, on_mfld_x, v; s₀ = s₀)
+            S̄ = step!(simulation, on_mfld_x, v; s₀ = s₀)
 
             # initialize decoder if necessary
             if (i >= simulation.trajectory.still + 0) && !decoder_initialized

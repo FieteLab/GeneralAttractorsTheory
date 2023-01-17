@@ -250,6 +250,62 @@ end
 
 
 # ---------------------------------------------------------------------------- #
+#                                  SINGLE CAN                                  #
+# ---------------------------------------------------------------------------- #
+"""
+A CAN that doesn't have multiple copies of the population with different offsets.
+"""
+mutable struct SingleCAN <: AbstractCAN
+    name::String
+    C::CoverSpace
+    n::NTuple{N,Int} where {N}         # number of neurons in each dimension
+    d::Int                             # number of dimensions
+    I::Vector{Tuple}                   # index (i,j...) of each neuron in the lattice
+    X::Matrix                          # N × n_neurons matrix with coordinates of each neuron in lattice
+    W::Matrix                  # connectivity matrices with lateral offsets | length N
+    kernel::AbstractKernel             # connectivity kernel
+    σ::Function                        # activation function
+    metric::Metric
+end
+
+function SingleCAN(
+    name::String,
+    C::CoverSpace,
+    n::NTuple{N,Int},
+    ξ::Function,
+    metric::Metric,
+    kernel::AbstractKernel;
+    σ::Union{Symbol,Function} = :relu,
+) where {N}
+    # check that ξ has the right form
+    nargs = first(methods(ξ)).nargs - 1
+    @assert N == nargs "ξ should accept $(N) arguments, accepts: $(nargs)"
+
+    rtype = Base.return_types(ξ, NTuple{N,Int})[1]
+    @assert rtype <: AbstractVector "ξ should return a Vector with neuron coordinates, not $rtype"
+
+    # get the index of every neuron in the lattice | vector of length N `n` with elements of length d
+    lattice_idxs::AbstractArray{NTuple{N,Int}} = ×(map(_n -> 1:_n, n)...) |> collect |> vec
+    @debug "Got lattice" typeof(lattice_idxs) size(lattice_idxs)
+
+    # get the coordinates of every neurons
+    ξ̂(t::Tuple) = ξ(t...)
+    X::Matrix = hcat(ξ̂.(lattice_idxs)...)  # matrix, size d × N
+    @debug "X" size(X) typeof(X) eltype(X)
+
+    # get connectivity
+    # get pairwise offset connectivity
+    D::Matrix = pairwise(metric, X, X)
+
+    # get connectivity matrix with kernel
+    W = kernel.k.(D)
+
+    # finalize
+    return SingleCAN(name, C, n, length(n), lattice_idxs, X, W, kernel, σ, metric)
+end
+
+
+# ---------------------------------------------------------------------------- #
 #                                   ONE FORMS                                  #
 # ---------------------------------------------------------------------------- #
 

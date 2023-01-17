@@ -48,7 +48,7 @@ function Base.rand(m::AbstractManifold)
     d = length(m.xmin)
     x = zeros(d)
     for i = 1:d
-        x[i] = rand(m.xmin[i]:0.025:m.xmax[i])
+        x[i] = rand(m.xmin[i]:0.001:m.xmax[i])
     end
     x
 end
@@ -65,6 +65,7 @@ apply_boundary_conditions!(x, ::AbstractManifold) = (x, ones(length(x)))
     ψs::Vector{AbstractVectorField}
     metric::Metric
 end
+
 Ring() = Ring(
     [0],
     [2π],
@@ -104,8 +105,8 @@ Manifoldℝ²(m) = Manifoldℝ²(
     metric::Metric
 end
 Torus() = Torus(
-    [0, 2π],
-    [0, 2π],
+    [0, 0],
+    [2π, 2π],
     [ConstantVectorField(2, 1), ConstantVectorField(2, 2)],
     # [VectorField(torus_ψ1), VectorField(torus_ψ2)],
     PeriodicEuclidean([2π, 2π]),
