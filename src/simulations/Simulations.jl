@@ -8,11 +8,7 @@ using SparseArrays
 import ForwardDiff: jacobian
 
 import GeneralAttractors:
-    save_simulation_history,
     moving_average,
-    savepath,
-    save_model,
-    save_data,
     by_column,
     plot_can_vector_fields!
 import GeneralAttractors: show_oneforms, show_oneforms!
@@ -30,7 +26,7 @@ import ..ManifoldUtils:
     AbstractVectorField
 
 export Simulation, run_simulation
-export Trajectory
+export Trajectory, ConstantTrajectory
 
 include("trajectory.jl")
 include("decoding.jl")

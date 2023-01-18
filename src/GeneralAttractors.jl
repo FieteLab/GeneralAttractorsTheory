@@ -1,17 +1,10 @@
 module GeneralAttractors
-
-# using Term
-# Term.STACKTRACE_HIDDEN_MODULES[] = ["Plots", "RecipesPipeline"]
-# Term.STACKTRACE_HIDE_FRAMES[] = false
-
-# install_term_stacktrace()
-# install_term_logger()
-# install_term_repr()
-
 using LinearAlgebra: norm
 using Plots
 using Distances: PeriodicEuclidean, evaluate, UnionMetric, SphericalAngle
 import Base.Iterators: product as ×  # cartesian product
+
+using BSON, YAML, NPZ
 
 include("io.jl")
 include("utils.jl")
@@ -22,11 +15,8 @@ include("metrics.jl")
 include("manifolds.jl")
 include("can.jl")
 
-
+export save_sim_data
 export CAN, OneForm
-export show_connectivity, plot_distance_function, show_oneforms, show_oneforms!
-
-export load_simulation_history, save_data, load_data, save_model, load_model
 
 using .Kernels
 using .ManifoldUtils
@@ -39,5 +29,9 @@ include("analysis/Analysis.jl")
 using .Simulations
 
 import .Analysis
+
+
+include("supervisor.jl")
+using .ProjectSupervisor
 
 end

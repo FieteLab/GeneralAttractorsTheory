@@ -25,7 +25,7 @@ Holds information necessary for running a simulation.
 """
 @with_kw_noshow mutable struct Simulation
     can::AbstractCAN
-    trajectory::Trajectory
+    trajectory::AbstractTrajectory
     S::SparseMatrixCSC               # n_neurons x 2d - state of all neurons
     W::Union{Nothing, Vector{SparseMatrixCSC} }      # all connection weights
     Ṡ::SparseMatrixCSC
@@ -39,8 +39,8 @@ Base.string(sim::Simulation) = "Simulation of $(sim.can)"
 Base.print(io::IO, sim::Simulation) = print(io, string(sim))
 Base.show(io::IO, ::MIME"text/plain", sim::Simulation) = print(io, string(sim))
 
-function Simulation(can::AbstractCAN, trajectory::Trajectory; kwargs...)
-    n_pops = hasfield(can, :offsetse) ?  length(can.offsets) : 1
+function Simulation(can::AbstractCAN, trajectory::AbstractTrajectory; kwargs...)
+    n_pops = hasfield(typeof(can), :offsetse) ?  length(can.offsets) : 1
 
     # initialize activity matrices
     N = *(can.n...)
@@ -65,12 +65,6 @@ end
 ∑ⱼ(x) = sum(x, dims = 2) |> vec
 
 
-function velocity_input(ωᵢ::OneForm, v::Vector, on_mfld_x::Vector)
-    ωᵢ(on_mfld_x, v) 
-end
-
-
-
 """
     step!(simulation::Simulation, x::Vector, v::Vector) 
 
@@ -91,11 +85,7 @@ function step!(
     d = size(S, 2)
 
     # get velocity input
-    V = can.α .* map(i -> velocity_input(can.Ω[i], v, on_mfld_x), 1:length(can.Ω)) |> vec  # inputs vector of size 2d
-
-    # r(x) = round(x; digits=4)
-    # println("\n\n" * string(r.(v)))
-    # println(string(r.(V)))
+    V = can.α .* map(i -> can.Ω[i](on_mfld_x, v), 1:length(can.Ω)) |> vec  # inputs vector of size 2d
 
     # update each population with each population's input
     for i = 1:d, j = 1:d
@@ -119,7 +109,7 @@ function step!(
     simulation.S = sparse(simulation.S)
     simulation.Ṡ = sparse(simulation.Ṡ)
 
-    return ∑ⱼ(S)  # return the sum of all activations
+    return ∑ⱼ(simulation.S)  # return the sum of all activations
 end
 
 
@@ -141,7 +131,7 @@ function step!(
     input = simulation.η > 0 ? (rand(Float64, size(S, 1)) .* simulation.η) .+ b₀ : b₀
 
     # enforce initial condition
-    isnothing(s₀) || (S[:, i] .*= s₀)
+    isnothing(s₀) || (S .*= s₀)
 
     # get activation
     Ṡ = W * S .+ input
@@ -167,23 +157,15 @@ include("history.jl")
 
 function run_simulation(
     simulation::Simulation;
-    savefolder::Union{String,Nothing} = nothing,
-    savename::String = simulation.can.name * "_sim",
-    frame_every_n::Union{Nothing,Int} = 20,   # how frequently to save an animation frame
-    fps = 20,
     discard_first_ms = 0,
     s₀ = nothing,
-    φ::Union{Function,Nothing} = nothing,
     kwargs...,
 )
-    savefolder = isnothing(savefolder) ? savename : savefolder
-
-    # setup animation
+    # setup history
     N = size(simulation.trajectory.X, 1)
     T = (N + 1) * simulation.dt
     time = 1:simulation.dt:T |> collect
     framen = 1
-    anim = Animation()
 
     # get history to track data
     history = History(simulation, N; discard_first_ms = discard_first_ms, kwargs...)
@@ -195,9 +177,9 @@ function run_simulation(
     decoder = nothing
 
     # do simulation steps and visualize   
-    pbar = ProgressBar()
-    Progress.with(pbar) do
-        job = addjob!(pbar, description = "Simulation", N = N)
+    # pbar = ProgressBar()
+    # Progress.with(pbar) do
+    #     job = addjob!(pbar, description = "Simulation", N = N)
         for i = 1:N
             # get activation for bump initialization
             if i > simulation.trajectory.still
@@ -233,52 +215,10 @@ function run_simulation(
             # add data to history
             (time[framen] > discard_first_ms) && add!(history, framen, simulation, v)
 
-            # add frame to animation
-            isnothing(frame_every_n) || begin
-                (i % frame_every_n == 0 || i == 1) &&
-                    (time[framen] > discard_first_ms) &&
-                    # (framen > simulation.trajectory.still) &&
-                    begin
-                        # try
-                            plot(simulation, time[framen], framen, x, v, X̄, φ)
-                        # catch e
-                        #     @warn "cacca" framen e
-                        # end
-                        frame(anim)
-                    end
-            end
-
             framen += 1
-            update!(job)
-        end
+        #     update!(job)
+        # end
     end
-
-    isnothing(frame_every_n) || begin
-        gif(anim, savepath(savefolder, savename, "gif"), fps = fps)
-    end
-
-    save_simulation_history(
-        history,
-        savefolder,
-        savename * "_" * simulation.can.name * "_history",
-    )
-    # save_model(
-    #     simulation.can,
-    #     savefolder,
-    #     savename * "_" * simulation.can.name * "_sim_CAN_model",
-    #     :CAN,
-    # )
-    save_data(
-        simulation.trajectory.X,
-        savefolder,
-        savename * "_" * simulation.can.name * "_sim_trajectory_X",
-    )
-    # save_data(
-    #     simulation.trajectory.V,
-    #     savefolder,
-    #     savename * "_" * simulation.can.name * "_sim_trajectory_V",
-    # )
-    save_data(X̄, savefolder, savename * "_" * simulation.can.name * "_sim_decoded_X")
 
     return history, X̄
 end

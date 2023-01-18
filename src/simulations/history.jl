@@ -12,8 +12,8 @@ average of all data.
 mutable struct History
     S::Array                        # activation at each timestep, n_neurons × 2d × T
     Ŝ::Array                        # for averaging
-    v::Array                        # input vector at each timestep
-    v̂::Array                        # for averaging
+    v::Union{Nothing, Array}                        # input vector at each timestep
+    v̂::Union{Nothing, Array}                        # for averaging
     average_over::Int               # average every N frames
     discard::Int                    # discard first N frames
     metadata::Dict                  # can info, sim params, timestamp...
@@ -41,8 +41,12 @@ function History(
 
     S = Array{Float64}(undef, (size(simulation.S)..., keep_frames))
     Ŝ = Array{Float64}(undef, (size(simulation.S)..., average_over))
-    v = Array{Float64}(undef, (size(simulation.trajectory.V, 2), keep_frames))
-    v̂ = Array{Float64}(undef, (size(simulation.trajectory.V, 2), average_over))
+    if isnothing(simulation.trajectory.V)
+        v, v̂ = nothing, nothing
+    else
+        v = Array{Float64}(undef, (size(simulation.trajectory.V, 2), keep_frames))
+        v̂ = Array{Float64}(undef, (size(simulation.trajectory.V, 2), average_over))
+    end
 
     @debug "Done" size(S) size(Ŝ) size(v) size(v̂)
     metadata = Dict{Symbol,Any}(
@@ -62,7 +66,7 @@ function History(
     return History(S, Ŝ, v, v̂, average_over, n_discard, metadata, 1, Δt)
 end
 
-function add!(history::History, framen::Int, simulation::Simulation, v::Vector{Float64})
+function add!(history::History, framen::Int, simulation::Simulation, v::Union{Vector, Nothing})
     framen < history.discard && return  # skip first N frames
 
     # make sure it fits in history
@@ -76,7 +80,7 @@ function add!(history::History, framen::Int, simulation::Simulation, v::Vector{F
 
     F = mod(framen, k)
     Ŝ[:, :, F+1] = simulation.S
-    v̂[:, F+1] = v
+    isnothing(v) || (v̂[:, F+1] = v)
 
     # update main registry
     if F == 0 || framen == 1
@@ -85,7 +89,7 @@ function add!(history::History, framen::Int, simulation::Simulation, v::Vector{F
             return
         end
         history.S[:, :, history.entry_n] = mean(Ŝ; dims = 3)
-        history.v[:, history.entry_n] = mean(v̂; dims = 2)
+        isnothing(v) || (history.v[:, history.entry_n] = mean(v̂; dims = 2))
         history.entry_n += 1
     end
 end

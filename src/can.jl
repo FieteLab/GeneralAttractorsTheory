@@ -268,6 +268,12 @@ mutable struct SingleCAN <: AbstractCAN
     metric::Metric
 end
 
+
+Base.string(can::SingleCAN) = "SingleCAN $(can.name) (dim=$(length(can.n))) - n neurons: $(can.n)"
+Base.print(io::IO, can::SingleCAN) = print(io, string(can))
+Base.show(io::IO, ::MIME"text/plain", can::SingleCAN) = print(io, string(can))
+
+
 function SingleCAN(
     name::String,
     C::CoverSpace,
@@ -301,6 +307,7 @@ function SingleCAN(
     W = kernel.k.(D)
 
     # finalize
+    σ = σ isa Symbol ? activations[σ] : σ
     return SingleCAN(name, C, n, length(n), lattice_idxs, X, W, kernel, σ, metric)
 end
 

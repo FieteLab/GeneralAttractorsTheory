@@ -84,3 +84,14 @@ toruscan = CAN(
     # offsets = offsets,
     # Ω = Ω
 )
+
+
+toruscan_single = SingleCAN(
+    "torus",
+    cover,
+    n,
+    ξ_t,
+    d_t,
+    k_t;
+    σ = :relu,
+)

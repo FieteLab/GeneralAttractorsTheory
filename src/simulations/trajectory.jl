@@ -106,6 +106,39 @@ end
 # ---------------------------------------------------------------------------- #
 #                                  TRAJECTORY                                  #
 # ---------------------------------------------------------------------------- #
+abstract type AbstractTrajectory end
+
+Base.string(T::AbstractTrajectory) = "Trajectory on $(T.M)"
+Base.print(io::IO, T::AbstractTrajectory) = print(io, string(T))
+Base.show(io::IO, ::MIME"text/plain", T::AbstractTrajectory) = print(io, string(T))
+
+
+struct ConstantTrajectory <: AbstractTrajectory
+    M::AbstractManifold
+    X::Matrix
+    X̄::Matrix   # on manifold trajectory
+    V::Nothing
+    still::Int # number of warmup frames at the start
+end
+
+ConstantTrajectory(can::AbstractCAN, args...; kwargs...) =
+    ConstantTrajectory(can, can.C.M, args...; kwargs...)
+
+
+function ConstantTrajectory(can::AbstractCAN, M::AbstractManifold, args...; T::Int = 250, still=0, kwargs...)
+    d = length(M.xmin)
+    x = Matrix(reshape(zeros(T, d), T, d))
+    
+    return ConstantTrajectory(
+        M,
+        x,
+        x,
+        nothing,
+        still,
+    )
+end
+
+
 """
 struct Trajectory
 
@@ -114,7 +147,7 @@ The trajectory is defined by a matrix V (T×d) of velocity
 along each of d-many dimensions at each time step in T. 
 X (T×d) is the coordinates of the trajectory's trace.
 """
-@with_repr struct Trajectory
+@with_repr struct Trajectory <: AbstractTrajectory
     M::AbstractManifold
     X::Matrix
     X̄::Matrix   # on manifold trajectory
