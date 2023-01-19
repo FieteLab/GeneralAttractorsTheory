@@ -1,7 +1,7 @@
 
 function torus_maker(cantype; 
         m::Int=64,
-        k_t::AbstractKernel = LocalGlobalKernel(α = 2.5, σ = 5.0), 
+        k::AbstractKernel = LocalGlobalKernel(α = 2.5, σ = 5.0), 
         offset_size::Number = 0.2,
     )
     # number of neurons
@@ -33,13 +33,13 @@ function torus_maker(cantype;
     cover = CoverSpace(Manifoldℝ²(100), Torus(), ρ, ρⁱ)
 
     # define a function to get the coordinates of each neuron in the lattice
-    function ξ_t(i::Int, j::Int)::Vector  # neurons coordinates function
+    function ξ(i::Int, j::Int)::Vector  # neurons coordinates function
         sep = 2π / n[1]
         [lerp(i, n[1], 0, 2π - sep), lerp(j, n[2], 0, 2π - sep)]   # ∈ [0, 2π] × [0, 2π]
     end
 
     # select a distance metric
-    d_t = PeriodicEuclidean([2π, 2π])  # distance function over a torus manifold
+    d = PeriodicEuclidean([2π, 2π])  # distance function over a torus manifold
 
     # # offsets
     # offsets = [
@@ -62,9 +62,9 @@ function torus_maker(cantype;
             "torus",
             cover,
             n,
-            ξ_t,
-            d_t,
-            k_t;
+            ξ,
+            d,
+            k;
             σ = :relu,
         )
     else
@@ -72,9 +72,9 @@ function torus_maker(cantype;
         "torus",
         cover,
         n,
-        ξ_t,
-        d_t,
-        k_t;
+        ξ,
+        d,
+        k;
         offset_size = offset_size,
         σ = :relu,
         α = 3.2,
@@ -86,4 +86,4 @@ end
 
 
 toruscan = torus_maker(:can)
-toruscan_single = torus_maker(:single; k_t = LocalGlobalKernel(α = 1.0, σ = 50.0))
+toruscan_single = torus_maker(:single; k = LocalGlobalKernel(α = 1.0, σ = 50.0))

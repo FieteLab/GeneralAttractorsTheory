@@ -68,7 +68,11 @@ struct MexicanHatKernel <: AbstractKernel
     k::Function
 
     function MexicanHatKernel(; α = 0.33, σ = 0.25, β = 0)
-        k(t) = α * 2 / (√(3σ) * π^(1 / 4)) * (1 - (t / σ)^2) * exp(-t^2 / (2σ)) - β
+        _k(t) = α * 2 / (√(3σ) * π^(1 / 4)) * (1 - (t / σ)^2) * exp(-t^2 / (2σ)) - β
+
+        # get the peak location to ensure we can set it at 0
+        peak = maximum(_k.(-4:.01:4))
+        k(t) = _k(t) - peak
         new(α, σ, k)
     end
 end
@@ -102,10 +106,13 @@ struct DiffOfExpKernel <: AbstractKernel
         δ::Float64 = 0.0,  # offset
     )
 
-        k(x) = begin
+        _k(x) = begin
             _x = abs(x)^2
             a * exp(-γ * _x) - exp(-β * _x) + δ
         end
+
+        peak = maximum(_k.(-4:.01:4))
+        k(t) = _k(t) - peak
         new(a, λ, β, γ, k)
     end
 end

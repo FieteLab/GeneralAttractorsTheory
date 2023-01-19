@@ -2,9 +2,8 @@ import MyterialColors: red, green, black, white
 
 # ---------------------------------- kernel ---------------------------------- #
 function Plots.plot(K::AbstractKernel; σ = 4, kwargs...)
-    x = -σ:0.001:σ |> collect
+    x = range(-σ,σ; length=500) |> collect
     y = K.(x)
-    x̂ = x[argmin(y)]
     Plots.plot(
         x,
         y,
@@ -15,14 +14,12 @@ function Plots.plot(K::AbstractKernel; σ = 4, kwargs...)
         grid = get(kwargs, :grid, false),
         color = get(kwargs, :color, "black");
         kwargs...,
-        # xlim = [-σ*abs(x̂), σ*abs(x̂)],
     )
 end
 
 function Plots.plot!(K::AbstractKernel; σ = 4, kwargs...)
-    x = -σ:0.001:σ |> collect
+    x = range(-σ,σ; length=500) |> collect
     y = K.(x)
-    x̂ = x[argmin(y)]
     Plots.plot!(
         x,
         y,
@@ -33,7 +30,6 @@ function Plots.plot!(K::AbstractKernel; σ = 4, kwargs...)
         grid = get(kwargs, :grid, false),
         color = get(kwargs, :color, "black");
         kwargs...,
-        # xlim = [-σ*abs(x̂), σ*abs(x̂)],
     )
 end
 
@@ -51,6 +47,7 @@ function plot_distance_1d(d::PeriodicEuclidean; kwargs...)
         vline!([point], color = colors[i], label = nothing)
     end
     display(p)
+    return p
 end
 
 
@@ -98,6 +95,7 @@ function plot_distance_2d(
 
     plt = plot(pts..., size = (600, 600); kwargs...)
     display(plt)
+    return plt
 end
 
 """
@@ -125,7 +123,7 @@ Visualize N=dimensional periodic distance functions.
 function plot_distance_function(d::PeriodicEuclidean; kwargs...)
     ndims = length(d.periods)
 
-    if ndims == 1
+    return if ndims == 1
         plot_distance_1d(d; kwargs...)
     elseif ndims == 2
         plot_distance_2d(d; kwargs...)
@@ -144,7 +142,7 @@ function plot_distance_function(d::MobiusEuclidean; kwargs...)
     X = (x × y) |> collect
     X = [[x...] for x in vec(X)]
 
-    plot_distance_2d(
+    return plot_distance_2d(
         d,
         x,
         y;

@@ -94,10 +94,6 @@ sphere_ψy(p) = sphere_ψy(p...)
 sphere_ψz(x, y, z)::Vector = (x * ∂y - y * ∂x) |> normalize
 sphere_ψz(p) = sphere_ψz(p...)
 
-φ = sphere_embedding
-
-
-
 
 # ---------------------------------------------------------------------------- #
 #                                   DIFF GEOM                                  #
