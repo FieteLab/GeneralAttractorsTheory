@@ -1,15 +1,3 @@
-using Distances
-using Term
-
-import GeneralAttractors: SphericalDistance
-using GeneralAttractors
-using GeneralAttractors.Kernels
-using GeneralAttractors: lerp
-using GeneralAttractors.ManifoldUtils
-import GeneralAttractors.ManifoldUtils: sphere_embedding, sphere_ψx, sphere_ψy, sphere_ψz, fibonacci_sphere
-import GeneralAttractors.Can: OneForm
-
-
 println(Panel("Creating sphere attractor", style = "green", justify = :center))
 
 
@@ -29,7 +17,7 @@ d_s = SphericalDistance()
 # d_s = SphericalAngle()
 
 # kernel  
-k_s = LocalGlobalKernel(α = 2.5, σ = 40.5, β = 2.5)
+k_s = LocalGlobalKernel(α = 2.5, σ = 40.5)
 
 # cover space
 cover = CoverSpace(S²)  # trivial cover space

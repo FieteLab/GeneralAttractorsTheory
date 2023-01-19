@@ -10,13 +10,11 @@ install_term_stacktrace(hide_frames = true)
 
 """
 Run a large number of simulations for a single copy CAN with different initial conditions.
-Save the data to make sure  
+Save the data & metadata for further analysis.
 """
 
-include("../networks/torus.jl")
-
-
 supervisor = Supervisor("GeneralAttractorsTheory")
+set_datadir(supervisor, "/Users/federicoclaudi/Dropbox (Personal)/Postdoc/GeneralAttractors/data")
 
 # --------------------------------- functions -------------------------------- #
 function random_init(can)
@@ -48,11 +46,11 @@ end
 can = toruscan_single   # type of CAN
 N_sims = 5000
 dt = 0.5
-duration = 200
+duration = 125
 still = 100
 τ = 5.0
 b₀ = 0.5
-
+tag = "random_initial_conditions"
 
 @assert can isa SingleCAN "CAN must be a SingleCAN."
 
@@ -70,12 +68,10 @@ Progress.with(pbar) do
         );
 
         store_data(
-            supervisor, 
-            "simulations",
-            "random_inits";
-            history = (Dict(:history => h), "bson"),
-            trajectory = (sim.trajectory.X, "npz"),
-            decoded = (X, "npz"),
+            supervisor,
+            tag,
+            can.name;
+            history = (Dict(h), "jld2"),
             metadata = Dict(
                 :can => can.name,
                 :dt => dt,
@@ -84,6 +80,8 @@ Progress.with(pbar) do
                 :τ => τ,
                 :b₀ => b₀,
                 :x₀ => x₀,
+                :tag => tag,
+                :n_neurons => collect(can.n),
             )
         )
         update!(job)

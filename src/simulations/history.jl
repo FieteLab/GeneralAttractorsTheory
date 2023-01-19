@@ -21,6 +21,12 @@ mutable struct History
     Δt::Number                      # time interval between saved frames. Depends on average over and dt
 end
 
+function Base.Dict(h::History)
+    keys = fieldnames(History)
+    vals = map(k -> getfield(h, k), keys)
+    return Dict([string(k) => v for (k,v) in zip(keys, vals)]...)
+end
+
 
 function History(
     simulation::Simulation,

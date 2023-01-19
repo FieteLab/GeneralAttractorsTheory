@@ -1,14 +1,3 @@
-using Distances
-using Term
-
-
-using GeneralAttractors
-using GeneralAttractors.Kernels
-using GeneralAttractors: lerp
-using GeneralAttractors.ManifoldUtils
-import GeneralAttractors.ManifoldUtils: Manifoldℝ², Mobius, MB_ψ1, MB_ψ2, MB_ψ3
-import GeneralAttractors: MobiusEuclidean, mobius_embedding
-
 println(Panel("Creating Mobius attractor", style = "green", justify = :center))
 
 # number of neurons
@@ -28,7 +17,7 @@ cover = CoverSpace(mfld)
 d_m = MobiusEuclidean()
 
 # connectivity kernel
-k_m = LocalGlobalKernel(α = 2.5, σ = 1.5, β = 2.5)
+k_m = LocalGlobalKernel(α = 2.5, σ = 1.5)
 
 
 # define offset vector fields

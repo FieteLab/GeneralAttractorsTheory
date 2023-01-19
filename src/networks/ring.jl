@@ -1,14 +1,3 @@
-using Distances
-using Term
-
-
-using GeneralAttractors
-using GeneralAttractors.Kernels
-using GeneralAttractors: lerp
-using GeneralAttractors.ManifoldUtils
-import GeneralAttractors.ManifoldUtils: Ring, ring_ψ
-
-
 println(Panel("Creating ring attractor", style = "green", justify = :center))
 
 # neurons position and distance function
@@ -19,7 +8,7 @@ n = (64,)  # number of neurons in the ring
 d_r = PeriodicEuclidean([2π])  # distance function
 
 # kernel
-k_r = LocalGlobalKernel(α = 2.5, σ = 0.25, β = 2.5)
+k_r = LocalGlobalKernel(α = 2.5, σ = 0.25)
 
 # cover map
 cover = CoverSpace(Ring())

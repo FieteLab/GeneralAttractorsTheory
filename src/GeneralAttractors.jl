@@ -3,10 +3,9 @@ using LinearAlgebra: norm
 using Plots
 using Distances: PeriodicEuclidean, evaluate, UnionMetric, SphericalAngle
 import Base.Iterators: product as ×  # cartesian product
+using Term
+using YAML, NPZ, JLD2
 
-using BSON, YAML, NPZ
-
-include("io.jl")
 include("utils.jl")
 include("embeddings.jl")
 
@@ -20,7 +19,7 @@ export CAN, OneForm
 
 using .Kernels
 using .ManifoldUtils
-using .Can: CAN, OneForm, offset_for_visual
+using .Can: CAN, OneForm, offset_for_visual, SingleCAN
 
 include("viz.jl")
 include("simulations/Simulations.jl")
@@ -33,5 +32,14 @@ import .Analysis
 
 include("supervisor.jl")
 using .ProjectSupervisor
+
+
+include("networks/mobius.jl")
+include("networks/torus.jl")
+include("networks/ring.jl")
+include("networks/sphere.jl")
+export toruscan, toruscan_single, spherecan, ringcan, mobiuscan
+export torus_maker
+
 
 end

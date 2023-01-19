@@ -1,14 +1,26 @@
 module ProjectSupervisor
-    export Supervisor, move_to_datadir, store_data
+    export Supervisor, 
+        move_to_datadir, 
+        store_data,
+        set_datadir,
+        get_entries,
+        fetch,
+        save_plot
 
     using ObjectivePaths, DataFrames, Term, MyterialColors, FileIO, UUIDs, Dates, LibGit2, YAML
-
+    using Term.Tables
+    import Plots: savefig
 
     # ---------------------------------------------------------------------------- #
     #                                  SUPERVISOR                                  #
     # ---------------------------------------------------------------------------- #
 
     # --------------------------------- creation --------------------------------- #
+    """
+        Supervisor
+
+    Keeps an eye on your project. Storing metadata on what gets saved where.
+    """
     mutable struct Supervisor
         projectdir::Folder
         datadir::Folder
@@ -35,6 +47,7 @@ module ProjectSupervisor
 
     # repr for Supervisor showing folder
     function Base.show(io::IO, supervisor::Supervisor)
+        meta = update_metadata!(supervisor.metadata)
         tprintln(io, "{bold $orange}Supervisor with datadir:{/bold $orange}")
         println(io, supervisor.datadir)
 
@@ -45,12 +58,31 @@ module ProjectSupervisor
             println(io, supervisor.gitrepo)
         end
 
-        tprintln(io, "{$orange}Metadata:{/$orange}")
-        println(io, DataFrame(supervisor.metadata))
+        df = DataFrame(meta)
+        tprintln(io, "{$orange}Metadata $(size(df)):{/$orange}"; highlight=false)
+        "tag" ∉ keys(meta) && return
+        _meta = filter(k -> k.first ∈ ("date","time","folder", "tag"), meta)
 
+        # keep at most 5 entries
+        for k in keys(_meta)
+            length(_meta[k]) < 5 && continue
+            _meta[k] = rand(_meta[k], 5)
+        end
+
+        println()
+        tprintln(io, Table(_meta;
+            columns_style=["bold white", "default", "dim", "dim"],
+            footer = length,
+            footer_style = "blue",
+            header_style = "blue bold",
+        ))
     end
+    
 
-
+    """
+    Find a folder that is a Git repo.
+    Either the project or one of its parents.
+    """
     function get_gitrepo(fld::Folder)::Union{Nothing, GitRepo}
         repo = nothing
         repodir = fld
@@ -67,6 +99,9 @@ module ProjectSupervisor
         return repo
     end
 
+    """
+        Get info for current git repository (e.g. commit)
+    """
     function git_info(sup::Supervisor)
         repo = sup.gitrepo
         isnothing(repo) && return "No git repository found"
@@ -85,13 +120,27 @@ module ProjectSupervisor
 
 
     # ------------------------------- change folder ------------------------------ #
+    
+    """
+        Move datadir to a subfolder
+    """
     function move_to_datadir(supervisor::Supervisor, fld::String)
         fld = Folder(supervisor.datadir / fld)
         supervisor.datadir = fld
         meta, meta_path = load_or_create_metadata(fld)
         supervisor.metadata = meta
         supervisor.metadatafile = meta_path
-        supervisor.gitrepo = get_gitrepo(fld)
+    end
+
+    """
+        Move datadir to another folder.
+    """
+    function set_datadir(supervisor::Supervisor, fld::String)
+        fld = Folder(fld)
+        supervisor.datadir = fld
+        meta, meta_path = load_or_create_metadata(fld)
+        supervisor.metadata = meta
+        supervisor.metadatafile = meta_path
     end
 
 
@@ -138,12 +187,16 @@ module ProjectSupervisor
         uid = ""
         for (k,v) in pairs(metadata)
             k = string(k)
+            v isa AbstractArray && return nothing
             k ∉ keys(sup.metadata) && return nothing
             v ∉ sup.metadata[k] && return nothing
 
-            fld = sup.metadata["folder"][sup.metadata[k] .== v][1]
+            matches = sup.metadata[k] .== v
+            any(Bool.(matches)) || return nothing
+
+            fld = sup.metadata["folder"][matches][1]
             fld == folder.path || return nothing
-            uid = sup.metadata["uid"][sup.metadata[k] .== v][1]
+            uid = sup.metadata["uid"][matches][1]
         end
         return uid
     end
@@ -167,25 +220,37 @@ module ProjectSupervisor
             pairs(metadata)...
         )
 
-        n_prev_entries = length(values(sup.metadata))
+        n_prev_entries =  haskey(sup.metadata, "uid") ? length(sup.metadata["uid"]) : 0
         for (k, v) in pairs(entry)
             k = string(k)
             if k ∉ keys(sup.metadata)
                 sup.metadata[k] = repeat(Any[nothing], n_prev_entries)
             end
+
             push!(sup.metadata[k], v)
         end
     end
 
+    function get_entries(sup::Supervisor; filter_values...)
+        df = DataFrame(sup.metadata)
+        for (k, v) in pairs(filter_values)
+            k = string(k)
+            k ∉ keys(sup.metadata) && continue
+            df = df[df[:, k] .== v, :]
+        end
+        return df
+    end
 
     # --------------------------------- save data -------------------------------- #
 
     function store_data(
         sup::Supervisor,
         paths_elements...;
-        metadata::AbstractDict = Dict(),
+        metadata::AbstractDict = Dict("tag"=>"notag"),
         data_entries...
     )
+        @assert "tag" ∈ string.(keys(metadata)) "Data entry metadata must have a tag."
+
         # get path to destination folder
         dest = if length(paths_elements) == 0
             sup.datadir
@@ -197,8 +262,8 @@ module ProjectSupervisor
         end
 
         # check if an entry with the same metadata already exists
-        # isnothing(check_entry_exists(sup, metadata, dest)) || @warn "Entry with same metadata already exists"
-        isnothing(check_entry_exists(sup, metadata, dest)) || error("Implement removing obsolete metadata")
+        isnothing(check_entry_exists(sup, metadata, dest)) || @warn "Entry with same metadata already exists"
+        # isnothing(check_entry_exists(sup, metadata, dest)) || error("Implement removing obsolete metadata")
 
         # collect meta info
         uid = string(uuid4())
@@ -227,13 +292,33 @@ module ProjectSupervisor
     end
 
 
-
+    function save_plot(sup::Supervisor, plt, name::AbstractString)
+        meta = git_info(sup)
+        path = (sup.projectdir / "plots" / (name*"_"*meta)).path
+        
+        savefig(plt, path * ".png")
+        savefig(plt, path * ".svg")
+    end
     
 
 
     # --------------------------------- load data -------------------------------- #
 
+    """
+        fetch(sup::Supervisor; filter_criteria...)
 
+    Fetch a subset of the data stored in the metadata based 
+    on some criteria to filter which entries to select.
+    """
+    function fetch(sup::Supervisor; filter_criteria...)::Tuple{DataFrame, Vector}
+        df = get_entries(sup; filter_criteria...)
+        
+        data = []
+        for entry in eachrow(df)
+            path = joinpath(entry.folder, entry.name)
+            push!(data, load(path))
+        end
 
-
+        return df, data
+    end
 end

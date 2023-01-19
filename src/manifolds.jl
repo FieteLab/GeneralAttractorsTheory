@@ -10,9 +10,14 @@ import ..GeneralAttractors: sphere_embedding, mobius_embedding
 
 export AbstractManifold, CoverSpace
 export ℝ², T, S²
+export Ring, Mobius, Sphere, Torus, Manifoldℝ²
 
 include("_manifolds.jl")
 
+export MB_ψ1, MB_ψ2, MB_ψ3
+export ring_ψ
+export torus_ψ1, torus_ψ2
+export sphere_ψx, sphere_ψy, sphere_ψz, fibonacci_sphere
 
 # ---------------------------------------------------------------------------- #
 #                                 VECTOR FIELDS                                #

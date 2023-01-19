@@ -8,12 +8,30 @@ function Plots.plot(K::AbstractKernel; σ = 4, kwargs...)
     Plots.plot(
         x,
         y,
-        xlabel = "distance Δx",
-        ylabel = "w",
-        lw = 2,
-        label = nothing,
-        grid = false,
-        color = "black";
+        xlabel = get(kwargs, :xlabel, "distance Δx"),
+        ylabel = get(kwargs, :ylabel, "w"),
+        lw = get(kwargs, :lw, 2),
+        label = get(kwargs, :label, nothing),
+        grid = get(kwargs, :grid, false),
+        color = get(kwargs, :color, "black");
+        kwargs...,
+        # xlim = [-σ*abs(x̂), σ*abs(x̂)],
+    )
+end
+
+function Plots.plot!(K::AbstractKernel; σ = 4, kwargs...)
+    x = -σ:0.001:σ |> collect
+    y = K.(x)
+    x̂ = x[argmin(y)]
+    Plots.plot!(
+        x,
+        y,
+        xlabel = get(kwargs, :xlabel, "distance Δx"),
+        ylabel = get(kwargs, :ylabel, "w"),
+        lw = get(kwargs, :lw, 2),
+        label = get(kwargs, :label, nothing),
+        grid = get(kwargs, :grid, false),
+        color = get(kwargs, :color, "black");
         kwargs...,
         # xlim = [-σ*abs(x̂), σ*abs(x̂)],
     )
