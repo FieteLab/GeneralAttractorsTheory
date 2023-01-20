@@ -3,8 +3,8 @@ Definition of parameters and settins used throughout the analysis/plots.
 """
 
 using Plots, DataFrames, Term, Statistics
-# gr()   # for fast plotting
-pyplot()  # for better plots quality
+gr()   # for fast plotting
+# pyplot()  # for better plots quality
 
 install_term_stacktrace(; hide_frames=false)
 
@@ -26,7 +26,13 @@ set_datadir(supervisor, datadir)
 b₀ = 1.0
 dt = 0.5
 
-networks = ("torus", "sphere", "mobius", "cylinder", "plane")
+networks = (
+    "torus", 
+    "sphere", 
+    "mobius", 
+    "cylinder",
+    "plane"
+)
 
 network_makers = Dict(
     "torus" => torus_maker,
@@ -47,11 +53,11 @@ embeddings = Dict(
 
 # ---------------------------- ANALYSIS paramters ---------------------------- #
 dimred_3d_params = AnalysisParameters(
-    max_nPC = 50,
-    pca_pratio = 0.9999,
+    max_nPC = 400,  # max num of PCs
+    pca_pratio = 0.999999,       # fraction of variance explained
     n_isomap_dimensions = 3,
-    isomap_k = 10,
-    isomap_downsample = 50,  # time downsamplin
+    isomap_k = 12,
+    isomap_downsample = 50,
 )
 
 dimred_10d_params = AnalysisParameters(
@@ -84,7 +90,7 @@ kernels_parameters_range = Dict(
     "torus" => Dict(
         :mexican_hat => Dict(
             :α => 3:δ:16,
-            :σ => 10:δ:100,
+            :σ => 5:δ:100,
         ),
         :DoE => Dict(
             :a => 4:δ:20,
@@ -103,7 +109,7 @@ kernels_parameters_range = Dict(
 "mobius" => Dict(
         :mexican_hat => Dict(
             :α => 3:δ:16,
-            :σ => 2:δ:30,
+            :σ => 1:δ:30,
         ),
         :DoE => Dict(
             :a => 4:δ:20,
@@ -122,7 +128,7 @@ kernels_parameters_range = Dict(
 "cylinder" => Dict(
         :mexican_hat => Dict(
             :α => 3:δ:16,
-            :σ => 2:δ:30,
+            :σ => 1:δ:30,
         ),
         :DoE => Dict(
             :a => 4:δ:20,
@@ -141,7 +147,7 @@ kernels_parameters_range = Dict(
     "plane" => Dict(
         :mexican_hat => Dict(
             :α => 3:δ:16,
-            :σ => 2:δ:30,
+            :σ => 1:δ:30,
         ),
         :DoE => Dict(
             :a => 4:δ:20,
@@ -160,7 +166,7 @@ kernels_parameters_range = Dict(
     "sphere" => Dict(
         :mexican_hat => Dict(
             :α => 3:δ:16,
-            :σ => 2:δ:30,
+            :σ => 1:δ:30,
         ),
         :DoE => Dict(
             :a => 4:δ:20,

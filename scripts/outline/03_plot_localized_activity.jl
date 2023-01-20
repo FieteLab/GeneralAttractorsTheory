@@ -17,13 +17,14 @@ for can_name in networks
     # simulation params
     duration = 125
     still = 100
-    x₀ = if can_name == "sphere"
-        [1, 0, 0]
-    elseif can_name == "cylinder"
-        [0, 0] 
-    else
-        [1, 5]
-    end
+    # x₀ = if can_name == "sphere"
+    #     [1, 0, 0]
+    # elseif can_name == "cylinder"
+    #     [0, 0] 
+    # else
+    #     [1, 5]
+    # end
+    x₀ = nothing
 
     # plots params
     n_samples_per_kernel = 2
@@ -47,21 +48,21 @@ for can_name in networks
             Δ = 2
             activity = reshape(h.S[:, 1, end], can.n)
             coords = by_column(φ, can.X[:, 1:Δ:end])
-            # push!(plots, heatmap(activity, title=name))
+            push!(plots, heatmap(activity, title=name))
             
-            push!(plots, 
-                scatter3d(eachrow(coords)...;
-                    msa=0, msw=0, alpha=1,
-                    ms=8,
-                    xlim=(-1.25, 1.25), ylim=(-1.25, 1.25), zlim=(-1.25, 1.25),
-                    marker_z=h.S[1:Δ:end, 1, end],
-                    camera=(45, 50),
-                    label=nothing,
-                    title=[name],
-                    showaxis = false,
-                    axis=nothing,
-                )
-            )
+            # push!(plots, 
+            #     scatter3d(eachrow(coords)...;
+            #         msa=0, msw=0, alpha=1,
+            #         ms=8,
+            #         xlim=(-1.25, 1.25), ylim=(-1.25, 1.25), zlim=(-1.25, 1.25),
+            #         marker_z=h.S[1:Δ:end, 1, end],
+            #         camera=(45, 50),
+            #         label=nothing,
+            #         title=[name],
+            #         showaxis = false,
+            #         axis=nothing,
+            #     )
+            # )
         end
     end
 
@@ -73,6 +74,7 @@ for can_name in networks
     )
 
     save_plot(supervisor, fig, "03_actvitity_$(can_name)");
+    display(fig)
 end
-# fig
-nothing
+
+# nothing

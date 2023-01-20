@@ -153,21 +153,7 @@ end
 
     Ref: https://mtsch.github.io/Ripserer.jl/dev/
 """
-function tda_on_pointcloud(
-    simulation_folder::String,
-    simulation_name::String,
-    params::AnalysisParameters,
-    lower_dim_space::String = "pca",
-)
-    # load
-    X = load_data(simulation_folder, "$(simulation_name)_$(lower_dim_space)_space")
-    tda_on_pointcloud(X, params, simulation_folder)
-end
-
-
-function tda_on_pointcloud(X::Matrix, params::AnalysisParameters, simulation_folder::String)
-    (checkpath(simulation_folder, "tda_results", "png") && !params.debug) && return
-
+function tda_on_pointcloud(X::Matrix, params::AnalysisParameters)
     # convert M in a vector of tuples for TDA
     n = (Int ∘ round)(size(X, 2) / params.tda_downsample_factor)
     X̄ = [Tuple(x) for x in rand(collect(eachcol(X)), n)]
@@ -184,31 +170,11 @@ function tda_on_pointcloud(X::Matrix, params::AnalysisParameters, simulation_fol
 
     # plot results
     plt = plot(plot(tda), barcode(tda), size = (1000, 800))
-    savefig(savepath(simulation_folder, "tda_results", "png"))
-    save_model(tda, simulation_folder, "tda_barcode", :TDA)
     return tda, plt
 end
 
 
-"""
-Run TDA and analyze barcode to infer topology.
 
-TODO: barcode analysis
-"""
-function estimate_manifold_topology(
-    simulation_name::String,
-    params::AnalysisParameters = AnalysisParameters(),
-)
-    return tda_on_pointcloud(simulation_name, params)
-end
-
-function estimate_manifold_topology(
-    X::Matrix,
-    params::AnalysisParameters = AnalysisParameters(),
-    savename::String = "test",
-)
-    return tda_on_pointcloud(X, params, savename)
-end
 
 # ---------------------------------------------------------------------------- #
 #                                   LOCAL PCA                                  #
@@ -224,18 +190,10 @@ function estimate_intrinsic_dimensionality(
 Fit PCA to local neighborhoods on the data manifold to estimate
 intrinsic dimensionality. 
 """
-function estimate_intrinsic_dimensionality(simulation_name::String, args...; kwargs...)
-
-    # load
-    M = load_data(simulation_name, "pca_space")
-    estimate_intrinsic_dimensionality(M, args...; kwargs...)
-end
-
-
 function estimate_intrinsic_dimensionality(
     M::Matrix,
     params::AnalysisParameters = AnalysisParameters();
-)
+)::Vector{Int}
     @info "Estimating intrinsic dimensionality" size(M) params.intrinsic_d_nseeds params.intrinsic_d_neighborhood_size
 
     # build nearest neighbor tree

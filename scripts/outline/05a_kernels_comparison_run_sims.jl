@@ -1,6 +1,8 @@
 using Term.Progress
 include("settings.jl")
 
+move_to_datadir(supervisor, "kernels_comparison")
+
 """
 Run a large number of simulations for a single copy CAN with different initial conditions.
 Save the data & metadata for further analysis.
@@ -13,14 +15,14 @@ kernel_params = kernels_parameters_range[can_name]
 
 # number of sims
 n_sims_per_kernel = 2500
-n_random_kernel_params_draws = 1  # for eacg kernel type
+n_random_kernel_params_draws = 10  # for eacg kernel type
 N_sims = n_sims_per_kernel * n_random_kernel_params_draws * length(kernels)
 @info "Running $N_sims simulations in total."
 
 # sim params
-duration = 120
-still = 100
-tag = "random_initial_conditions"
+duration = 70
+still = 50
+tag = "kernels_comparison"
 
 
 # # -------------------------------- run & save -------------------------------- #
@@ -28,21 +30,15 @@ pbar = ProgressBar()
 Progress.with(pbar) do
     job = addjob!(pbar, description = "Simulation", N = N_sims)
     for (name, ktype) in pairs(kernels), rep in 1:n_random_kernel_params_draws
-        
-        params = if n_random_kernel_params_draws > 1
-            Dict(k => rand(v) for (k, v) in kernel_params[name])
-        else
-            Dict(k => mean(v) for (k, v) in kernel_params[name])
-        end
+        # make network with random kernel
+        params = Dict(k => rand(v) for (k, v) in kernel_params[name])
         kernel = ktype(; params...)
-
         can = can_maker(:single; k=kernel)
 
+        # run simulations
         for i in 1:n_sims_per_kernel
             generate_or_load(
-                supervisor,
-                tag,
-                can.name;
+                supervisor, "simulations";
                 fmt = "jld2", 
                 name = "history_$(ktype)_rep_$(rep)_$(i)",
                 metadata = Dict(
@@ -63,7 +59,6 @@ Progress.with(pbar) do
             end
             update!(job)
         end
-        break
     end
 end
 

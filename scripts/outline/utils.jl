@@ -51,9 +51,10 @@ end
 # --------------------------------- topology --------------------------------- #
 
 """
-Load a subset of the data from the supervisor.
+Load a subset of the data from the supervisor with multiple simulations and concatenate
+activations. 
 """
-function load(; filters...)
+function load_and_concat_activations(; filters...)
     metadata, data = ProjectSupervisor.fetch(supervisor; filters...)
     
     # stack activations over time
