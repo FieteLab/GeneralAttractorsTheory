@@ -45,3 +45,34 @@ function simulate_constant_traj_random_init(can, duration, dt, still, τ, b₀; 
     );
     return h, X
 end
+
+
+
+# --------------------------------- topology --------------------------------- #
+
+"""
+Load a subset of the data from the supervisor.
+"""
+function load(; filters...)
+    metadata, data = ProjectSupervisor.fetch(supervisor; filters...)
+    
+    # stack activations over time
+    X = hcat(
+        map(
+            d -> d["S"][:, 1, 10:end], data
+        )...
+    )
+    @info "Loaded $(length(data)) simulations." X
+    return X
+end
+
+
+"""
+do PCA dimensionality reduction
+"""
+do_pca(X, params) = Analysis.pca_dimensionality_reduction(X, params)[2]
+
+"""
+do Isomap dimensionality reduction
+"""
+do_isomap(X, params) = isomap_dimensionality_reduction(X, params)[2]

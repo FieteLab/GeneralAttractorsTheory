@@ -1,6 +1,14 @@
 # ---------------------------------------------------------------------------- #
 #                                  EMBEDDINGS                                  #
 # ---------------------------------------------------------------------------- #
+
+
+function identity_embedding end
+
+identity_embedding(x, y) = [x, y]
+identity_embedding(x, y, z) = [x, y, z]
+identity_embedding(p) = identity_embedding(p...)
+
 """
 Classic sphere embedding in ℝ³
 """
@@ -46,3 +54,11 @@ function cylinder_embedding(θ, z)
     return [R * cos(θ), R * sin(θ), z]
 end
 cylinder_embedding(p) = cylinder_embedding(p...)
+
+
+function plane_embedding end
+
+function plane_embedding(x, y)
+    return [x, y, 0.0]
+end
+plane_embedding(p) = plane_embedding(p...)

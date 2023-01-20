@@ -128,7 +128,8 @@ module ProjectSupervisor
         Move datadir to a subfolder
     """
     function move_to_datadir(supervisor::Supervisor, fld::String)
-        fld = Folder(supervisor.datadir / fld)
+        fld = supervisor.datadir / fld
+        exists(fld) || mkdir(fld)
         supervisor.datadir = fld
         meta, meta_path = load_or_create_metadata(fld)
         supervisor.metadata = meta

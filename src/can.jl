@@ -78,6 +78,16 @@ end
 #                                      CAN                                     #
 # ---------------------------------------------------------------------------- #
 
+function validate_ξ(ξ, N)
+    # check that ξ has the right form
+    nargs = first(methods(ξ)).nargs - 1
+    @assert N == nargs "ξ should accept $(N) arguments, accepts: $(nargs)"
+
+    rtype = Base.return_types(ξ, NTuple{N,Int})[1]
+    @assert rtype <: AbstractVector "ξ should return a Vector with neuron coordinates, not $rtype"
+end
+
+
 # --------------------------- activation functions --------------------------- #
 relu(x) = max(0, x)
 
@@ -167,12 +177,7 @@ function CAN(
     args...;
     kwargs...,
 ) where {N}
-    # check that ξ has the right form
-    nargs = first(methods(ξ)).nargs - 1
-    @assert N == nargs "ξ should accept $(N) arguments, accepts: $(nargs)"
-
-    rtype = Base.return_types(ξ, NTuple{N,Int})[1]
-    @assert rtype <: AbstractVector "ξ should return a Vector with neuron coordinates, not $rtype"
+    validate_ξ(ξ, N)
 
     # get the index of every neuron in the lattice | vector of length N `n` with elements of length d
     lattice_idxs::AbstractArray{NTuple{N,Int}} = ×(map(_n -> 1:_n, n)...) |> collect |> vec
@@ -278,25 +283,25 @@ function SingleCAN(
     name::String,
     C::CoverSpace,
     n::NTuple{N,Int},
-    ξ::Function,
+    ξ::Union{Matrix, Function},
     metric::Metric,
     kernel::AbstractKernel;
     σ::Union{Symbol,Function} = :relu,
 ) where {N}
-    # check that ξ has the right form
-    nargs = first(methods(ξ)).nargs - 1
-    @assert N == nargs "ξ should accept $(N) arguments, accepts: $(nargs)"
 
-    rtype = Base.return_types(ξ, NTuple{N,Int})[1]
-    @assert rtype <: AbstractVector "ξ should return a Vector with neuron coordinates, not $rtype"
 
     # get the index of every neuron in the lattice | vector of length N `n` with elements of length d
     lattice_idxs::AbstractArray{NTuple{N,Int}} = ×(map(_n -> 1:_n, n)...) |> collect |> vec
     @debug "Got lattice" typeof(lattice_idxs) size(lattice_idxs)
 
     # get the coordinates of every neurons
-    ξ̂(t::Tuple) = ξ(t...)
-    X::Matrix = hcat(ξ̂.(lattice_idxs)...)  # matrix, size d × N
+    X::Matrix = if ξ isa Matrix
+        ξ
+    else
+        validate_ξ(ξ, N)
+        ξ̂(t::Tuple) = ξ(t...)
+        hcat(ξ̂.(lattice_idxs)...)  # matrix, size d × N
+    end
     @debug "X" size(X) typeof(X) eltype(X)
 
     # get connectivity

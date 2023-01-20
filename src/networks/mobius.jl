@@ -2,6 +2,7 @@
 function mobius_maker(
     cantype; 
     offset_size = 0.2,
+    n = 0,  # not used but here for consistency with other methods
     α = 35,
     σ = :softrelu,
     k = LocalGlobalKernel(α = 2.5, σ = 1.5)

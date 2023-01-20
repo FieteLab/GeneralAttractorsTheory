@@ -10,8 +10,8 @@ install_term_stacktrace(; hide_frames=false)
 using GeneralAttractors.Simulations
 using GeneralAttractors.Analysis
 using GeneralAttractors.Kernels
-import GeneralAttractors: torus_maker, sphere_maker, mobius_maker, cylinder_maker
-import GeneralAttractors: torus_embedding, sphere_embedding, mobius_embedding, cylinder_embedding
+import GeneralAttractors: torus_maker, sphere_maker, mobius_maker, cylinder_maker, plane_maker
+import GeneralAttractors: torus_embedding, identity_embedding, mobius_embedding, cylinder_embedding, plane_embedding
 using GeneralAttractors.ProjectSupervisor
 import GeneralAttractors: by_column
 
@@ -25,20 +25,43 @@ set_datadir(supervisor, datadir)
 b₀ = 1.0
 dt = 0.5
 
+networks = ("torus", "sphere", "mobius", "cylinder", "plane")
 
 network_makers = Dict(
     "torus" => torus_maker,
     "sphere" => sphere_maker,
     "mobius" => mobius_maker,
     "cylinder" => cylinder_maker,
+    "plane" => plane_maker,
 )
 
 embeddings = Dict(
     "torus" => torus_embedding,
-    "sphere" => sphere_embedding,
+    "sphere" => identity_embedding,  # because the neurons are already "embedded" on the sphere
     "mobius" => mobius_embedding,
     "cylinder" => cylinder_embedding,
+    "plane" => plane_embedding,
 )
+
+
+# ---------------------------- ANALYSIS paramters ---------------------------- #
+dimred_3d_params = AnalysisParameters(
+    max_nPC = 50,
+    pca_pratio = 0.9999,
+    n_isomap_dimensions = 3,
+    isomap_k = 10,
+    isomap_downsample = 50,  # time downsamplin
+)
+
+dimred_10d_params = AnalysisParameters(
+    max_nPC = 50,
+    pca_pratio = 0.9999,
+    n_isomap_dimensions = 10,
+    isomap_k = 10,
+    isomap_downsample = 50,  # time downsamplin
+)
+
+
 
 
 # --------------------------- kernel values ranges --------------------------- #
@@ -74,7 +97,83 @@ kernels_parameters_range = Dict(
             :σ => 1.5:δ:3.0,
             :β_minus => -1:δ:-.1
         ),
-    )
+    ),
+
+"mobius" => Dict(
+        :mexican_hat => Dict(
+            :α => 3:δ:16,
+            :σ => 2:δ:30,
+        ),
+        :DoE => Dict(
+            :a => 4:δ:20,
+            :λ => 4:δ:30,
+        ),
+        :local_global => Dict(
+            :α => 0.8:δ:8,
+            :σ => 50:δ:75,
+        ),
+        :constant => Dict(
+            :σ => 0.5:δ:1.5,
+            :β_minus => -1:δ:-.1
+        ),
+    ),
+
+"cylinder" => Dict(
+        :mexican_hat => Dict(
+            :α => 3:δ:16,
+            :σ => 2:δ:30,
+        ),
+        :DoE => Dict(
+            :a => 4:δ:20,
+            :λ => 4:δ:30,
+        ),
+        :local_global => Dict(
+            :α => 0.8:δ:8,
+            :σ => 50:δ:75,
+        ),
+        :constant => Dict(
+            :σ => 0.5:δ:1.5,
+            :β_minus => -1:δ:-.1
+        ),
+    ),
+
+    "plane" => Dict(
+        :mexican_hat => Dict(
+            :α => 3:δ:16,
+            :σ => 2:δ:30,
+        ),
+        :DoE => Dict(
+            :a => 4:δ:20,
+            :λ => 4:δ:30,
+        ),
+        :local_global => Dict(
+            :α => 0.8:δ:8,
+            :σ => 50:δ:75,
+        ),
+        :constant => Dict(
+            :σ => 0.5:δ:1.0,
+            :β_minus => -1:δ:-.1
+        ),
+    ),
+
+    "sphere" => Dict(
+        :mexican_hat => Dict(
+            :α => 3:δ:16,
+            :σ => 2:δ:30,
+        ),
+        :DoE => Dict(
+            :a => 4:δ:20,
+            :λ => 4:δ:30,
+        ),
+        :local_global => Dict(
+            :α => 2:δ:10,
+            :σ => 50:δ:75,
+        ),
+        :constant => Dict(
+            :σ => 0.8:δ:1.2,
+            :β_minus => -1:δ:-.1
+        ),
+    ),
 )
 
 

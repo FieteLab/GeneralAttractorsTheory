@@ -170,6 +170,12 @@ function apply_boundary_conditions!(x::Vector, ::Sphere)
     return x ./ norm(x), ones(length(x))
 end
 
+function Base.rand(::Sphere)
+    x = rand(3)
+    return x ./ norm(x)
+end
+
+
 # ---------------------------------------------------------------------------- #
 #                                    MOBIUS                                    #
 # ---------------------------------------------------------------------------- #

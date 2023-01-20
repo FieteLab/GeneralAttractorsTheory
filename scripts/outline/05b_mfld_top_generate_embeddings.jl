@@ -9,43 +9,10 @@ Store the results using the supervisor.
 include("settings.jl")
 
 
-function load(; filters...)
-    metadata, data = ProjectSupervisor.fetch(supervisor; filters...)
-    
-    # stack activations over time
-    X = hcat(
-        map(
-            d -> d["S"][:, 1, 10:end], data
-        )...
-    )
-    @info "Loaded $(length(data)) simulations." X
-    return X
-end
-
-
-
-do_pca(X, params) = Analysis.pca_dimensionality_reduction(X, params)[2]
-
-do_isomap(X, params) = isomap_dimensionality_reduction(X, params)[2]
 
 
 
 # -------------------------------- run & save -------------------------------- #
-params_3d = AnalysisParameters(
-    max_nPC = 50,
-    pca_pratio = 0.9999,
-    n_isomap_dimensions = 3,
-    isomap_k = 10,
-    isomap_downsample = 50,  # time downsamplin
-)
-
-params_10d = AnalysisParameters(
-    max_nPC = 50,
-    pca_pratio = 0.9999,
-    n_isomap_dimensions = 10,
-    isomap_k = 10,
-    isomap_downsample = 50,  # time downsamplin
-)
 
 
 can_name = "torus"  
@@ -89,23 +56,6 @@ for kernel in values(kernels)
             ) do
                 M = do_isomap(do_pca(X, params), params)
             end
-
-            # store_data(
-            #     supervisor, 
-            #     "random_initial_conditions",
-            #     "embeddings";
-            #     data = M, 
-            #     fmt = "npz", 
-            #     name = "$(kernel)_$(dim)_rep_$(rep)",
-            #     metadata = Dict(
-            #         :can => can_name,
-            #         :kernel => string(kernel),
-            #         :rep => rep,
-            #         :params => params,
-            #         :tag  => "random_initial_conditions",
-            #     )
-            # )
-
             print(hLine(; style="dim"))
         end
     end
