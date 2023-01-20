@@ -10,7 +10,6 @@ d = PeriodicEuclidean([2π, 2π])  # distance function over a torus manifold
 p = plot_distance_function(d, plot_title = "Torus distance")
 save_plot(supervisor, p, "02_distance_torus")
 
-
 d = PeriodicEuclidean([2π, Inf])
 p = plot_distance_function(d, plot_title = "Cylinder distance", layout = (4, 1))
 save_plot(supervisor, p, "02_distance_cylinder")

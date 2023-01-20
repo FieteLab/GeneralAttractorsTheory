@@ -10,7 +10,7 @@ import ..GeneralAttractors: sphere_embedding, mobius_embedding
 
 export AbstractManifold, CoverSpace
 export ℝ², T, S²
-export Ring, Mobius, Sphere, Torus, Manifoldℝ²
+export Ring, Mobius, Sphere, Torus, Manifoldℝ², Cylinder
 
 include("_manifolds.jl")
 
@@ -99,6 +99,29 @@ Manifoldℝ²(m) = Manifoldℝ²(
 )
 ℝ² = Manifoldℝ²(100)
 
+
+# ---------------------------------------------------------------------------- #
+#                                   CYLINDER                                   #
+# ---------------------------------------------------------------------------- #
+@with_repr struct Cylinder <: AbstractManifold
+    xmin::Vector
+    xmax::Vector
+    ψs::Vector{AbstractVectorField}
+    metric::Metric
+end
+
+Cylinder() = Cylinder(
+    [0, 0],
+    [2π, 1],
+    [ConstantVectorField(2, 1), ConstantVectorField(2, 2)],
+    PeriodicEuclidean([2π]),
+)
+
+C = Cylinder()
+
+function apply_boundary_conditions!(x::Vector, ::Cylinder)
+    return mod.(x, 2π), ones(length(x))
+end
 
 # ---------------------------------------------------------------------------- #
 #                                     TORUS                                    #

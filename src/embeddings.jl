@@ -13,8 +13,6 @@ function sphere_embedding(lon, lat)
 end
 
 
-
-
 """
 Mobius band embedding in ℝ³
 
@@ -39,3 +37,12 @@ function torus_embedding(θ₁, θ₂)
     return [(R + r * cos(θ₁)) * cos(θ₂), (R + r * cos(θ₁)) * sin(θ₂), r * sin(θ₁)]
 end
 torus_embedding(p) = torus_embedding(p...)
+
+
+function cylinder_embedding end
+
+function cylinder_embedding(θ, z)
+    R = 0.8
+    return [R * cos(θ), R * sin(θ), z]
+end
+cylinder_embedding(p) = cylinder_embedding(p...)
