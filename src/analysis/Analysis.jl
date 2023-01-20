@@ -46,6 +46,12 @@ export animate_3d_scatter
     intrinsic_d_neighborhood_size::Int = 200      # number of points surrounding each seed to include in PCA          
 end
 
+function Base.Dict(h::AnalysisParameters)
+    keys = fieldnames(AnalysisParameters)
+    vals = map(k -> getfield(h, k), keys)
+    return Dict([string(k) => v for (k,v) in zip(keys, vals)]...)
+end
+
 include("topology.jl")
 using .ManifoldAnalysis:
     pca_dimensionality_reduction,

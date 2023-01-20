@@ -12,7 +12,6 @@ m = 64
 can_maker = network_makers[can_name]
 
 # simulation params
-dt = 0.5
 duration = 125
 still = 100
 x₀ = [1, 0]
@@ -52,7 +51,6 @@ for (name, ktype) in pairs(kernels)
                 title=[name],
                 showaxis = false,
                 axis=nothing,
-                border=:none,
             )
         )
     end

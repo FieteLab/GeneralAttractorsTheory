@@ -2,9 +2,10 @@
 Definition of parameters and settins used throughout the analysis/plots.
 """
 
-using Plots
+using Plots, DataFrames, Term
 # gr()
 pyplot()
+install_term_stacktrace(; hide_frames=false)
 
 using GeneralAttractors.Simulations
 using GeneralAttractors.Analysis
@@ -14,7 +15,7 @@ import GeneralAttractors: torus_embedding, sphere_embedding, mobius_embedding
 using GeneralAttractors.ProjectSupervisor
 import GeneralAttractors: by_column
 
-datadir = "/Users/federicoclaudi/Dropbox (Personal)/Postdoc/GeneralAttractors/data"
+datadir = "/Users/federicoclaudi/Desktop/GeneralAttractors/data"
 
 supervisor = Supervisor("GeneralAttractorsTheory")
 set_datadir(supervisor, datadir)
@@ -22,6 +23,7 @@ set_datadir(supervisor, datadir)
 # ---------------------------------- general --------------------------------- #
 τ = 5.0
 b₀ = 1.0
+dt = 0.5
 
 
 network_makers = Dict(
@@ -43,10 +45,10 @@ For each kernel type and CAN architecture
 """
 
 kernels = (;
-   :mexican_hat => MexicanHatKernel, 
-   :DoE => DiffOfExpKernel,
+#    :mexican_hat => MexicanHatKernel, 
+#    :DoE => DiffOfExpKernel,
    :local_global => LocalGlobalKernel,
-   :constant => ConstantKernel,
+#    :constant => ConstantKernel,
 )
 
 

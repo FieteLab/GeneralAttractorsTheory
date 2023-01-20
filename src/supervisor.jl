@@ -5,7 +5,8 @@ module ProjectSupervisor
         set_datadir,
         get_entries,
         fetch,
-        save_plot
+        save_plot,
+        generate_or_load
 
     using ObjectivePaths, DataFrames, Term, MyterialColors, FileIO, UUIDs, Dates, LibGit2, YAML
     using Term.Tables
@@ -76,6 +77,8 @@ module ProjectSupervisor
             footer_style = "blue",
             header_style = "blue bold",
         ))
+
+        println.(keys(supervisor.metadata))
     end
     
 
@@ -145,13 +148,33 @@ module ProjectSupervisor
 
 
     # --------------------------------- metadata --------------------------------- #
+
+    function validate(meta::AbstractDict)
+        @assert eltype(keys(meta)) == String "Metadata keys must be Strings: $(eltype(keys(meta)))"
+        # make sure all entries have the same length
+        if "uid" ∈ keys(meta)
+            n_entries = unique(length.(values(meta)))
+            _counts = map(p -> (p.first, length(p.second)), collect(pairs(meta)))
+            @assert length(n_entries) <= 1 "Metadata entries have different lengths $n_entries- $_counts"
+        end
+    end
+
     function load_or_create_metadata(fld::Folder)::Tuple{AbstractDict, ObjectivePaths.File}
         path = fld / "metadata.yaml"
         meta = if exists(path)
             YAML.load_file(path.path) |> update_metadata!
         else
-            Dict{Union{Symbol, AbstractString}, Any}()
+            Dict()
         end
+        meta = Dict{String, Any}(meta)
+
+        # make sure vecs can accept any type
+        for (k, v) in pairs(meta)
+            length(v) == 0 && continue
+            meta[string(k)] = Any[v...]
+        end
+
+        validate(meta)
         return meta, path
     end
 
@@ -174,32 +197,36 @@ module ProjectSupervisor
             metadata[k] = deleteat!(metadata[k], to_remove)
         end
 
-        length(metadata["name"]) == 0 && (metadata = Dict{Union{Symbol, AbstractString}, Any}())
+        length(metadata["name"]) == 0 && (metadata = Dict{String, Any}())
+        metadata = Dict{String, Any}(metadata)
+        validate(metadata)
         return metadata
     end
 
-    """
+    # """
 
-    Check if any entry in supervisor.metadata matches the given metadata.
-    If so, return the uid of the entry, otherwise return nothing
-    """
-    function check_entry_exists(sup::Supervisor, metadata::AbstractDict, folder::Folder)::Union{Nothing, String}
-        uid = ""
-        for (k,v) in pairs(metadata)
-            k = string(k)
-            v isa AbstractArray && return nothing
-            k ∉ keys(sup.metadata) && return nothing
-            v ∉ sup.metadata[k] && return nothing
+    # Check if any entry in supervisor.metadata matches the given metadata.
+    # If so, return the uid of the entry, otherwise return nothing
+    # """
+    # function check_entry_exists(sup::Supervisor, metadata::AbstractDict, folder::Folder)::Union{Nothing, String}
+    #     uid = ""
+    #     for (k,v) in pairs(metadata)
+    #         k = string(k)
 
-            matches = sup.metadata[k] .== v
-            any(Bool.(matches)) || return nothing
+    #         (v isa AbstractArray &&
+    #             k ∉ keys(sup.metadata) &&
+    #             v ∉ sup.metadata[k] &&
+    #             length(sup.metadata[k]) == 0 ) && return nothing
 
-            fld = sup.metadata["folder"][matches][1]
-            fld == folder.path || return nothing
-            uid = sup.metadata["uid"][matches][1]
-        end
-        return uid
-    end
+    #         matches = sup.metadata[k] .== v
+    #         any(Bool.(matches)) || return nothing
+
+    #         fld = sup.metadata["folder"][sup.metadata[k] .== v][1]
+    #         fld == folder.path || return nothing
+    #         uid = sup.metadata["uid"][sup.metadata[k] .== v][1]
+    #     end
+    #     return uid
+    # end
 
     function add_metadata_entry(
         sup::Supervisor,
@@ -223,12 +250,24 @@ module ProjectSupervisor
         n_prev_entries =  haskey(sup.metadata, "uid") ? length(sup.metadata["uid"]) : 0
         for (k, v) in pairs(entry)
             k = string(k)
-            if k ∉ keys(sup.metadata)
-                sup.metadata[k] = repeat(Any[nothing], n_prev_entries)
-            end
 
+            # if metadata doesn't have this key, add it to the metadata
+            if k ∉ keys(sup.metadata)
+                sup.metadata[k] = repeat(Any[""], n_prev_entries)
+            end
+            
+            # store value
             push!(sup.metadata[k], v)
         end
+
+        # make sure we fill metadata keys not in this entry
+        ekeys = string.(keys(entry))
+        for k in string.(keys(sup.metadata))
+            k ∈ ekeys && continue
+            push!(sup.metadata[k], "")
+        end
+
+        validate(sup.metadata)
     end
 
     function get_entries(sup::Supervisor; filter_values...)
@@ -243,14 +282,12 @@ module ProjectSupervisor
 
     # --------------------------------- save data -------------------------------- #
 
-    function store_data(
-        sup::Supervisor,
-        paths_elements...;
-        metadata::AbstractDict = Dict("tag"=>"notag"),
-        data_entries...
-    )
-        @assert "tag" ∈ string.(keys(metadata)) "Data entry metadata must have a tag."
+    """
+        get_savename(sup, name, fmt, paths_elements...; )
 
+    Get the path where some data will be saved.
+    """
+    function get_savename(sup, name, fmt, paths_elements...; )
         # get path to destination folder
         dest = if length(paths_elements) == 0
             sup.datadir
@@ -261,31 +298,97 @@ module ProjectSupervisor
             _dest
         end
 
-        # check if an entry with the same metadata already exists
-        isnothing(check_entry_exists(sup, metadata, dest)) || @warn "Entry with same metadata already exists"
-        # isnothing(check_entry_exists(sup, metadata, dest)) || error("Implement removing obsolete metadata")
+        # get save name
+        name = string(name) * "." * fmt
+        return dest/name
+    end
+        
+    """
+        generate_or_load(
+            fn, 
+            sup::Supervisor,
+            paths_elements...;
+            name=nothing,
+            fmt=nothing,
+            kwargs...
+            )
+
+        If the file exists, load it. Otherwise, generate it using `fn` and save it.
+    """
+    function generate_or_load(
+        fn, 
+        sup::Supervisor,
+        paths_elements...;
+        name=nothing,
+        fmt=nothing,
+        kwargs...
+        )
+
+        savename = get_savename(sup, name, fmt, paths_elements...)
+        if exists(savename)
+            return load(savename.path)
+        else
+            data = fn()
+            store_data(sup; savename=savename, data=data, kwargs...)
+        end
+    end
+
+    """
+        store_data(
+            sup::Supervisor,
+            data;
+            paths_elements...;
+            name=nothing,
+            fmt=nothing,
+            kwargs...
+        )
+
+    Store some data in the supervisor's data folder.
+    """
+    function store_data(
+        sup::Supervisor,
+        paths_elements...;
+        data = nothing,
+        name=nothing,
+        fmt=nothing,
+        kwargs...
+    )
+        savename = get_savename(sup, name, fmt, paths_elements...)
+        return store_data(sup; savename=savename, data=data, kwargs...)
+    end
+
+    """
+        store_data(
+            sup::Supervisor,
+            savename,
+            data;
+            metadata::AbstractDict = Dict("tag"=>"notag"),
+        )
+
+    Store some data in the supervisor's data folder.
+    """
+    function store_data(
+        sup::Supervisor;
+        savename::ObjectivePaths.File,
+        data,
+        metadata::AbstractDict = Dict("tag"=>"notag"),
+    )
+        @assert "tag" ∈ string.(keys(metadata)) "Data entry metadata must have a tag."
 
         # collect meta info
         uid = string(uuid4())
         when = Dates.now()
         date, time = split(string(when), "T")
 
-        # save data
-        for (name, (data, extension)) in pairs(data_entries)
-            name = string(name) * "_" * uid * "." * extension
-            savename = dest/name
-            exists(savename) && @warn "Overwriting data at $(savename.path)"
 
-            try
-                save(savename.path, data)
-            catch e
-                @error "Error saving data at $(savename.path)" e
-                continue
-            end
-
-            # add metadata entry
-            add_metadata_entry(sup, uid, date, time, git_info(sup), savename, metadata)
+        try
+            save(savename.path, data)
+        catch e
+            @error "Error saving data at $(savename.path)" e
         end
+
+        # add metadata entry
+        add_metadata_entry(sup, uid, date, time, git_info(sup), savename, metadata)
 
         # save metadata
         YAML.write_file(sup.metadatafile.path, sup.metadata)
