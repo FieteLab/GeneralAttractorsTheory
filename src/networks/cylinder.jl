@@ -8,7 +8,7 @@ function cylinder_maker(
 )
 
     # number of neurons
-    n = (n, (Int ∘ floor)(n/2π)) # number of neurons per dimension
+    n = (n, (Int ∘ floor)(n/π)) # number of neurons per dimension
 
     # ℝ² → Cy cover map.
     r2_extent = 100

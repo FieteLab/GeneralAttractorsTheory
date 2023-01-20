@@ -17,7 +17,13 @@ for can_name in networks
     # simulation params
     duration = 125
     still = 100
-    x₀ = can_name == "sphere" ? [1, 0, 0] : [1, 0]
+    x₀ = if can_name == "sphere"
+        [1, 0, 0]
+    elseif can_name == "cylinder"
+        [0, 0] 
+    else
+        [1, 5]
+    end
 
     # plots params
     n_samples_per_kernel = 2

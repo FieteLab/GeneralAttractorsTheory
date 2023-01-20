@@ -21,10 +21,11 @@ tag = "manifold_topology_data"
 kernel_name = :local_global
 
 # -------------------------------- run & save -------------------------------- #
-pbar = ProgressBar()
-Progress.with(pbar) do
-    job = addjob!(pbar, description = "Simulation", N = N_sims)
+# pbar = ProgressBar()
+# Progress.with(pbar) do
+#     job = addjob!(pbar, description = "Simulation", N = N_sims)
     for can_name in networks        
+        print(hLine(can_name; style="red"))
         # can params
         can_maker = network_makers[can_name]
         kernel_params = Dict(
@@ -37,6 +38,7 @@ Progress.with(pbar) do
 
         # run simulations
         for i in 1:n_sims_per_network
+            i % 25 == 0 && tprintln("   doing $i/$n_sims_per_network - `$(can_name)`")
             generate_or_load(
                 supervisor,
                 can.name;
@@ -56,8 +58,8 @@ Progress.with(pbar) do
                 h, _ = simulate_constant_traj_random_init(can, duration, dt, still, τ, b₀)
                 Dict(h)
             end
-            update!(job)
-        end
+        #     update!(job)
+        # end
     end
 end
 

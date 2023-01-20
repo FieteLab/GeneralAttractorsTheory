@@ -3,8 +3,9 @@ Definition of parameters and settins used throughout the analysis/plots.
 """
 
 using Plots, DataFrames, Term, Statistics
-gr()
-# pyplot()
+# gr()   # for fast plotting
+pyplot()  # for better plots quality
+
 install_term_stacktrace(; hide_frames=false)
 
 using GeneralAttractors.Simulations
