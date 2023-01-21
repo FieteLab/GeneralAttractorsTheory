@@ -53,11 +53,11 @@ embeddings = Dict(
 
 # ---------------------------- ANALYSIS paramters ---------------------------- #
 dimred_3d_params = AnalysisParameters(
-    max_nPC = 400,  # max num of PCs
+    max_nPC = 200,  # max num of PCs
     pca_pratio = 0.999999,       # fraction of variance explained
     n_isomap_dimensions = 3,
-    isomap_k = 12,
-    isomap_downsample = 50,
+    isomap_k = 8,
+    isomap_downsample = 40,
 )
 
 dimred_10d_params = AnalysisParameters(

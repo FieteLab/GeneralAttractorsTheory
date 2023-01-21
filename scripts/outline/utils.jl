@@ -55,12 +55,12 @@ Load a subset of the data from the supervisor with multiple simulations and conc
 activations. 
 """
 function load_and_concat_activations(; filters...)
-    metadata, data = ProjectSupervisor.fetch(supervisor; filters...)
+    _, data = ProjectSupervisor.fetch(supervisor; filters...)
     
     # stack activations over time
     X = hcat(
         map(
-            d -> d["S"][:, 1, 10:end], data
+            d -> d["S"][:, 1, end-5:end], data
         )...
     )
     @info "Loaded $(length(data)) simulations." X

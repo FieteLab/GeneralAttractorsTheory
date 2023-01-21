@@ -8,16 +8,18 @@ Save the data & metadata for further analysis.
 
 move_to_datadir(supervisor, "mfld_top")
 
+#TODO maybe data needs to be normalized before PCA?
+
 GENERATE_DATA = true
 
 # number of sims
-n_sims_per_network = 3000
+n_sims_per_network = 5000
 N_sims = n_sims_per_network * length(networks)
 GENERATE_DATA && @info "Running $N_sims simulations in total."
 
 # sim params
-duration = 120
-still = 100
+duration = 25
+still = 15
 tag = "manifold_topology_data"
 kernel_name = :mexican_hat
 
@@ -26,6 +28,7 @@ kernel_name = :mexican_hat
 for can_name in networks    
     GENERATE_DATA || break    
     print(hLine(can_name; style="red"))
+
     # can params
     can_maker = network_makers[can_name]
     kernel_params = Dict(

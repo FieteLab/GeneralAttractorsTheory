@@ -15,16 +15,16 @@ for can_name in networks
     can_maker = network_makers[can_name]
 
     # simulation params
-    duration = 125
-    still = 100
-    # x₀ = if can_name == "sphere"
-    #     [1, 0, 0]
-    # elseif can_name == "cylinder"
-    #     [0, 0] 
-    # else
-    #     [1, 5]
-    # end
-    x₀ = nothing
+    duration = 25
+    still = 15
+    x₀ = if can_name == "sphere"
+        [1, 0, 0]
+    elseif can_name == "cylinder"
+        [2π, -1] 
+    else
+        [1, 0]
+    end
+
 
     # plots params
     n_samples_per_kernel = 2
