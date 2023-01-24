@@ -42,7 +42,8 @@ export animate_3d_scatter
 
     # intrinsic dimensionality (local PCA)
     intrinsic_d_nseeds::Int = 200      # number of seed points for local PCA
-    intrinsic_d_neighborhood_size::Int = 200      # number of points surrounding each seed to include in PCA          
+    intrinsic_d_neighborhood_size::Int = 200      # number of points surrounding each seed to include in PCA    
+    intrinsic_d_pratio::Float64 = 0.8       # fraction of variance explained      
 end
 
 function Base.Dict(h::AnalysisParameters)

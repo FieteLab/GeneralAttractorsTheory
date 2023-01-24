@@ -49,7 +49,7 @@ for i in 1:10
             marker_z = h.S[:, 1, end], msa=0, msw=0,
             colorbar = i == 5,
             label=nothing, 
-            # clims=(-0.2, .8),
+            clims=(-0.2, 1.2),
             showaxis = false,
             axis=nothing,
         )

@@ -16,7 +16,7 @@ end
 
 Get a sim for a single CAN with a constant trajectory.
 """
-function constant_traj_sim(can::SingleCAN, duration, dt, still, τ, b₀)
+function constant_traj_sim(can::SingleCAN, duration, dt, still, τ, b₀; η=0.1)
     # initialize trajectory and simulation
     nframes = (Int ∘ round)(duration / dt)
     trajectory = ConstantTrajectory(
@@ -25,7 +25,7 @@ function constant_traj_sim(can::SingleCAN, duration, dt, still, τ, b₀)
         still = still,
     )
 
-    return Simulation(can, trajectory; η = 0.0, b₀ = b₀, τ = τ)
+    return Simulation(can, trajectory; b₀ = b₀, τ = τ, η=0.1)
 end
 
 """
@@ -34,9 +34,11 @@ end
 Get and run a simulation for a SingleCAN wwith random initial condition
 and constant input trajectory.
 """
-function simulate_constant_traj_random_init(can, duration, dt, still, τ, b₀; x₀=nothing)
+function simulate_constant_traj_random_init(can, duration, dt, still, τ, b₀; x₀=nothing, 
+    η=0.0,
+    )
     x₀, activate = random_init(can; x₀=x₀)
-    sim = constant_traj_sim(can, duration, dt, still, τ, b₀)
+    sim = constant_traj_sim(can, duration, dt, still, τ, b₀; η=η)
     h, X = run_simulation(    
         sim;
         discard_first_ms = still,

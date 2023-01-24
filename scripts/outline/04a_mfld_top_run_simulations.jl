@@ -1,4 +1,3 @@
-using Term.Progress
 include("settings.jl")
 
 """
@@ -59,7 +58,7 @@ for can_name in networks
                 :tag => tag,
                 :n_neurons => collect(can.n),
             ),
-            load_existsing=false
+            load_existing=false
         ) do 
             h, _ = simulate_constant_traj_random_init(can, duration, dt, still, τ, b₀)
             Dict(h)
@@ -94,7 +93,7 @@ for can_name in networks
                 :params => Dict(params),
                 :tag  => "$(dim)embeddings",
             ),
-            load_existsing=false
+            load_existing=false
         ) do
             do_isomap(do_pca(X, params), params)
         end

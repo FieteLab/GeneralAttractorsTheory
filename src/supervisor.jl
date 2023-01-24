@@ -322,13 +322,13 @@ module ProjectSupervisor
         paths_elements...;
         name=nothing,
         fmt=nothing,
-        load_existsing = true,
+        load_existing = true,
         kwargs...
         )
 
         savename = get_savename(sup, name, fmt, paths_elements...)
         if exists(savename)
-            return if load_existsing
+            return if load_existing
                 load(savename.path)
             else
                 nothing

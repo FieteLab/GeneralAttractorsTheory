@@ -192,26 +192,36 @@ intrinsic dimensionality.
 function estimate_intrinsic_dimensionality(
     M::Matrix,
     params::AnalysisParameters = AnalysisParameters();
+    nntree = nothing,
+    Us = nothing,  # precomputed neighborhoods
 )::Vector{Int}
-    @info "Estimating intrinsic dimensionality" size(M) params.intrinsic_d_nseeds params.intrinsic_d_neighborhood_size
+    # @info "Estimating intrinsic dimensionality" size(M) params.intrinsic_d_nseeds params.intrinsic_d_neighborhood_size params.intrinsic_d_pratio
 
     # build nearest neighbor tree
-    nntree = KDTree(M; reorder = false, leafsize = 5)
+    nntree = isnothing(nntree) ? KDTree(M; reorder = false, leafsize = 5) : nntree
 
     # sample random points on the manifold
     seeds_idxs = rand(1:size(M, 2), params.intrinsic_d_nseeds)
     seeds = M[:, seeds_idxs]
 
     # get neighborhoods
-    k = (Int ∘ round)(params.intrinsic_d_neighborhood_size)
-    Us, _ = knn(nntree, seeds, k)
+    Us = if isnothing(Us) == true
+        k = (Int ∘ round)(params.intrinsic_d_neighborhood_size)
+        knn(nntree, seeds, k)[1]
+    else
+        Us
+    end
 
     # for each neighborhood fit PCA and get the number of PCs
     D = []  # store "dimensionality" of each tangent vector space
-    for U in Us
+    for (i, U) in enumerate(Us)
         @assert length(U) == k
-        pca_model = fit(PCA, M[:, U]; pratio = 0.999999, maxoutdim = size(M, 2))
-        d = find_fraction_variance_explained_elbow(principalvars(pca_model))
+        pca_model = fit(PCA, M[:, U]; 
+                    pratio = params.intrinsic_d_pratio, 
+                    maxoutdim = size(M, 2)
+        )
+        # d = find_fraction_variance_explained_elbow(principalvars(pca_model))
+        d = length(principalvars(pca_model))
         push!(D, d)
     end
     return D

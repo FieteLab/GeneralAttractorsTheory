@@ -5,8 +5,8 @@ Definition of parameters and settins used throughout the analysis/plots.
 using Plots, DataFrames, Term, Statistics
 import MyterialColors: Palette, green_dark, deep_purple
 
-# gr()   # for fast plotting
-pyplot()  # for better plots quality
+gr()   # for fast plotting
+# pyplot()  # for better plots quality
 
 install_term_stacktrace(; hide_frames=true)
 
@@ -67,10 +67,10 @@ dimred_3d_params = AnalysisParameters(
 )
 
 dimred_10d_params = AnalysisParameters(
-    max_nPC = 50,
-    pca_pratio = 0.9999,
+    max_nPC = 200,
+    pca_pratio = 0.9999999,
     n_isomap_dimensions = 10,
-    isomap_k = 10,
+    isomap_k = 5,
     isomap_downsample = 50,  # time downsamplin
 )
 
