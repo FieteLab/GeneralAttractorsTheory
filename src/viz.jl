@@ -105,9 +105,10 @@ Plot metrics of type PeriodicEuclidean
 """
 function plot_distance_2d(d::PeriodicEuclidean; kwargs...)
     upperbound(x) = isfinite(x) ? x : 1
+    
     # get coordinates mesh
-    x = range(0, upperbound(d.periods[1]), length = 100) |> collect
-    y = range(0, upperbound(d.periods[2]), length = 100) |> collect
+    x = range(0, upperbound(d.periods[1]), length = 500) |> collect
+    y = range(0, upperbound(d.periods[2]), length = 500) |> collect
 
     plot_distance_2d(d, x, y; kwargs...)
 end
@@ -137,7 +138,7 @@ plot_distance_function(d::MobiusEuclidean; kwargs...)
 Plot distance for metric of type MobiusEuclidean
 """
 function plot_distance_function(d::MobiusEuclidean; kwargs...)
-    x = -1/2:0.075:1.2 |> collect
+    x = -1:0.075:1 |> collect
     y = 0:0.075:2π |> collect
     X = (x × y) |> collect
     X = [[x...] for x in vec(X)]
@@ -146,7 +147,7 @@ function plot_distance_function(d::MobiusEuclidean; kwargs...)
         d,
         x,
         y;
-        points = [[-1 / 2, 0], [0, 3], [0.5, 0.2], [0, 2π]],
+        points = [[-0.8, 0], [0, 3], [0.5, 0.2], [0, 2π]],
         kwargs...,
     )
 end

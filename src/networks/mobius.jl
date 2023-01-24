@@ -2,22 +2,27 @@
 function mobius_maker(
     cantype; 
     offset_size = 0.2,
-    n = 0,  # not used but here for consistency with other methods
+    n = nothing,  # not used but here for consistency with other methods
     α = 35,
     σ = :softrelu,
     k = LocalGlobalKernel(α = 2.5, σ = 1.5)
 )
+    mfld = Mobius()
+
     # number of neurons
-    n = ((Int ∘ round)(1 / 0.05), (Int ∘ round)(2π / 0.2))
+    y_extent = abs(mfld.xmin[1]) + abs(mfld.xmax[1])
+    n = isnothing(n) ? 
+            ((Int ∘ round)(y_extent / 0.025), (Int ∘ round)(2π / 0.1)) :
+            (n, n)
 
     # cover space
-    mfld = Mobius()
     cover = CoverSpace(mfld)
 
     # coordinates function (from neurons index to lattice coordintes)
+    sep = 2π / n[2]
     ξ(i::Int, j::Int)::Vector = [
         lerp(i, n[1], mfld.xmin[1], mfld.xmax[1]),
-        lerp(j, n[2], mfld.xmin[2], mfld.xmax[2] - mfld.xmax[2] / n[2]),
+        lerp(j, n[2], 0, 2π - sep),
     ]
 
     # metric

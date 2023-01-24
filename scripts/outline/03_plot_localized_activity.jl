@@ -24,7 +24,7 @@ for can_name in networks
     else
         [1, 0]
     end
-
+    # x₀ = nothing
 
     # plots params
     n_samples_per_kernel = 2
@@ -48,8 +48,20 @@ for can_name in networks
             Δ = 2
             activity = reshape(h.S[:, 1, end], can.n)
             coords = by_column(φ, can.X[:, 1:Δ:end])
-            push!(plots, heatmap(activity, title=name))
-            
+  
+            w_x = range(can.X[1,1], can.X[1,end]; length=can.n[1])
+            w_y = range(can.X[2,1], can.X[2,end]; length=can.n[2])
+        
+        
+            x = can.X[1,:]
+        
+            # push!(plots, heatmap(activity, title=name))
+            # @info "cacca" can.X activity h.S[:, 1, end]
+            plt = scatter3d(
+                can.X[1, :], can.X[2, :], h.S[:, 1, end],
+                marker_z = h.S[:, 1, end], msa=0, msw=0
+            )
+
             # push!(plots, 
             #     scatter3d(eachrow(coords)...;
             #         msa=0, msw=0, alpha=1,
@@ -66,15 +78,16 @@ for can_name in networks
         end
     end
 
-    fig = plot(plots..., 
-            # clims=(-0.2, 0.8),
-            layout=(length(kernels), n_samples_per_kernel), 
-            size=(1400, 1400),
+    _fig = plot(plots..., 
+            clims=(-0.2, 0.8),
+            layout=(n_samples_per_kernel, length(kernels)), 
+            size=(1400, 1000),
             aspect_ratio=:equal
     )
+    # save_plot(supervisor, _fig, "03_actvitity_$(can_name)");
+    display(_fig)
 
-    save_plot(supervisor, fig, "03_actvitity_$(can_name)");
-    display(fig)
+    break
 end
 
 # nothing

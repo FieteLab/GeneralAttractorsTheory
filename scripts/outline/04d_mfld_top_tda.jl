@@ -16,8 +16,8 @@ tda_params = AnalysisParameters(
     tda_threshold = 1.25,       # threshold to reduce TDA computation 
     tda_downsample_factor = 7,        # temporal downsampling of data for TDA
     tda_dim_max = 1,        # max feature dimension, starting at 0
-    intrinsic_d_nseeds::Int = 200      # number of seed points for local PCA
-    intrinsic_d_neighborhood_size::Int = 200
+    intrinsic_d_nseeds = 200,      # number of seed points for local PCA
+    intrinsic_d_neighborhood_size = 200,
 )
 
 

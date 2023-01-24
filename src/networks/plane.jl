@@ -19,10 +19,7 @@ function plane_maker(
 
     # define a distance metric
     d = Euclidean()
-
-    # TODO offsets and stuff?
-
-
+    
     return if cantype == :single 
         SingleCAN(
             "plane",

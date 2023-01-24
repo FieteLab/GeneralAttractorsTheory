@@ -100,6 +100,16 @@ Manifoldℝ²(m) = Manifoldℝ²(
 ℝ² = Manifoldℝ²(100)
 
 
+function Base.rand(m::Manifoldℝ²)
+    # generate a random point on the unit sphere
+    d = length(m.xmin)
+    x = zeros(d)
+    for i = 1:d
+        x[i] = rand(m.xmin[i]+0.25:0.001:m.xmax[i]-0.25)  # padding because of boundary effect on neural activity
+    end
+    x
+end
+
 # ---------------------------------------------------------------------------- #
 #                                   CYLINDER                                   #
 # ---------------------------------------------------------------------------- #
@@ -111,7 +121,7 @@ Manifoldℝ²(m) = Manifoldℝ²(
 end
 
 Cylinder() = Cylinder(
-    [0, 0],
+    [0, -1],
     [2π, 1],
     [ConstantVectorField(2, 1), ConstantVectorField(2, 2)],
     PeriodicEuclidean([2π]),
@@ -122,6 +132,17 @@ C = Cylinder()
 function apply_boundary_conditions!(x::Vector, ::Cylinder)
     return mod.(x, 2π), ones(length(x))
 end
+
+# function Base.rand(m::Cylinder)
+#     # generate a random point on the unit sphere
+#     d = length(m.xmin)
+#     x = zeros(d)
+#     for i = 1:d
+#         δ = d == 2 ? 0.25 : 0.0
+#         x[i] = rand(m.xmin[i]+δ:0.001:m.xmax[i]-δ)  # padding because of boundary effect on neural activity
+#     end
+#     x
+# end
 
 # ---------------------------------------------------------------------------- #
 #                                     TORUS                                    #
@@ -171,7 +192,8 @@ function apply_boundary_conditions!(x::Vector, ::Sphere)
 end
 
 function Base.rand(::Sphere)
-    x = rand(3)
+    # generate a random point on the unit sphere
+    x = rand(3) .- 0.5
     return x ./ norm(x)
 end
 
@@ -187,10 +209,9 @@ end
 end
 
 Mobius() = Mobius(
-    [-0.75, 0],
-    [0.75, 2π],
+    [-1, 0],
+    [1, 2π],
     [VectorField(MB_ψ1), VectorField(MB_ψ2)],
-    # [ConstantVectorField(2, 1), ConstantVectorField(2, 2)],
     MobiusEuclidean(),
 )
 
@@ -223,6 +244,17 @@ function apply_boundary_conditions!(x::Vector, m::Mobius)
     end
     return x, vel_correction_facors
 end
+
+# function Base.rand(m::Mobius)
+#     # generate a random point on the unit sphere
+#     d = length(m.xmin)
+#     x = zeros(d)
+#     for i = 1:d
+#         δ = d == 1 ? 0.25 : 0.0
+#         x[i] = rand(m.xmin[i]+δ:0.001:m.xmax[i]-δ)  # padding because of boundary effect on neural activity
+#     end
+#     x
+# end
 
 
 # ---------------------------------------------------------------------------- #

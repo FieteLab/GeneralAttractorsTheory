@@ -6,11 +6,13 @@ Run a large number of simulations for a single copy CAN with different initial c
 Save the data & metadata for further analysis.
 """
 
+import GeneralAttractors: r2_to_cy_scaling, cy_to_r2_scaling
 move_to_datadir(supervisor, "mfld_top")
 
-#TODO maybe data needs to be normalized before PCA?
 
-GENERATE_DATA = true
+GENERATE_DATA = false
+GENERATE_EMBEDDINGS = true
+GENERATE_DEUBUG_PLOTS = false
 
 # number of sims
 n_sims_per_network = 5000
@@ -67,8 +69,9 @@ end
 
 # ---------------------------- generate embeddings --------------------------- #
 
-@info "Dimensionality reduction embeddings"
+GENERATE_EMBEDDINGS && @info "Dimensionality reduction embeddings"
 for can_name in networks
+    GENERATE_EMBEDDINGS || break
     print(hLine(can_name; style="red"))
     filters = Dict{Symbol, Any}(
         :tag => tag,
@@ -99,3 +102,45 @@ for can_name in networks
     print(hLine(; style="dim"))
 end
 
+# ---------------------------- confirmation plots ---------------------------- #
+
+"""
+For each network plot the position of initial condition againt
+the decoded location of the bump on the manifold
+"""
+
+GENERATE_DEUBUG_PLOTS && begin
+    @info "Plotting decoded locations"
+
+    for can_name in networks
+        # plot rand init conditions
+        can = network_makers[can_name](:single)
+        x₀ = hcat(map(i -> rand(can.C.N), 1:n_sims_per_network)...)
+        p1 = scatter(
+            eachrow(x₀)...;
+            color = :black, ms=25, alpha=.5,
+            title = can_name, label=nothing,
+        ) 
+
+        # load data and get lattice bump locations
+        filters = Dict{Symbol, Any}(
+            :tag => tag,
+            :can => can_name,
+        )
+        metadata, data = ProjectSupervisor.fetch(supervisor; filters...)
+        
+        x = hcat(map(
+            d -> begin
+                    peak = argmax(d["S"][:, 1, end])
+                    can.X[:, peak]
+                end, data
+        )...)
+
+        p2 = scatter(
+            eachrow(x)...;
+            color = :red, ms=5, alpha=.25, msa=0, msw=0,
+            title = "bump locations", label=nothing,
+        ) 
+        plot(p1, p2) |> display
+    end
+end

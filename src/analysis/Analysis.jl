@@ -19,7 +19,6 @@ include("utils.jl")
 export AnalysisParameters
 export pca_dimensionality_reduction,
     isomap_dimensionality_reduction,
-    estimate_manifold_topology,
     estimate_intrinsic_dimensionality
 export animate_3d_scatter
 
@@ -56,6 +55,5 @@ include("topology.jl")
 using .ManifoldAnalysis:
     pca_dimensionality_reduction,
     isomap_dimensionality_reduction,
-    estimate_manifold_topology,
     estimate_intrinsic_dimensionality
 end

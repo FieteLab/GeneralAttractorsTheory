@@ -3,10 +3,12 @@ Definition of parameters and settins used throughout the analysis/plots.
 """
 
 using Plots, DataFrames, Term, Statistics
-gr()   # for fast plotting
-# pyplot()  # for better plots quality
+import MyterialColors: Palette, green_dark, deep_purple
 
-install_term_stacktrace(; hide_frames=false)
+# gr()   # for fast plotting
+pyplot()  # for better plots quality
+
+install_term_stacktrace(; hide_frames=true)
 
 using GeneralAttractors.Simulations
 using GeneralAttractors.Analysis
@@ -51,13 +53,17 @@ embeddings = Dict(
 )
 
 
+# ------------------------------ PLOTTING params ----------------------------- #
+networks_colors = getfield.(Palette(green_dark, deep_purple; N = length(networks)).colors, :string)
+
+
 # ---------------------------- ANALYSIS paramters ---------------------------- #
 dimred_3d_params = AnalysisParameters(
-    max_nPC = 200,  # max num of PCs
+    max_nPC = 400,  # max num of PCs
     pca_pratio = 0.999999,       # fraction of variance explained
     n_isomap_dimensions = 3,
-    isomap_k = 8,
-    isomap_downsample = 40,
+    isomap_k = 5,
+    isomap_downsample = 20,
 )
 
 dimred_10d_params = AnalysisParameters(
@@ -90,18 +96,18 @@ kernels_parameters_range = Dict(
     "torus" => Dict(
         :mexican_hat => Dict(
             :α => 3:δ:16,
-            :σ => 5:δ:100,
+            :σ => 3:δ:80,
         ),
         :DoE => Dict(
             :a => 4:δ:20,
-            :λ => 20:δ:100,
+            :λ => 10:δ:100,
         ),
         :local_global => Dict(
-            :α => 0.8:δ:5,
-            :σ => 150:δ:200,
+            :α => 0.8:δ:8,
+            :σ => 100:δ:200,
         ),
         :constant => Dict(
-            :σ => 1.5:δ:3.0,
+            :σ => 1.0:δ:2.0,
             :β_minus => -1:δ:-.1
         ),
     ),

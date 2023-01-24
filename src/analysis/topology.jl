@@ -23,7 +23,6 @@ include("analysis_viz.jl")
 
 export pca_dimensionality_reduction,
     isomap_dimensionality_reduction,
-    estimate_manifold_topology,
     estimate_intrinsic_dimensionality
 
 # ----------------------------------- utils ---------------------------------- #
@@ -42,7 +41,7 @@ https://towardsdatascience.com/detecting-knee-elbow-points-in-a-graph-d13fc517a6
 function find_fraction_variance_explained_elbow(σ::Vector{Float64})::Int
     length(σ) == 1 && return 1
     # check input
-    @assert σ[1] > σ[end] string(σ)
+    @assert σ[1] > σ[end] "Fraction of variance explained should be decreasing, did you `cumsum`?"
 
     # fit a line through the first and last point
     # consider that σ₁ = f(x₁) - x₁=1
