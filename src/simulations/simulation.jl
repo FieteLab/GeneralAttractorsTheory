@@ -159,10 +159,11 @@ function run_simulation(
     simulation::Simulation;
     discard_first_ms = 0,
     s₀ = nothing,
+    callbacks::Dict = Dict(),
     kwargs...,
 )
     # setup history
-    N = size(simulation.trajectory.X, 1)
+    N = size(simulation.trajectory.X, 1)  # number of steps
     T = (N + 1) * simulation.dt
     time = 1:simulation.dt:T |> collect
     framen = 1
@@ -175,6 +176,9 @@ function run_simulation(
     X̄[1, :] = simulation.trajectory.X[1, :]
     decoder_initialized = false
     decoder = nothing
+
+    # keep track of which callbacks have been invoked already
+    cbs_called = Dict(k => false for k in keys(callbacks))
 
     # do simulation steps and visualize   
     # pbar = ProgressBar()
@@ -214,6 +218,15 @@ function run_simulation(
 
             # add data to history
             (time[framen] > discard_first_ms) && add!(history, framen, simulation, v)
+
+            # call eventual callback functions
+            for (name, (cbtime, cb)) in callbacks
+                if time[framen] > cbtime && !cbs_called[name] == true
+                    @debug "Simulation callback $name called at time $(time[framen]), frame $framen"
+                    cb(simulation)
+                    cbs_called[name] = true
+                end
+            end
 
             framen += 1
         #     update!(job)

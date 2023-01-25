@@ -69,7 +69,7 @@ function (dec::Decoder)(s::Vector, can::AbstractCAN)
         # find potential errors in decoding
         if d[selected] > 2.5
             r(x) = round(x; digits = 2)
-            @warn "Decoding problems" r.(dec.x) r.(dec.n) r.(n̂) dec.Δ
+            @debug "Decoding problems" r.(dec.x) r.(dec.n) r.(n̂) dec.Δ
         end
 
         # set the new point as the next decoded point

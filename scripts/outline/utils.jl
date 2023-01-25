@@ -51,7 +51,7 @@ Get and run a simulation for a SingleCAN wwith random initial condition
 and constant input trajectory.
 """
 function simulate_constant_traj_random_init(can, duration, dt, still, τ, b₀; x₀=nothing, 
-    η=0.0,
+    η=0.0, kwargs...
     )
     x₀, activate = random_init(can; x₀=x₀)
     sim = constant_traj_sim(can, duration, dt, still, τ, b₀; η=η)
@@ -60,6 +60,7 @@ function simulate_constant_traj_random_init(can, duration, dt, still, τ, b₀; 
         discard_first_ms = still,
         average_over_ms = 1,
         s₀ = 1.0 .* activate,
+        kwargs...
     );
     return h, X
 end

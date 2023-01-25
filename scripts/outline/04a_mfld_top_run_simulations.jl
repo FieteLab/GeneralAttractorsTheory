@@ -81,21 +81,25 @@ for can_name in networks
 
     # embed in 3 and 10 dimensions
     for (dim, params) in zip(("d3_", "d10_", "d50_"), (dimred_3d_params, dimred_10d_params, dimred_50d_params))
+        meta = Dict(
+            :can => can_name,
+            :dim => parse(Int, dim[2:end-1]),
+            :params => Dict(params),
+            :tag  => "$(dim)embeddings",
+        )
 
         generate_or_load(
             supervisor, 
             "embeddings";
             name = "$(can_name)_$(dim)",
             fmt = "npz",
-            metadata = Dict(
-                :can => can_name,
-                :dim => parse(Int, dim[2:end-1]),
-                :params => Dict(params),
-                :tag  => "$(dim)embeddings",
-            ),
+            metadata = meta,
             load_existing=false
         ) do
-            do_isomap(do_pca(X, params), params)
+            pca, X̄ = pca_dimensionality_reduction(X, params)
+            iso, X̄ = isomap_dimensionality_reduction(X̄, params)
+            store_data(supervisor, "embeddings"; name = "$(can_name)_$(dim)embedding", fmt="bson", data=Dict(:iso=>iso, :pca=>pca), metadata = meta)
+            X̄  # save transformed data
         end
     end
     print(hLine(; style="dim"))

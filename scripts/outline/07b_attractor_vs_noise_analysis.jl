@@ -69,7 +69,9 @@ if DO_TDA
             :η => η,
         )
 
-        do_tda(supervisor, filters, "07b_TDA_η=$η"; max_d=2)
+        tresh = η > 0.5 ? 30 : 20
+
+        do_tda(supervisor, filters, "07b_TDA_η=$η"; max_d=2, tresh=tresh)
     end
 end
 
