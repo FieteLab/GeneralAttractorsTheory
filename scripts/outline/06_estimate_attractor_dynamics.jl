@@ -17,7 +17,7 @@ compute in hiigh dimensions, we use isomap to get a lower dimensional
 using ManifoldLearning, MultivariateStats  # needed to be able to load iso
 using Distances, FileIO, LinearAlgebra
 
-GENERATE_DATA = true
+GENERATE_DATA = false
 
 include("settings.jl")
 move_to_datadir(supervisor, "mfld_top")
@@ -35,11 +35,6 @@ filters = Dict{Symbol, Any}(
 end
 @isdefined(can) || (can = make_standard_single_torus_can())
 
-# project data to 400d dimensional space
-d400_pca = @isdefined(d400_pca) ? d400_pca : fit(PCA, X, maxoutdim=4096, pratio=1.0)
-d400_P = projection(d400_pca)[:, 1:400]'
-d400_x = @isdefined(d400_x) ? d400_x : d400_P * X
-@isdefined(pw_d_x) || (pw_d_x = pairwise(Euclidean(), d400_x))
 
 # ----------------------------- define functions ----------------------------- #
 # write a function to get a random n-dimensional vector of magnitude offset size
@@ -68,6 +63,11 @@ plot_vec!(ax, x, v; kwargs...) = plot!(
     kwargs...
 )
 
+function vec2mat(v::Vector)::Matrix
+    n= length(v)
+    reshape(v, (n, 1))
+end
+
 # --------------------------------- run sims --------------------------------- #
 # get the magnitude of the colums of X to set the perturbation size
 X_mags = norm.(eachcol(X))
@@ -80,7 +80,7 @@ duration, still = N+250, 25
 offset_time = 200
 tstart, tend = offset_time-100-still, offset_time+100-still  # time window around stim onset
 
-N_sims = 3
+N_sims = 100
 
 GENERATE_DATA && begin
     tspace_offset_norm = [] # store norm of offset vector in tangent space
@@ -103,44 +103,50 @@ for simn in 1:N_sims
                 )
     )
 
+    s = h.S[:, 1, 2:end]
 
-    # project trajectory and offset to 400d space  
-    d400_s = (d400_P * h.S[:, 1, :])[:, 2:end]
 
     # get the closest points from torus data to the pre-stim trajectory & fit local pca
     pw_d_s = pairwise(
                 Euclidean(), 
-                Matrix(reshape(d400_s[:, tstart-1], (400, 1))), 
-                d400_x
+                vec2mat(s[:, tstart-1]), 
+                X
         )[1, :]  # get the closest points based on the time just before the offset stimulus
 
     distance_theshold = sort(pw_d_s)[501]
-    closest = d400_x[:, pw_d_s .< distance_theshold]
+    closest = X[:, pw_d_s .< distance_theshold]
 
     pca = fit(PCA, closest, maxoutdim=400, pratio=1.0)
-    @info "aa" d400_s closest pca eigvecs(pca)
-     
-    @info "fulld_pca" fulld_pca
-    tspace = Matrix(fulld_pca[:, 1:2]')
-    ortho_space = Matrix(fulld_pca[:, 3:end]')
 
-    @assert size(tspace) == (2, N) "tspace is wrong size: $(size(tspace)) instead of $((2, N))"
-    @assert size(ortho_space) == (N-2, N) "ortho_space is wrong size: $(size(ortho_space)) instead of $((N-2, N))"
- 
-    # get norm of offset vector in/out tangent space
-    push!(tspace_offset_norm, norm(tspace * offset))
-    push!(offmld_offset_norm, norm(ortho_space * offset))
+    # get the tangent space
+    tspace = eigvecs(pca)[:, 1:2]
+
+    # project to a space orthogonal to the tangent space (N × N)
+    pcs_orthonormal = Matrix(qr(tspace).Q)
+    projection_matrix = Matrix{Float64}(I, N, N) - pcs_orthonormal * pcs_orthonormal'
+
+    # @info "Fitted local PCA" s closest pca eigvecs(pca) offset tspace projection_matrix norm(tspace' * offset) norm(projection_matrix * offset)
+    
+    # store offset vector magnitude
+    push!(
+        tspace_offset_norm, 
+        norm(tspace' * offset)
+    )
+    push!(
+        offmld_offset_norm, 
+        norm(projection_matrix * offset)
+    )
 
     # get distance from pre-stimulus state in/out tangent space
-    tspace_s = tspace * d400_s
+    tspace_s = tspace' * s
     tgt = reshape(tspace_s[:, tstart-1], (2, 1))
     push!(tspace_distances, 
         pairwise(Euclidean(), tgt, tspace_s)[1, tstart:tend]
     )
 
     # project data to orthogonal space and get the dynamics
-    off_mfld_s = ortho_space * d400_s
-    tgt = reshape(off_mfld_s[:, 1], (398, 1))
+    off_mfld_s = projection_matrix * s
+    tgt = reshape(off_mfld_s[:, tstart-1], (size(off_mfld_s, 1), 1))
     push!(
         offmld_distances,
         pairwise(Euclidean(), tgt, off_mfld_s)[1, tstart:tend]
@@ -150,25 +156,39 @@ end
 
 # ---------------------------------- viusals --------------------------------- #
 
-p1 = histogram(tspace_offset_norm, label="tangent space offset vector norm")
-histogram!(offmld_offset_norm, label="orthogonal space offset vector norm")
+p1 = histogram(tspace_offset_norm, label="tangent space offset vector norm", grid=false)
+histogram!(offmld_offset_norm, label="orthogonal space offset vector norm", grid=false)
 
 p2 = plot(
     label = "tangent space distance from pre-stimulus state",
     xlabel = "time (ms)", ylabel = "distance (a.u.)",
     title = "On manifold drift",
+    grid=false
 )
 p3 = plot(
     label = "orthogonal space distance from pre-stimulus state",
     xlabel = "time (ms)", ylabel = "distance (a.u.)",
     title = "Off manifold drift",
+    grid=falsegrid=false,
 )
 
 for i in 1:N_sims
-    plot!(p2, tspace_distances[i], label=nothing, lw=.5, color=:grey)
-    plot!(p3, offmld_distances[i], label=nothing, lw=.5, color=:grey)
+    plot!(p2, tspace_distances[i], label=nothing, lw=.5, color=:grey, alpha=.75)
+    plot!(p3, offmld_distances[i], label=nothing, lw=.5, color=:grey, alpha=.75)
 end
+
+# plot mean and std for the distances
+tspace_μ = mean(hcat(tspace_distances...), dims=2)
+tspace_σ = std(hcat(tspace_distances...), dims=2)
+offmld_μ = mean(hcat(offmld_distances...), dims=2)
+offmld_σ = std(hcat(offmld_distances...), dims=2)
+
+plot!(p2, tspace_μ, ribbon=tspace_σ, label="mean ± std", color=salmon_dark, lw=3, ribbon_alpha=.5)
+plot!(p3, offmld_μ, ribbon=offmld_σ, label="mean ± std", color=indigo, lw=3, ribbon_alpha=.5)
+
 
 fig = plot(p1, p2, p3, layout=(3, 1), size=(800, 800))
 
 
+save_plot(supervisor, fig, "on_off_mfld_drift")
+fig
