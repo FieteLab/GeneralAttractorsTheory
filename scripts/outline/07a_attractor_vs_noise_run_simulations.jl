@@ -31,12 +31,7 @@ can_name = "torus"
 # -------------------------------- run & save -------------------------------- #
 if GENERATE_DATA
     # make network
-    can_maker = network_makers[can_name]
-    kernel_params = Dict(
-        k => mean(v) for (k, v) in kernels_parameters_range[can_name][kernel_name]
-    )
-    kernel = kernels[kernel_name](; kernel_params...)
-    can = can_maker(:single; k=kernel)
+    can = make_standard_single_torus_can()
 
     # run simulations
     for η in noise_values
@@ -80,6 +75,7 @@ for η in noise_values
     )
 
     X = load_and_concat_activations(; filters...) 
+    @info "Loaded data for `η = $(η)`, n neurons = $(size(X, 2)), n samples = $(size(X, 1))" 
 
     # embed in 3 and 10 dimensions
     for (dim, params) in zip(("d3_", "d10_"), (dimred_3d_params, dimred_10d_params))
@@ -87,13 +83,14 @@ for η in noise_values
         generate_or_load(
             supervisor, 
             "embeddings";
-            name = "$(can_name)_$(dim)",
+            name = "$(can_name)_$(dim)_$(η)",
             fmt = "npz",
             metadata = Dict(
                 :can => can_name,
                 :dim => parse(Int, dim[2]),
                 :params => Dict(params),
                 :tag  => "$(dim)embeddings",
+                :η => η,
             ),
             load_existing=false
         ) do
@@ -102,6 +99,3 @@ for η in noise_values
     end
     print(hLine(; style="dim"))
 end
-
-# TODO don't embedd all data at once
-# TODO do TDA

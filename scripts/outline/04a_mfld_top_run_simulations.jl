@@ -80,7 +80,7 @@ for can_name in networks
     X = load_and_concat_activations(; filters...) 
 
     # embed in 3 and 10 dimensions
-    for (dim, params) in zip(("d3_", "d10_"), (dimred_3d_params, dimred_10d_params))
+    for (dim, params) in zip(("d3_", "d10_", "d50_"), (dimred_3d_params, dimred_10d_params, dimred_50d_params))
 
         generate_or_load(
             supervisor, 
@@ -89,7 +89,7 @@ for can_name in networks
             fmt = "npz",
             metadata = Dict(
                 :can => can_name,
-                :dim => parse(Int, dim[2]),
+                :dim => parse(Int, dim[2:end-1]),
                 :params => Dict(params),
                 :tag  => "$(dim)embeddings",
             ),

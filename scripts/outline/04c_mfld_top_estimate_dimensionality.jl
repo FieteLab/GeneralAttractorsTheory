@@ -26,9 +26,9 @@ import GeneralAttractors.Analysis.ManifoldAnalysis:
         fraction_variance_explained, find_fraction_variance_explained_elbow, pca_dimensionality_reduction
 move_to_datadir(supervisor, "mfld_top")
 
-PLOT_ACTIVITY_PCA_VARIANCE_EXPLAINED = false
-ESTIMATE_LOCAL_PCA_PARAMS_SENSITIVITY = false
-ESTIMATE_INTRINSIC_DIMENSIONALITY = true
+PLOT_ACTIVITY_PCA_VARIANCE_EXPLAINED = true
+ESTIMATE_LOCAL_PCA_PARAMS_SENSITIVITY = true
+ESTIMATE_INTRINSIC_DIMENSIONALITY = false
 
 if PLOT_ACTIVITY_PCA_VARIANCE_EXPLAINED
     dim_est_params = AnalysisParameters(
@@ -40,7 +40,8 @@ if PLOT_ACTIVITY_PCA_VARIANCE_EXPLAINED
     plt = plot(
         xlabel = "PC", ylabel = "Fraction of variance explained",
         grid = false,
-        size = (1000, 600)
+        size = (1000, 600);
+        plot_font_size_kwargs...
     )
 
     for (network, color) in zip(networks, networks_colors)
@@ -103,7 +104,8 @@ if ESTIMATE_LOCAL_PCA_PARAMS_SENSITIVITY
         xlabel = "Neighborhood size", ylabel = "Fraction of variance explained",
         grid = false,
         size = (1000, 600),
-        title = network,
+        title = network;
+        plot_font_size_kwargs...
     )
     for (p, color) in zip(pratios, colors)
         estimated_dim = []

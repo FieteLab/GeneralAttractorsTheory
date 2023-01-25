@@ -44,8 +44,6 @@ function mobius_maker(
         OneForm(4, (t, θ) -> -offset_size * MB_ψ2(t, θ)),
     ]
 
-
-
     # construct network
     return if cantype == :single
         SingleCAN(

@@ -401,7 +401,7 @@ module ProjectSupervisor
     end
 
 
-    function save_plot(sup::Supervisor, plt, name::AbstractString)
+    function save_plot(sup::Supervisor, plt, name::AbstractString; dpi=300)
         meta = git_info(sup)
         path = (sup.projectdir / "plots" / (name*"_"*meta)).path
         

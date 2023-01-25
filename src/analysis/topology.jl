@@ -152,7 +152,7 @@ end
 
     Ref: https://mtsch.github.io/Ripserer.jl/dev/
 """
-function tda_on_pointcloud(X::Matrix, params::AnalysisParameters)
+function tda_on_pointcloud(X::Matrix, params::AnalysisParameters; color=nothing, plot_kwargs...)
     # convert M in a vector of tuples for TDA
     n = (Int ∘ round)(size(X, 2) / params.tda_downsample_factor)
     X̄ = [Tuple(x) for x in rand(collect(eachcol(X)), n)]
@@ -168,7 +168,7 @@ function tda_on_pointcloud(X::Matrix, params::AnalysisParameters)
     )
 
     # plot results
-    plt = plot(plot(tda), barcode(tda), size = (1000, 800))
+    plt = plot(plot(tda, color=color), barcode(tda), size = (1000, 800); plot_kwargs...)
     return tda, plt
 end
 

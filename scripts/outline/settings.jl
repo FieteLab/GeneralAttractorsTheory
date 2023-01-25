@@ -3,10 +3,10 @@ Definition of parameters and settins used throughout the analysis/plots.
 """
 
 using Plots, DataFrames, Term, Statistics
-import MyterialColors: Palette, green_dark, deep_purple
+import MyterialColors: Palette, green_dark, deep_purple, indigo, salmon
 
-gr()   # for fast plotting
-# pyplot()  # for better plots quality
+# gr()   # for fast plotting
+pyplot()  # for better plots quality
 
 install_term_stacktrace(; hide_frames=true)
 
@@ -57,6 +57,22 @@ embeddings = Dict(
 networks_colors = getfield.(Palette(green_dark, deep_purple; N = length(networks)).colors, :string)
 
 
+plot_font_size_kwargs = Dict(
+    :xtickfontsize=>16,
+    :ytickfontsize=>16,
+    :ztickfontsize=>16,
+    :xguidefontsize=>16,
+    :yguidefontsize=>16,
+    :zguidefontsize=>16,
+    :grid => false,
+    :legendfontsize=>16,
+    :right_margin => 12Plots.mm,
+    :left_margin => 12Plots.mm,
+    :top_margin => 12Plots.mm,
+    :bottom_margin => 12Plots.mm,
+    :dpi => 300,
+)
+
 # ---------------------------- ANALYSIS paramters ---------------------------- #
 dimred_3d_params = AnalysisParameters(
     max_nPC = 400,  # max num of PCs
@@ -70,6 +86,15 @@ dimred_10d_params = AnalysisParameters(
     max_nPC = 200,
     pca_pratio = 0.9999999,
     n_isomap_dimensions = 10,
+    isomap_k = 5,
+    isomap_downsample = 50,  # time downsamplin
+)
+
+
+dimred_50d_params = AnalysisParameters(
+    max_nPC = 200,
+    pca_pratio = 0.9999999,
+    n_isomap_dimensions = 50,
     isomap_k = 5,
     isomap_downsample = 50,  # time downsamplin
 )

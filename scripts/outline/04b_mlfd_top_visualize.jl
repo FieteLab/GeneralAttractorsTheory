@@ -1,4 +1,3 @@
-using Term.Progress
 include("settings.jl")
 
 """
