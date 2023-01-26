@@ -15,6 +15,7 @@ using GeneralAttractors.Analysis
 using GeneralAttractors.Kernels
 import GeneralAttractors: torus_maker, sphere_maker, mobius_maker, cylinder_maker, plane_maker
 import GeneralAttractors: torus_embedding, identity_embedding, mobius_embedding, cylinder_embedding, plane_embedding
+import GeneralAttractors: toruscan, spherecan, mobiuscan, cylindercan, planecan
 using GeneralAttractors.ProjectSupervisor
 import GeneralAttractors: by_column
 
@@ -34,6 +35,14 @@ networks = (
     "mobius", 
     "cylinder",
     "plane"
+)
+
+cans = Dict(
+    "torus" => toruscan, 
+    "sphere" => spherecan,
+    "mobius" => mobiuscan,
+    "cylinder" => cylindercan,
+    "plane" => planecan,
 )
 
 network_makers = Dict(

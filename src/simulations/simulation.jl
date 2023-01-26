@@ -40,7 +40,7 @@ Base.print(io::IO, sim::Simulation) = print(io, string(sim))
 Base.show(io::IO, ::MIME"text/plain", sim::Simulation) = print(io, string(sim))
 
 function Simulation(can::AbstractCAN, trajectory::AbstractTrajectory; kwargs...)
-    n_pops = hasfield(typeof(can), :offsetse) ?  length(can.offsets) : 1
+    n_pops = hasfield(typeof(can), :offsets) ?  length(can.offsets) : 1
 
     # initialize activity matrices
     N = *(can.n...)
@@ -49,8 +49,7 @@ function Simulation(can::AbstractCAN, trajectory::AbstractTrajectory; kwargs...)
 
     # get all connection weights
     W = if n_pops > 1
-        sparse.(map(x -> Float64.(x), can.Ws))
-        droptol!.(W, 0.001)
+        droptol!.(sparse.(map(x -> Float64.(x), can.Ws)), 0.001)
     else
         nothing
     end
@@ -86,7 +85,7 @@ function step!(
 
     # get velocity input
     V = can.α .* map(i -> can.Ω[i](on_mfld_x, v), 1:length(can.Ω)) |> vec  # inputs vector of size 2d
-
+    @info Ṡ W S V
     # update each population with each population's input
     for i = 1:d, j = 1:d
         # get baseline and noise inputs
@@ -181,9 +180,9 @@ function run_simulation(
     cbs_called = Dict(k => false for k in keys(callbacks))
 
     # do simulation steps and visualize   
-    # pbar = ProgressBar()
-    # Progress.with(pbar) do
-    #     job = addjob!(pbar, description = "Simulation", N = N)
+    pbar = ProgressBar()
+    Progress.with(pbar) do
+        job = addjob!(pbar, description = "Simulation", N = N)
         for i = 1:N
             # get activation for bump initialization
             if i > simulation.trajectory.still
@@ -229,8 +228,8 @@ function run_simulation(
             end
 
             framen += 1
-        #     update!(job)
-        # end
+            update!(job)
+        end
     end
 
     return history, X̄

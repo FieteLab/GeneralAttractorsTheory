@@ -10,7 +10,7 @@ using GeneralAttractors.ManifoldUtils
 import GeneralAttractors.Simulations: plot_trajectory_and_decoded
 
 
-include("../networks/mobius.jl")
+
 
 # --------------------------------- simulate --------------------------------- #
 dt = 0.5
@@ -30,8 +30,8 @@ trajectory = Trajectory(
     mobiuscan;
     T = nframes,
     dt = dt,
-    # σv = [0.5, 0.3],
-    σv = 0,
+    σv = [0.5, 0.3],
+    # σv = 0,
     μv = [0.1, 0.0],
     x₀ = x₀,
     still = still,
@@ -47,14 +47,13 @@ simulation = Simulation(mobiuscan, trajectory; η = 0.0, b₀ = 0.5, τ = 5.0)
 # run
 h, X̄ = @time run_simulation(
     simulation;
-    frame_every_n = 25,
+    # frame_every_n = 25,
     discard_first_ms = 0,
     average_over_ms = 10,
-    fps = 5,
     s₀ = 1.0 .* activate,
-    φ = mobius_embedding,
-    savefolder = "mobius",
-    savename = "test",
+    # φ = mobius_embedding,
+    # savefolder = "mobius",
+    # savename = "test",
 );
 
 plot_trajectory_and_decoded(trajectory, X̄) |> display
