@@ -7,7 +7,8 @@ import GeneralAttractors.Simulations: plot_trajectory_and_decoded
 import GeneralAttractors: animate_simulation_data
 
 include("settings.jl")
-
+move_to_datadir(supervisor, "path_int")
+tag = "decoding_data"
 
 """
 TODO: 
@@ -21,7 +22,7 @@ TODO:
 
 # ---------------------------------- get CAN --------------------------------- #
 dt = 0.5
-duration = 300
+duration = 2000
 still = 50  # initialization period        
 
 network = "cylinder"
@@ -82,8 +83,30 @@ h, X̄ = @time run_simulation(
 )
 
 
+meta = metadata = Dict(
+    "network" => network,
+    "dt" => dt,
+    "duration" => duration,
+    "still" => still,
+    "tag" => tag,
+)
+
+pop_activity = sum(h.S; dims=2)[:, 1, :]
+store_data(supervisor, "simulations"; fmt = "npz", 
+        name="$(network)_pop_activity", data = pop_activity, metadata=meta)
+store_data(supervisor, "simulations"; fmt = "npz", 
+        name="$(network)_traj_X", data = trajectory.X, metadata=meta)
+store_data(supervisor, "simulations"; fmt = "npz", 
+        name="$(network)_traj_V", data = trajectory.V, metadata=meta)
+store_data(supervisor, "simulations"; fmt = "npz", 
+        name="$(network)_decoded_X", data = h.x_M_decoded, metadata=meta)
+store_data(supervisor, "simulations"; fmt = "npz", 
+        name="$(network)_bump_X", data = h.x_N, metadata=meta)
+
+# store_data(supervisor, "simulations"; fmt = "jld2", name="$(network)_sim_data", data = Dict("h" => h, "trajectory"=>trajectory), metadata=meta)
+
 # --------------------------------- visualie --------------------------------- #
 plot_trajectory_and_decoded(trajectory, X̄) |> display
-# animate_simulation_data(can, trajectory, h, X̄, embedding, 
-#         (supervisor.projectdir / "plots" /"$(network)_sim_traj.gif").path
-# )
+animate_simulation_data(can, trajectory, h, X̄, embedding, 
+        (supervisor.projectdir / "plots" /"$(network)_sim_traj.gif").path
+)

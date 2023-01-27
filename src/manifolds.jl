@@ -160,8 +160,8 @@ end
 
 Cylinder() = Cylinder(
     "Cylinder",
-    [0, -1],
-    [2π, 1],
+    [0, -5],
+    [2π, 5],
     [ConstantVectorField(2, 1), ConstantVectorField(2, 2)],
     PeriodicEuclidean([2π]),
     2, [1, 0]
