@@ -10,24 +10,24 @@ using GeneralAttractors.ManifoldUtils
 import GeneralAttractors.Simulations: plot_trajectory_and_decoded
 
 
-
+can = mobius_maker(:default)
 
 # --------------------------------- simulate --------------------------------- #
 dt = 0.5
-duration = 1200
+duration = 400
 still = 50  # initialization period  
 dmin = 0.5  # minimal distance from x₀ for state intialization  
 
 # select neurons to initialize
 x₀ = [0.5, 5]
-d = map(i -> mobiuscan.metric(x₀, mobiuscan.X[:, i]), 1:size(mobiuscan.X, 2))
+d = map(i -> can.metric(x₀, can.X[:, i]), 1:size(can.X, 2))
 activate = zeros(length(d))
 activate[d.<dmin] .= 1
 
 # initialize trajectory and simulation
 nframes = (Int ∘ round)(duration / dt)
 trajectory = Trajectory(
-    mobiuscan;
+    can;
     T = nframes,
     dt = dt,
     σv = [0.5, 0.3],
@@ -40,7 +40,7 @@ trajectory = Trajectory(
 plot(trajectory) |> display
 
 
-simulation = Simulation(mobiuscan, trajectory; η = 0.0, b₀ = 0.5, τ = 5.0)
+simulation = Simulation(can, trajectory; η = 0.0, b₀ = 0.5, τ = 5.0)
 
 
 

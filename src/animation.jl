@@ -1,0 +1,48 @@
+using Plots
+using Term.Progress
+
+function animate_simulation_data(can, traj, hist, X, φ, savepath; dt=0.5, frames_Δ=15, neurons_Δ = 5)
+    coord3d = by_column(φ, can.X)
+    nframes = size(traj.X, 1)
+    skipframes = traj.still / dt |> floor |> Int
+
+    anim = Animation()
+
+    pbar = ProgressBar()
+    Progress.with(pbar) do
+        job = addjob!(pbar, description = "Making animation", N = (Int ∘ ceil)((nframes - skipframes) / frames_Δ))
+        for fnum in 1:frames_Δ:nframes
+            fnum * dt < traj.still && continue
+            # fnum % hist.average_over == 0 && (hist_frame += 1)
+            hist_frame = (fnum-skipframes)  ÷ hist.average_over + 1
+
+            # plot trajectory
+            p1 = plot(traj, fnum)
+            plot!(
+                p1, X[1:fnum, 1], X[1:fnum, 2],
+                lw = 6, color=:red, alpha=.5,
+                label = "decoded",
+                )
+
+            # plot neurons activation
+            s = sum(hist.S[:, :, hist_frame], dims=2)[1:neurons_Δ:end]
+            p2 = scatter3d(
+                coord3d[1, 1:neurons_Δ:end], coord3d[2, 1:neurons_Δ:end], coord3d[3, 1:neurons_Δ:end],
+                marker_z = s,
+                ms = 5,  msw = 0.0,
+                alpha=0.5,
+                xlim = [-1.1, 1.1], ylim = [-1.1, 1.1], zlim = [-1.1, 1.1], 
+                size = (800, 800),
+                )
+
+ 
+            # plot(simulation, time[framen], framen, x, v, X̄, φ)
+            plot(p1, p2, layout = (1, 2), size = (1200, 800))
+            frame(anim)
+            update!(job)
+        end
+        
+    end
+
+    gif(anim, savepath, fps = 30)
+end

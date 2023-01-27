@@ -16,117 +16,57 @@ end
 
 
 function Plots.plot(traj::Trajectory)
-    d = size(traj.X, 2)
     X = remove_jumps_from_trajectory(traj.X)
     X̄ = remove_jumps_from_trajectory(traj.X̄)
-    if d == 2
-        # i,j = traj.M isa Mobius ? (2, 1) : (1, 2)
-        i, j = (1, 2)
+ 
+    p1 = plot(
+        X[:, 1],
+        X[:, 2],
+        lw = 3,
+        color = :black,
+        label = nothing,
+        title = "trajectory on: $(traj.M.name)",
+        grid = false,
+        aspect_ratio = :equal,
+        xlim = [traj.M.xmin[1], traj.M.xmax[1]],
+        ylim = [traj.M.xmin[2], traj.M.xmax[2]],
+    )
 
-        p1 = plot(
-            X[:, i],
-            X[:, j],
-            lw = 3,
-            color = :black,
-            label = nothing,
-            title = "trajectory",
-            grid = false,
-            aspect_ratio = :equal,
-        )
+    p2 = plot(
+        X̄[:, 1],
+        X̄[:, 2],
+        lw = 3,
+        color = :red,
+        label = nothing,
+        title = "trjectory on: $(traj.N.name)",
+        grid = false,
+        aspect_ratio = :equal,
+        xlim = [traj.N.xmin[1], traj.N.xmax[1]],
+        ylim = [traj.N.xmin[2], traj.N.xmax[2]],
+    )
 
-        p2 = plot(
-            X̄[:, i],
-            X̄[:, j],
-            lw = 3,
-            color = :red,
-            label = nothing,
-            title = "on mfld traj",
-            grid = false,
-            aspect_ratio = :equal,
-        )
-
-        plot(p1, p2)
-
-    elseif d == 1
-        plot(
-            X[:, 1],
-            lw = 3,
-            color = :black,
-            label = nothing,
-            title = "trajectory",
-            grid = false,
-        )
-    else
-        p1 = plot(
-            eachcol(X)...,
-            lw = 3,
-            color = :black,
-            label = nothing,
-            title = "trajectory",
-            grid = false,
-            aspect_ratio = :equal,
-        )
-    end
+    plot(p1, p2)
 end
 
 
 function Plots.plot(traj::Trajectory, i::Int; xmin = nothing, xmax = nothing)
     d = size(traj.X, 2)
 
-    if traj.M isa Mobius
-        xmin = isnothing(xmin) ? traj.M.xmin : xmin
-        xmax = isnothing(xmax) ? traj.M.xmax : xmax
-    else
-        xmin =
-            isnothing(xmin) ?
-            minimum(traj.X, dims = 1) .- abs.(minimum(traj.X, dims = 1) * 1.1) : xmin
-        xmax =
-            isnothing(xmax) ? maximum(traj.X, dims = 1) .+ maximum(traj.X, dims = 1) * 1.1 :
-            xmax
-    end
-
     t0 = traj.M isa Mobius ? max(1, i - 200) : 1
     X = remove_jumps_from_trajectory(traj.X)
-    if d == 2
-        k, j = 1, 2
-        plt = plot(
-            X[t0:i, k],
-            X[t0:i, j],
-            lw = 6,
-            color = :black,
-            grid = false,
-            aspect_ratio = :equal,
-            label = nothing,
-            camera = (0.075 * i, 20),
-            xlim = [xmin[k], xmax[k]],
-            ylim = [xmin[j], xmax[j]],
-        )
-    elseif d == 1
-        plt = plot(
-            X[:, 1],
-            lw = 4,
-            color = :black,
-            grid = false,
-            label = nothing,
-            ylim = [xmin[1], xmax[1]],
-        )
-    else
-        plt = plot(
-            eachcol(X[t0:i, :])...,
-            lw = 4,
-            color = :black,
-            grid = false,
-            aspect_ratio = :equal,
-            label = nothing,
-            xlim = [-1.1, 1.1],
-            ylim = [-1.1, 1.1],
-            zlim = [-1.1, 1.1],
-            camera = (0.075 * i, 20),
-        )
-    end
-
-    # fain line
-    # plot!(plt, eachcol(X)..., lw = 1.5, color = :black, label = nothing, alpha = 0.5)
+    k, j = 1, 2
+    plt = plot(
+        X[t0:i, k],
+        X[t0:i, j],
+        lw = 6,
+        color = :black,
+        grid = false,
+        aspect_ratio = :equal,
+        label = nothing,
+        camera = (0.075 * i, 20),
+        xlim = [traj.M.xmin[1], traj.M.xmax[1]],
+        ylim = ylim = [traj.M.xmin[2], traj.M.xmax[2]],
+    )
 
     plt
 end

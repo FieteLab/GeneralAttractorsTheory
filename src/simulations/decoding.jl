@@ -14,11 +14,11 @@ mutable struct Decoder
     x̂::Vector # last state in a space homeomorphic to can.C.M but with no scaling compared to can.C.N
     n::Vector # last state in can.C.N, the neural lattice coordinates
     Δ::Vector # shift between x,n at time t=0 (they will be offset when decoding start)
-    α::Float64  # scaling correction factor
+    decoding_offset
 end
 
-Decoder(x::Vector, n::Vector, α) = Decoder(x, x, n, x - n, α)
-Decoder(x::Vector, n::Vector) = Decoder(x, x, n, x - n, 1)
+Decoder(x::Vector, n::Vector; decoding_offset=zeros(length(X))) = Decoder(x, x, n, x - n, decoding_offset)
+
 
 
 
@@ -45,11 +45,16 @@ that are closest to it.
 """
 function (dec::Decoder)(s::Vector, can::AbstractCAN)
     # get the position of activity bump in neural mfld coordinates
-    n̂ = decode_peak_location(s, can)
+    n̂ = decode_peak_location(s, can) .- dec.decoding_offset
     can.C.M == can.C.N && return (n̂, n̂)
 
     # get Δn relative to previous bump coordinates
     Δn = n̂ .- dec.n
+
+    # scale Δn by the cover space scaling functions
+    for (i, λ) in enumerate(can.C.λs)
+        Δn[i] = λ(Δn[i])
+    end
 
     if norm(Δn) < 1
         # for small on-mfld movement, just look at the change in coordinates

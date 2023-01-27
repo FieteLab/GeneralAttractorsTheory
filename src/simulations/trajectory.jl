@@ -1,6 +1,6 @@
 import Term.Repr: @with_repr
 using Statistics
-
+import ForwardDiff: jacobian
 
 # ----------------------------------- utils ---------------------------------- #
 """
@@ -149,6 +149,7 @@ X (T×d) is the coordinates of the trajectory's trace.
 """
 @with_repr struct Trajectory <: AbstractTrajectory
     M::AbstractManifold
+    N::AbstractManifold
     X::Matrix
     X̄::Matrix   # on manifold trajectory
     V::Matrix
@@ -157,7 +158,7 @@ end
 
 
 Trajectory(can::AbstractCAN, args...; kwargs...) =
-    Trajectory(can, can.C.M, args...; kwargs...)
+    Trajectory(can, can.C.M, can.C.N, args...; kwargs...)
 
 
 
@@ -199,7 +200,8 @@ Arguments:
 """
 function Trajectory(
         can::AbstractCAN,
-        M::AbstractManifold;
+        M::AbstractManifold,
+        N::AbstractManifold;
         T::Int = 250,
         dt::Float64 = 0.5,
         σv::Union{Number,Vector} = 1,  # variability of each speed field
@@ -211,6 +213,7 @@ function Trajectory(
         n_piecewise_segments::Int = 3,
         scale::Number = 1,
         smoothing_window=11,
+        Vs = nothing,
     )   
     
     ψs::Vector = can.C.M.ψs # get manifold vector fields
@@ -230,24 +233,26 @@ function Trajectory(
     # get starting point
     x₀ = x₀ isa Number ? repeat([x₀], d) : x₀
     x₀ = !isnothing(x₀) ? x₀ : rand(M)
-    x₀ = get_closest_neuron(x₀, can.X, can.metric)
+    # x₀ = get_closest_neuron(x₀, can.X, can.metric)
     @assert length(x₀) == d "Got x₀: $(x₀) and d=$d"
 
+    @info "Generating trajectory" can.name M d σv μv modality
 
     # get velocity vector magnitude in components at each frame
-    Vs = Vector[]  # magnitude trace along each dimension
-    for i = 1:n_vfields
-        v = if modality == :piecewise
-            piecewise_linear(T, n_piecewise_segments, -vmax:(vmax/100):vmax)
-        elseif modality == :constant
-            ones(T) .* μv[i]
-        else
-            x = random_variable(T, μv[i], σv[i]; smoothing_window = smoothing_window) * scale
-            clamp!(x, -vmax, vmax)
-            ramp = [range(0, 1, length = 100)..., ones(T - 100)...]
-            x .* ramp
+    if isnothing(Vs)
+        Vs = Vector[]  # magnitude trace along each dimension
+        for i = 1:n_vfields
+            v = if modality == :piecewise
+                piecewise_linear(T, n_piecewise_segments, -vmax:(vmax/100):vmax)
+            elseif modality == :constant
+                ones(T) .* μv[i]
+            else
+                x = random_variable(T, μv[i], σv[i]; smoothing_window = smoothing_window) * scale
+                ramp = [range(0, 1, length = 100)..., ones(T - 100)...]
+                x .* ramp
+            end
+            push!(Vs, v)
         end
-        push!(Vs, v)
     end
 
     """
@@ -260,30 +265,35 @@ function Trajectory(
     # first, generate a trajectory on the M mfld
     X, V = Matrix(reshape(zeros(T, d), T, d)), Matrix(reshape(zeros(T, d), T, d))
     X[1, :] = x₀
+    v_correction = ones(d)
     for t = 2:T
         x = X[t-1, :]
 
         # get a velocity vector
-        v = ∑ψ(x, t)
+        v = ∑ψ(x, t) 
 
         # make sure vmax magnitude is in range
         v = enforce_vmax(v, vmax)
         v = enforce_vmin(v, 0.01)
-
+ 
         # update on mfld position
         x̂ = x + (v * dt)
         x̂, v_correction = apply_boundary_conditions!(x̂, can.C.M)
 
+        # scale velocity inputs
+        J = jacobian(can.C.ρ, x̂)
+        v = J * (v .* v_correction)
+
         # store
         X[t, :] = x̂
-        V[t-1, :] = v .* v_correction
+        V[t-1, :] = v 
     end
 
     # if the M and N manifolds are the same, we're done
     if can.C.M == can.C.N
         X̄ = X
     else
-        # reconstruct the N mfld trajecotry using the cover map ρ
+        # reconstruct the N mfld trajectory using the cover map ρ
         X̄ = by_column(can.C.ρ, Matrix(X'))' |> Matrix
     end
 
@@ -291,5 +301,5 @@ function Trajectory(
     still > 0 && begin
         X, V = add_initial_still_phase(X, X̄, V, still, x₀)
     end
-    return Trajectory(M, X, X̄, V, still)
+    return Trajectory(M, N, X, X̄, V, still)
 end

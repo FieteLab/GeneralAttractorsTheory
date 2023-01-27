@@ -1,6 +1,5 @@
-
 function torus_maker(cantype; 
-        n::Int=64,
+        n::Int=48,
         k::AbstractKernel = LocalGlobalKernel(α = 2.5, σ = 5.0), 
         offset_size::Number = 0.2,
         α = 3.2,
@@ -33,7 +32,7 @@ function torus_maker(cantype;
 
     ρⁱ(w::Vector; n = 6) = ρⁱ(w...; n = n)
     
-    cover = CoverSpace(Manifoldℝ²(100), Torus(), ρ, ρⁱ)
+    cover = CoverSpace(Manifoldℝ²(25), Torus(), ρ, ρⁱ)
 
     # define a function to get the coordinates of each neuron in the lattice
     function ξ(i::Int, j::Int)::Vector  # neurons coordinates function

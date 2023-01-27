@@ -65,6 +65,7 @@ apply_boundary_conditions!(x, ::AbstractManifold) = (x, ones(length(x)))
 #                                     RING                                     #
 # ---------------------------------------------------------------------------- #
 @with_repr struct Ring <: AbstractManifold
+    name::String
     xmin::Vector
     xmax::Vector
     ψs::Vector{AbstractVectorField}
@@ -72,6 +73,7 @@ apply_boundary_conditions!(x, ::AbstractManifold) = (x, ones(length(x)))
 end
 
 Ring() = Ring(
+    "ring",
     [0],
     [2π],
     # [VectorField(ring_ψ)], 
@@ -86,12 +88,14 @@ apply_boundary_conditions!(x, ::Ring) = mod.(x, 2π), 1
 #                                     PLANE                                    #
 # ---------------------------------------------------------------------------- #
 @with_repr struct Manifoldℝ² <: AbstractManifold
+    name::String
     xmin::Vector
     xmax::Vector
     ψs::Vector{AbstractVectorField}
     metric::Metric
 end
 Manifoldℝ²(m) = Manifoldℝ²(
+    "ℝ²",
     [-m, -m],
     [m, m],
     [ConstantVectorField(2, 1), ConstantVectorField(2, 2)],
@@ -110,10 +114,37 @@ function Base.rand(m::Manifoldℝ²)
     x
 end
 
+function apply_boundary_conditions!(x::Vector, m::Manifoldℝ²)
+
+    vel_correction_factors = [1, 1]
+    # non periodic dimension
+    δ = 0.2  # padding around boundary to account for bump size
+    if x[1] <= m.xmin[1] + δ
+        x[1] = m.xmin[1] + δ
+        vel_correction_factors[1] = 0
+    elseif x[1] >= m.xmax[1] - δ
+        x[1] = m.xmax[1] - δ
+        vel_correction_factors[1] = 0
+    end
+
+
+    if x[2] <= m.xmin[2] + δ
+        x[2] = m.xmin[2] + δ
+        vel_correction_factors[2] = 0
+    elseif x[2] >= m.xmax[2] - δ
+        x[2] = m.xmax[2] - δ
+        vel_correction_factors[2] = 0
+    end
+
+    return x, vel_correction_factors
+end
+
+
 # ---------------------------------------------------------------------------- #
 #                                   CYLINDER                                   #
 # ---------------------------------------------------------------------------- #
 @with_repr struct Cylinder <: AbstractManifold
+    name::String
     xmin::Vector
     xmax::Vector
     ψs::Vector{AbstractVectorField}
@@ -121,6 +152,7 @@ end
 end
 
 Cylinder() = Cylinder(
+    "Cylinder",
     [0, -1],
     [2π, 1],
     [ConstantVectorField(2, 1), ConstantVectorField(2, 2)],
@@ -129,8 +161,23 @@ Cylinder() = Cylinder(
 
 C = Cylinder()
 
-function apply_boundary_conditions!(x::Vector, ::Cylinder)
-    return mod.(x, 2π), ones(length(x))
+function apply_boundary_conditions!(x::Vector, m::Cylinder)
+    
+    vel_correction_facors = [1, 1]
+    # non periodic dimension
+    δ = 0.2  # padding around boundary to account for bump size
+    if x[2] <= m.xmin[2] + δ
+        x[2] = m.xmin[2] + δ
+        vel_correction_facors[2] = 0
+    elseif x[2] >= m.xmax[2] - δ
+        x[2] = m.xmax[2] - δ
+        vel_correction_facors[2] = 0
+    end
+
+    # periodic dimension
+    x[1] = mod(x[1], 2π)
+    return x, vel_correction_facors
+
 end
 
 # function Base.rand(m::Cylinder)
@@ -148,12 +195,14 @@ end
 #                                     TORUS                                    #
 # ---------------------------------------------------------------------------- #
 @with_repr struct Torus <: AbstractManifold
+    name::String
     xmin::Vector
     xmax::Vector
     ψs::Vector{AbstractVectorField}
     metric::Metric
 end
 Torus() = Torus(
+    "Torus",
     [0, 0],
     [2π, 2π],
     [ConstantVectorField(2, 1), ConstantVectorField(2, 2)],
@@ -171,12 +220,14 @@ end
 #                                    SPHERE                                    #
 # ---------------------------------------------------------------------------- #
 @with_repr struct Sphere <: AbstractManifold
+    name::String
     xmin::Vector
     xmax::Vector
     ψs::Vector{AbstractVectorField}
     metric::Metric
 end
 S² = Sphere(
+    "S²",
     [-1, -1, -1],
     [1, 1, 1],
     [
@@ -202,6 +253,7 @@ end
 #                                    MOBIUS                                    #
 # ---------------------------------------------------------------------------- #
 @with_repr struct Mobius <: AbstractManifold
+    name::String
     xmin::Vector
     xmax::Vector
     ψs::Vector{AbstractVectorField}
@@ -209,8 +261,9 @@ end
 end
 
 Mobius() = Mobius(
-    [-1, 0],
-    [1, 2π],
+    "Mobius",
+    [-0.75, 0],
+    [0.75, 2π],
     [VectorField(MB_ψ1), VectorField(MB_ψ2)],
     MobiusEuclidean(),
 )
@@ -223,15 +276,15 @@ on the non periodic dimension, put it at the manifold's boundary,
 if it's along the periodic dimension gets its position module 2π.
 """
 function apply_boundary_conditions!(x::Vector, m::Mobius)
-    vel_correction_facors = [1, 1]
+    vel_correction_factors = [1, 1]
     # non periodic dimension
     δ = 0.2  # padding around boundary to account for bump size
     if x[1] <= m.xmin[1] + δ
         x[1] = m.xmin[1] + δ
-        vel_correction_facors[1] = 0
+        vel_correction_factors[1] = 0
     elseif x[1] >= m.xmax[1] - δ
         x[1] = m.xmax[1] - δ
-        vel_correction_facors[1] = 0
+        vel_correction_factors[1] = 0
     end
 
     # periodic dimension
@@ -242,7 +295,7 @@ function apply_boundary_conditions!(x::Vector, m::Mobius)
         x[2] = 2π + x[2]
         x[1] = -x[1]
     end
-    return x, vel_correction_facors
+    return x, vel_correction_factors
 end
 
 # function Base.rand(m::Mobius)
@@ -266,9 +319,12 @@ end
     N::AbstractManifold  # neural manifold (covered)
     ρ::Function          # cover map | it's ρ (\rho) not 'p'
     ρⁱ::Function         # inverse of the cover map
+    λs::Vector{Function}  # functions with scaling from points in M to points in N
 end
 
-CoverSpace(M, N) = CoverSpace(M, N, identity, identity)
+
+CoverSpace(M, N, ρ, ρⁱ) = CoverSpace(M, N, ρ, ρⁱ, repeat([identity], length(M.xmin)))
+CoverSpace(M, N) = CoverSpace(M, N, identity, identity, repeat([identity], length(M.xmin)))
 CoverSpace(M) = CoverSpace(M, M)
 
 identity(x) = x

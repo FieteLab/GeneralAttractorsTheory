@@ -1,6 +1,6 @@
 function sphere_maker(
     cantype;
-    n::Int = 64,
+    n::Int = 48,
     offset_size = 0.1,
     k = LocalGlobalKernel(α = 2.5, σ = 40.5),
     α = 46,

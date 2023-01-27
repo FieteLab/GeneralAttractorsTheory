@@ -1,6 +1,6 @@
 function cylinder_maker(
     cantype;
-    n::Int = 64,
+    n::Int = 48,
     k::AbstractKernel = LocalGlobalKernel(α = 2.5, σ = 5.0), 
     offset_size::Number = 0.2,
     α = 3.2,
@@ -11,11 +11,11 @@ function cylinder_maker(
     n = (n, n) # number of neurons per dimension
 
     # ℝ² → Cy cover map.
-    r2_extent = 100
+    r2_extent = 25
     M = Manifoldℝ²(r2_extent)
 
     # define a function to map x ∈ -r2_extent, r2_extent to x ∈ -1,1
-    r2_to_cy_scaling(x) = x/ r2_extent
+    r2_to_cy_scaling(x) = x / r2_extent
     # and the inverse
     cy_to_r2_scaling(x) = x * r2_extent
 
@@ -43,7 +43,7 @@ function cylinder_maker(
     end
     ρⁱ(w::Vector; n = 6) = ρⁱ(w...; n = n)
 
-    cover = CoverSpace(M, Cylinder(), ρ, ρⁱ)
+    cover = CoverSpace(M, Cylinder(), ρ, ρⁱ, [identity, cy_to_r2_scaling])
 
     # define a function to get the coordinates of each neuron in the lattice
     function ξ(i::Int, j::Int)::Vector  # neurons coordinates function

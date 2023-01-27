@@ -1,6 +1,6 @@
 function plane_maker(
     cantype;
-    n::Int = 64,
+    n::Int = 48,
     k::AbstractKernel = LocalGlobalKernel(α = 2.5, σ = 5.0), 
     offset_size::Number = 0.2,
     α = 3.2,
@@ -9,8 +9,15 @@ function plane_maker(
 
     # number of neurons
     n = (n, n) # number of neurons per dimension
+    m_to_n(x) = x ./ 25
+    n_to_m(x) = x .* 25
 
-    cover = CoverSpace(Manifoldℝ²(1))
+    ρ(x, y) = [x/25, y/25]
+    ρ(v) = ρ(v...)
+    ρⁱ(x, y) = [x*25, y*25]
+    ρⁱ(w::Vector) = ρⁱ(w...)
+    
+    cover = CoverSpace(Manifoldℝ²(25), Manifoldℝ²(1), ρ, ρⁱ, [n_to_m, n_to_m])
 
     # define a function to get the coordinates of each neuron in the lattice
     function ξ(i::Int, j::Int)::Vector  # neurons coordinates function

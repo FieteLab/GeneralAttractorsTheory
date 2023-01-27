@@ -85,9 +85,23 @@ function step!(
 
     # get velocity input
     V = can.α .* map(i -> can.Ω[i](on_mfld_x, v), 1:length(can.Ω)) |> vec  # inputs vector of size 2d
-    @info Ṡ W S V
+
+    # # update each population with each population's input
+    # for i = 1:d, j = 1:d
+    #     # get baseline and noise inputs
+    #     input = simulation.η > 0 ? (rand(Float64, size(S, 1)) .* simulation.η) .+ b₀ : b₀
+
+    #     # enforce initial condition
+    #     isnothing(s₀) || (S[:, i] .*= s₀)
+
+    #     # get activation
+    #     Ṡ[:, i] .+= W[j] * S[:, j] .+ V[i] .+ input
+    # end
+
+
     # update each population with each population's input
-    for i = 1:d, j = 1:d
+    S_tot = sum(S, dims = 2) 
+    for i = 1:d
         # get baseline and noise inputs
         input = simulation.η > 0 ? (rand(Float64, size(S, 1)) .* simulation.η) .+ b₀ : b₀
 
@@ -95,9 +109,8 @@ function step!(
         isnothing(s₀) || (S[:, i] .*= s₀)
 
         # get activation
-        Ṡ[:, i] .+= W[j] * S[:, j] .+ V[i] .+ input
+        Ṡ[:, i] .+= W[i] * S_tot .+ V[i] .+ input
     end
-
 
     # update activity
     simulation.S += (can.σ.(Ṡ) - S) / (simulation.τ)
@@ -206,10 +219,12 @@ function run_simulation(
 
             # initialize decoder if necessary
             if (i >= simulation.trajectory.still + 0) && !decoder_initialized
+                _x = decode_peak_location(S̄, simulation.can)
                 # prep decoder
                 decoder = Decoder(
                     simulation.trajectory.X[i, :],
-                    decode_peak_location(S̄, simulation.can),
+                    _x;
+                    decoding_offset = simulation.trajectory.X[i, :] .-_x,
                     # 1 / simulation.can.offset_size,
                 )
                 decoder_initialized = true

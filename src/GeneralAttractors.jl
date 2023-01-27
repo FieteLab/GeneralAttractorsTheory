@@ -24,6 +24,7 @@ using .Can: CAN, OneForm, offset_for_visual, SingleCAN
 include("viz.jl")
 include("simulations/Simulations.jl")
 include("analysis/Analysis.jl")
+include("animation.jl")
 
 using .Simulations
 
