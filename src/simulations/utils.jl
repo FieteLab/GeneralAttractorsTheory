@@ -32,6 +32,16 @@ function Plots.plot(traj::Trajectory)
         ylim = [traj.M.xmin[2], traj.M.xmax[2]],
     )
 
+    scatter!(
+        X[1:50:end, 1],
+        X[1:50:end, 2],
+        marker_z = norm.(eachrow(traj.V))[1:50:end],
+        # color = :black,
+        label = nothing,
+        msw = .5, msa = .5,
+        colorbar_title = "speed",
+    )
+
     p2 = plot(
         X̄[:, 1],
         X̄[:, 2],
@@ -45,7 +55,7 @@ function Plots.plot(traj::Trajectory)
         ylim = [traj.N.xmin[2], traj.N.xmax[2]],
     )
 
-    plot(p1, p2)
+    plot(p1, p2; size=(1000, 1000))
 end
 
 

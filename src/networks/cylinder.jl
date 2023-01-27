@@ -12,12 +12,14 @@ function cylinder_maker(
 
     # ℝ² → Cy cover map.
     r2_extent = 25
+    cy_extent = 5
+    ratio = r2_extent / cy_extent
     M = Manifoldℝ²(r2_extent)
 
     # define a function to map x ∈ -r2_extent, r2_extent to x ∈ -1,1
-    r2_to_cy_scaling(x) = x / r2_extent
+    r2_to_cy_scaling(x) = x / ratio
     # and the inverse
-    cy_to_r2_scaling(x) = x * r2_extent
+    cy_to_r2_scaling(x) = x * ratio
 
     """ ρ """
     ρ(x, y) = [mod(x, 2π), r2_to_cy_scaling(y)] # ρ: ℝ² → T
@@ -48,7 +50,7 @@ function cylinder_maker(
     # define a function to get the coordinates of each neuron in the lattice
     function ξ(i::Int, j::Int)::Vector  # neurons coordinates function
         sep = 2π / n[1]
-        [lerp(i, n[1], 0, 2π - sep), lerp(j, n[2], -1, 1)]  
+        [lerp(i, n[1], 0, 2π - sep), lerp(j, n[2], -cy_extent, cy_extent)]  
     end
 
     # define a distance metric

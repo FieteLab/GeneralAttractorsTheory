@@ -253,6 +253,10 @@ function Trajectory(
             end
             push!(Vs, v)
         end
+    else
+        Vs = map(
+            v -> (v ./ maximum(v)) .* vmax, Vs
+        ) |> collect
     end
 
     """

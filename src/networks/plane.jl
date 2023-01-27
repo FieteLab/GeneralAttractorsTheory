@@ -9,19 +9,23 @@ function plane_maker(
 
     # number of neurons
     n = (n, n) # number of neurons per dimension
-    m_to_n(x) = x ./ 25
-    n_to_m(x) = x .* 25
 
-    ρ(x, y) = [x/25, y/25]
+    m_extent, n_extent = 25, 5 # size of the two manifolds
+    ratio = m_extent / n_extent
+
+    m_to_n(x) = x ./ ratio
+    n_to_m(x) = x .* ratio
+
+    ρ(x, y) = [x/ratio, y/ratio]
     ρ(v) = ρ(v...)
-    ρⁱ(x, y) = [x*25, y*25]
+    ρⁱ(x, y) = [x*ratio, y*ratio]
     ρⁱ(w::Vector) = ρⁱ(w...)
     
-    cover = CoverSpace(Manifoldℝ²(25), Manifoldℝ²(1), ρ, ρⁱ, [n_to_m, n_to_m])
+    cover = CoverSpace(Manifoldℝ²(m_extent), Manifoldℝ²(n_extent), ρ, ρⁱ, [n_to_m, n_to_m])
 
     # define a function to get the coordinates of each neuron in the lattice
     function ξ(i::Int, j::Int)::Vector  # neurons coordinates function
-        [lerp(i, n[1], -1, 1), lerp(j, n[2], -1, 1)]  
+        [lerp(i, n[1], -n_extent, n_extent), lerp(j, n[2], -n_extent, n_extent)]  
     end
 
     # define a distance metric

@@ -3,23 +3,31 @@ using Plots
 
 using GeneralAttractors
 using GeneralAttractors.Simulations
-
-using Term
-using Distances
+import GeneralAttractors.Simulations: plot_trajectory_and_decoded
 import GeneralAttractors: animate_simulation_data
 
 include("settings.jl")
+
+
+"""
+TODO: 
+- [ ] make all CANs work on the same traj
+- [ ] save a simulation data for all cans
+- [ ] save an animation of the trajectory, the decoded trajectory, the bump and the neuron state space
+"""
+
+
 # pyplot()
 
 # ---------------------------------- get CAN --------------------------------- #
 dt = 0.5
-duration = 700
+duration = 1000
 still = 50  # initialization period        
 
 network = "torus"
 
 can, x₀_net, x₀_traj, embedding = if network == "torus"
-    can = torus_maker(:defult; n=48, α=35)
+    can = torus_maker(:defult; n=48, α=31)
     x₀_net, x₀_traj = [3.14, 3.14], [-10, 0]
     can, x₀_net, x₀_traj, torus_embedding
 elseif network == "cylinder"
@@ -39,9 +47,10 @@ activate[d.<1.5] .= 1
 
 # ------------------------ make simulation trajecotry ------------------------ #
 nframes = (Int ∘ round)(duration / dt)
-
-vx = sin.(range(0, 2π, length=nframes)) .* 2
-vy = cos.(range(0, 2π, length=nframes)) .* 2
+v_mag = (cos.(range(0, 2π - .1, length=nframes)) ./ 2 .+ .5)
+vx = sin.(range(0, 1, length=nframes)) .* v_mag
+# vx = collect(1:nframes) ./ nframes .* v_mag
+vy = cos.(range(0, 2π - .1, length=nframes)) .* v_mag
 
 trajectory = Trajectory(
     can;
@@ -57,7 +66,7 @@ trajectory = Trajectory(
     Vs = [vx, vy],
 )
 plot(trajectory) |> display
-simulation = Simulation(can, trajectory; η = 0.0, b₀ = 1.0)
+simulation = Simulation(can, trajectory; η = 0.0, b₀ = 1.0);
 
 # --------------------------------- simulate --------------------------------- #
 h, X̄ = @time run_simulation(
@@ -71,12 +80,7 @@ h, X̄ = @time run_simulation(
 
 
 # --------------------------------- visualie --------------------------------- #
+plot_trajectory_and_decoded(trajectory, X̄) |> display
 animate_simulation_data(can, trajectory, h, X̄, embedding, 
         (supervisor.projectdir / "plots" /"$(network)_sim_traj.gif").path
 )
-
-# TODO make things work for the CYLINDER
-# TODO set things up such that the same trajectory can be used with everybody
-
-
-

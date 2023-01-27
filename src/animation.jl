@@ -31,8 +31,11 @@ function animate_simulation_data(can, traj, hist, X, φ, savepath; dt=0.5, frame
                 marker_z = s,
                 ms = 5,  msw = 0.0,
                 alpha=0.5,
-                xlim = [-1.1, 1.1], ylim = [-1.1, 1.1], zlim = [-1.1, 1.1], 
+                xlim = [minimum(coord3d[1,:])-.5, maximum(coord3d[1,:])+.5], 
+                ylim = [minimum(coord3d[2,:])-.5, maximum(coord3d[2,:])+.5], 
+                zlim = [minimum(coord3d[3,:])-.5, maximum(coord3d[3,:])+.5], 
                 size = (800, 800),
+                colorbar=false,
                 )
 
  

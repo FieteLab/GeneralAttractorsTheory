@@ -70,6 +70,8 @@ apply_boundary_conditions!(x, ::AbstractManifold) = (x, ones(length(x)))
     xmax::Vector
     ψs::Vector{AbstractVectorField}
     metric::Metric
+    d::Int  # dimensionality
+    periodic_dimensions::Vector # label for which dimensions are periodic
 end
 
 Ring() = Ring(
@@ -78,7 +80,7 @@ Ring() = Ring(
     [2π],
     # [VectorField(ring_ψ)], 
     [ConstantVectorField(1, 1)],
-    PeriodicEuclidean([2π]),
+    PeriodicEuclidean([2π]), 1, [1]
 )
 
 apply_boundary_conditions!(x, ::Ring) = mod.(x, 2π), 1
@@ -93,6 +95,8 @@ apply_boundary_conditions!(x, ::Ring) = mod.(x, 2π), 1
     xmax::Vector
     ψs::Vector{AbstractVectorField}
     metric::Metric
+    d::Int  # dimensionality
+    periodic_dimensions::Vector # label for which dimensions are periodic
 end
 Manifoldℝ²(m) = Manifoldℝ²(
     "ℝ²",
@@ -100,6 +104,7 @@ Manifoldℝ²(m) = Manifoldℝ²(
     [m, m],
     [ConstantVectorField(2, 1), ConstantVectorField(2, 2)],
     Euclidean(),
+    2, [0, 0]
 )
 ℝ² = Manifoldℝ²(100)
 
@@ -149,6 +154,8 @@ end
     xmax::Vector
     ψs::Vector{AbstractVectorField}
     metric::Metric
+    d::Int  # dimensionality
+    periodic_dimensions::Vector # label for which dimensions are periodic
 end
 
 Cylinder() = Cylinder(
@@ -157,6 +164,7 @@ Cylinder() = Cylinder(
     [2π, 1],
     [ConstantVectorField(2, 1), ConstantVectorField(2, 2)],
     PeriodicEuclidean([2π]),
+    2, [1, 0]
 )
 
 C = Cylinder()
@@ -200,6 +208,8 @@ end
     xmax::Vector
     ψs::Vector{AbstractVectorField}
     metric::Metric
+    d::Int  # dimensionality
+    periodic_dimensions::Vector # label for which dimensions are periodic
 end
 Torus() = Torus(
     "Torus",
@@ -207,7 +217,7 @@ Torus() = Torus(
     [2π, 2π],
     [ConstantVectorField(2, 1), ConstantVectorField(2, 2)],
     # [VectorField(torus_ψ1), VectorField(torus_ψ2)],
-    PeriodicEuclidean([2π, 2π]),
+    PeriodicEuclidean([2π, 2π]), 2, [1, 1]
 )
 T = Torus()
 
@@ -225,6 +235,8 @@ end
     xmax::Vector
     ψs::Vector{AbstractVectorField}
     metric::Metric
+    d::Int  # dimensionality
+    periodic_dimensions::Vector # label for which dimensions are periodic
 end
 S² = Sphere(
     "S²",
@@ -236,6 +248,7 @@ S² = Sphere(
         VectorField(sphere_ψz)
     ],
     SphericalDistance(),
+    3, [0, 0, 0]
 )
 
 function apply_boundary_conditions!(x::Vector, ::Sphere)
@@ -258,6 +271,8 @@ end
     xmax::Vector
     ψs::Vector{AbstractVectorField}
     metric::Metric
+    d::Int  # dimensionality
+    periodic_dimensions::Vector # label for which dimensions are periodic
 end
 
 Mobius() = Mobius(
@@ -266,6 +281,7 @@ Mobius() = Mobius(
     [0.75, 2π],
     [VectorField(MB_ψ1), VectorField(MB_ψ2)],
     MobiusEuclidean(),
+    2, [0, 1]
 )
 
 

@@ -193,9 +193,9 @@ function run_simulation(
     cbs_called = Dict(k => false for k in keys(callbacks))
 
     # do simulation steps and visualize   
-    pbar = ProgressBar()
-    Progress.with(pbar) do
-        job = addjob!(pbar, description = "Simulation", N = N)
+    # pbar = ProgressBar()
+    # Progress.with(pbar) do
+    #     job = addjob!(pbar, description = "Simulation", N = N)
         for i = 1:N
             # get activation for bump initialization
             if i > simulation.trajectory.still
@@ -212,7 +212,7 @@ function run_simulation(
             else
                 decoded_x, on_mfld_x = simulation.trajectory.X[i, :], decode_peak_location(s̄, simulation.can)
             end
-            X̄[i, :] = decoded_x
+            X̄[i, :] = decoded_x 
 
             # step simulation
             S̄ = step!(simulation, on_mfld_x, v; s₀ = s₀)
@@ -224,8 +224,7 @@ function run_simulation(
                 decoder = Decoder(
                     simulation.trajectory.X[i, :],
                     _x;
-                    decoding_offset = simulation.trajectory.X[i, :] .-_x,
-                    # 1 / simulation.can.offset_size,
+                    decoding_offset = simulation.trajectory.X[i, :] .- _x,
                 )
                 decoder_initialized = true
             end
@@ -243,8 +242,8 @@ function run_simulation(
             end
 
             framen += 1
-            update!(job)
-        end
+        #     update!(job)
+        # end
     end
 
     return history, X̄
