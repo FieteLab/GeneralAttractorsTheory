@@ -22,14 +22,15 @@ TODO:
 
 # ---------------------------------- get CAN --------------------------------- #
 dt = 0.5
-duration = 2000
+duration = 2500
 still = 50  # initialization period        
 
-network = "cylinder"
+network = "plane"
+funky = false
 
 can, x₀_traj, embedding = if network == "torus"
-    can = torus_maker(:defult; n=48, α=30)
-    x₀_trja = [-20, -15]
+    can = torus_maker(:defult; n=48, α=19, offset_size=0.3)
+    x₀_traj = [-20, -15]
     can, x₀_traj, torus_embedding
 elseif network == "cylinder"
     can = cylinder_maker(:default; n=48, α=30)
@@ -37,7 +38,7 @@ elseif network == "cylinder"
     can, x₀_traj, cylinder_embedding
 elseif network == "plane"
     can = plane_maker(:default; n=48, α=140, offset_size=0.05)
-    x₀_trja = [-20, -15]
+    x₀_traj = [-20, -15]
     can, x₀_traj, plane_embedding
 end
 
@@ -78,8 +79,6 @@ h, X̄ = @time run_simulation(
     discard_first_ms = still,
     average_over_ms = 0,
     s₀ = 1.0 .* activate,
-    # savefolder = "abstract",
-    # savename = "torus_$i",
 )
 
 
@@ -89,24 +88,25 @@ meta = metadata = Dict(
     "duration" => duration,
     "still" => still,
     "tag" => tag,
+    "funky" => funky,
 )
 
-pop_activity = sum(h.S; dims=2)[:, 1, :]
-store_data(supervisor, "simulations"; fmt = "npz", 
-        name="$(network)_pop_activity", data = pop_activity, metadata=meta)
-store_data(supervisor, "simulations"; fmt = "npz", 
-        name="$(network)_traj_X", data = trajectory.X, metadata=meta)
-store_data(supervisor, "simulations"; fmt = "npz", 
-        name="$(network)_traj_V", data = trajectory.V, metadata=meta)
-store_data(supervisor, "simulations"; fmt = "npz", 
-        name="$(network)_decoded_X", data = h.x_M_decoded, metadata=meta)
-store_data(supervisor, "simulations"; fmt = "npz", 
-        name="$(network)_bump_X", data = h.x_N, metadata=meta)
+# pop_activity = sum(h.S; dims=2)[:, 1, :]
+# store_data(supervisor, "simulations"; fmt = "npz", 
+#         name="$(network)_pop_activity", data = pop_activity, metadata=meta)
+# store_data(supervisor, "simulations"; fmt = "npz", 
+#         name="$(network)_traj_X", data = trajectory.X, metadata=meta)
+# store_data(supervisor, "simulations"; fmt = "npz", 
+#         name="$(network)_traj_V", data = trajectory.V, metadata=meta)
+# store_data(supervisor, "simulations"; fmt = "npz", 
+#         name="$(network)_decoded_X", data = h.x_M_decoded, metadata=meta)
+# store_data(supervisor, "simulations"; fmt = "npz", 
+#         name="$(network)_bump_X", data = h.x_N, metadata=meta)
 
-# store_data(supervisor, "simulations"; fmt = "jld2", name="$(network)_sim_data", data = Dict("h" => h, "trajectory"=>trajectory), metadata=meta)
+store_data(supervisor, "simulations"; fmt = "jld2", name="$(network)_sim_data", data = Dict("h" => h, "trajectory"=>trajectory), metadata=meta)
 
 # --------------------------------- visualie --------------------------------- #
 plot_trajectory_and_decoded(trajectory, X̄) |> display
-animate_simulation_data(can, trajectory, h, X̄, embedding, 
-        (supervisor.projectdir / "plots" /"$(network)_sim_traj.gif").path
-)
+# animate_simulation_data(can, trajectory, h, X̄, embedding, 
+#         (supervisor.projectdir / "plots" /"$(network)_sim_traj.gif").path
+# )

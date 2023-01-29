@@ -216,7 +216,6 @@ Torus() = Torus(
     [0, 0],
     [2π, 2π],
     [ConstantVectorField(2, 1), ConstantVectorField(2, 2)],
-    # [VectorField(torus_ψ1), VectorField(torus_ψ2)],
     PeriodicEuclidean([2π, 2π]), 2, [1, 1]
 )
 T = Torus()

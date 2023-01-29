@@ -5,8 +5,8 @@ Definition of parameters and settins used throughout the analysis/plots.
 using Plots, DataFrames, Term, Statistics, LinearAlgebra
 import MyterialColors: Palette, green_dark, deep_purple, indigo, salmon, salmon_dark
 
-gr()   # for fast plotting
-# pyplot()  # for better plots quality
+# gr()   # for fast plotting
+pyplot()  # for better plots quality
 
 install_term_stacktrace(; hide_frames=true)
 

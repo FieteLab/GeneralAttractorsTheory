@@ -193,9 +193,9 @@ function run_simulation(
     cbs_called = Dict(k => false for k in keys(callbacks))
 
     # do simulation steps and visualize   
-    pbar = ProgressBar()
-    Progress.with(pbar) do
-        job = addjob!(pbar, description = "Simulation", N = N)
+    # pbar = ProgressBar()
+    # Progress.with(pbar) do
+    #     job = addjob!(pbar, description = "Simulation", N = N)
         for i = 1:N
             # get activation for bump initialization
             if i > simulation.trajectory.still
@@ -244,8 +244,8 @@ function run_simulation(
             end
 
             framen += 1
-            update!(job)
-        end
+        #     update!(job)
+        # end
     end
 
     return history, X̄

@@ -9,7 +9,7 @@ import GeneralAttractors: r2_to_cy_scaling, cy_to_r2_scaling
 move_to_datadir(supervisor, "mfld_top")
 
 
-GENERATE_DATA = false
+GENERATE_DATA = true
 GENERATE_EMBEDDINGS = true
 GENERATE_DEUBUG_PLOTS = false
 
