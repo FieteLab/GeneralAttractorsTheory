@@ -5,6 +5,7 @@ function cylinder_maker(
     offset_size::Number = 0.2,
     α = 3.2,
     σ = :softrelu,
+    use_offset_fields::Bool = false
 )
 
     # number of neurons

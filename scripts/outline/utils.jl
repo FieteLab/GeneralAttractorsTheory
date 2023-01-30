@@ -6,6 +6,8 @@ import GeneralAttractors.Analysis.ManifoldAnalysis:
         tda_on_pointcloud, estimate_intrinsic_dimensionality
 
 
+# ------------------------------ networks makers ----------------------------- #
+
 function make_standard_single_torus_can(; kernel_name = :DoE)
     can_maker = network_makers["torus"]
     kernel_params = Dict(
@@ -15,6 +17,53 @@ function make_standard_single_torus_can(; kernel_name = :DoE)
     return can_maker(:single; k=kernel)
 end
 
+"""
+Generate a CAN with multiple copies for path integration stuff.
+"""
+make_path_int_can(network; funky=false, random_x0=false) = if network == "torus"
+    can = if funky
+            torus_maker(:defult; n=48, α=330, offset_size=0.15, use_offset_fields=true)
+        else
+            torus_maker(:defult; n=48, α=19, offset_size=0.3, use_offset_fields=false)
+    end
+    x₀_traj = random_x0 ? nothing : [-20, -15]
+    can, x₀_traj, torus_embedding
+elseif network == "cylinder"
+    can = cylinder_maker(:default; n=48, α=30)
+    x₀_traj = random_x0 ? nothing : [-20, -15]
+    can, x₀_traj, cylinder_embedding
+elseif network == "plane"
+    can = plane_maker(:default; 
+            n=48, α=70, offset_size=0.1,
+            # k=LocalGlobalKernel(α = 2.5, σ = 25.0)
+            )
+    x₀_traj = random_x0 ? nothing : [-20, -15]
+    can, x₀_traj, plane_embedding
+elseif network == "mobius"
+    can = mobius_maker(:defult; n=48, α=19)
+    x₀_traj = random_x0 ? nothing : [-20, -15]
+    can, x₀_traj, mobius_embedding
+elseif network == "sphere"
+    can = sphere_maker(:default; n=48, α=30)
+    x₀_traj = random_x0 ? nothing : [-20, -15]
+    can, x₀_traj, sphere_embedding
+end
+
+
+
+
+# ----------------------------------- misc ----------------------------------- #
+
+"""
+Create mask to initialize CAN at.
+"""
+function get_can_initialization_weights(trajectory, can)
+    x₀_net = trajectory.X̄[1, :]
+    d = map(i -> can.metric(x₀_net, can.X[:, i]), 1:size(can.X, 2))
+    activate = zeros(length(d))
+    activate[d.<1.5] .= 1
+    return activate
+end
 
 """
 Get a random initial condition for a CAN
@@ -167,4 +216,97 @@ function do_tda(
         fit=false,
         width = 50
     ) |> print
+end
+
+
+# ---------------------------------------------------------------------------- #
+#                                   PLOTTING                                   #
+# ---------------------------------------------------------------------------- #
+
+
+"""
+Make a frame of a gif to show path integration dynamics:
+i. decoded trajectory
+ii. activation on neural lattice
+iii. activation in ISO embedding of state space
+"""
+function path_int_gif_frame(trajectory, X, S, can, w_x, w_y, M, S_embedd, fnum, skipframes)
+            # plot trajectory & decoded
+            p1 = plot(trajectory, fnum+skipframes)
+            plot!(
+                p1, X[1, 1:fnum], X[2, 1:fnum],
+                lw = 6, color=:red, alpha=.5,
+                label = "decoded",
+                xlabel = "m₁", ylabel = "m₂",
+                )
+            s =  S[:, hist_frame]
+
+            # plot activation on neural lattice
+            p2 = if d == 2
+                contourf(
+                    w_x, w_y, Matrix(reshape(s, can.n)'), 
+                    xlabel = "θ₁", ylabel = "θ₂",
+                    # clims=(-0.0, 0.9),
+                    aspect_ratio = :equal,
+                    linewidth = 0.25,
+                    xlim = (minimum(w_x)-0.5, maximum(w_x)+0.5), ylim = (minimum(w_y)-0.5, maximum(w_y)+0.5),
+                    msc=:black,
+                    lc=:black,
+                    grid = false,
+                    colorbar = false,
+                    size=(1000, 1000)
+                )
+            else
+                scatter3d(
+                    eachrow(coord3d[:, 1:spatial_downsampling:end])..., 
+                    marker_z=s,
+                    xlabel = "θ₁", ylabel = "θ₂", zlabel = "θ₃",
+                    xlim=(-1.1, 1.1), ylim=(-1.1, 1.1), zlim=(-1.1, 1.1),
+                    msc=:black, msa=0.5, msw=1,
+                    label=nothing, colorbar=false,
+                    showaxis = false,
+                    axis=nothing,
+                    size=(1000, 1000)
+                )
+            end
+
+
+            # plot neurons activation in ISO space
+            p3 = scatter(
+                eachrow(M[:, 1:25:end])...,
+                color=:black, alpha=.5, ms=3, 
+                showaxis = false,
+                axis=nothing,
+                xlim = [-10, 10], ylim = [-10, 10], zlim = [-10, 10],
+                label=nothing,
+                size=(1000, 1000)
+            )
+
+            s_embed = S_embedd[
+                :, 
+                max(hist_frame-100, 1):hist_frame,
+            ]
+            scatter!(
+                eachrow(s_embed)...,
+                marker_z = 1:size(s_embed, 2),
+                msa=0, msw=0, colorbar = false,
+                label=nothing
+            )
+
+            plt = plot(p1, p2, 
+                p3, layout=(1,3), 
+                # layout=(1,2),
+                size=(2200, 800),
+                xtickfontsize=16,
+                ytickfontsize=16,
+                ztickfontsize=16,
+                xguidefontsize=16,
+                yguidefontsize=16,
+                zguidefontsize=16,
+                legendfontsize=16,
+                right_margin = 12Plots.mm,
+                left_margin = 12Plots.mm,
+                top_margin = 12Plots.mm,
+                bottom_margin = 12Plots.mm,
+            )
 end

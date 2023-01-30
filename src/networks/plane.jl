@@ -5,12 +5,13 @@ function plane_maker(
     offset_size::Number = 0.2,
     α = 3.2,
     σ = :softrelu,
+    use_offset_fields::Bool = false
 )
 
     # number of neurons
     n = (n, n) # number of neurons per dimension
 
-    m_extent, n_extent = 25, 5 # size of the two manifolds
+    m_extent, n_extent = 25, 10 # size of the two manifolds
     ratio = m_extent / n_extent
 
     m_to_n(x) = x ./ ratio

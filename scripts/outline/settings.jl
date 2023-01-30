@@ -2,11 +2,11 @@
 Definition of parameters and settins used throughout the analysis/plots.
 """
 
-using Plots, DataFrames, Term, Statistics, LinearAlgebra
+using Plots, DataFrames, Term, Statistics, LinearAlgebra, ObjectivePaths
 import MyterialColors: Palette, green_dark, deep_purple, indigo, salmon, salmon_dark
 
-# gr()   # for fast plotting
-pyplot()  # for better plots quality
+gr()   # for fast plotting
+# pyplot()  # for better plots quality
 
 install_term_stacktrace(; hide_frames=true)
 
@@ -88,7 +88,7 @@ dimred_3d_params = AnalysisParameters(
     pca_pratio = 0.999999999999999999,       # fraction of variance explained
     n_isomap_dimensions = 3,
     isomap_k = 5,
-    isomap_downsample = 20,
+    isomap_downsample = 50,
 )
 
 dimred_10d_params = AnalysisParameters(

@@ -15,13 +15,13 @@ tag = "decoding_data"
 # ---------------------------- plotting functions ---------------------------- #
 
 spatial_downsampling = 5
-temporal_downsampling = 25
+temporal_downsampling = 50
 fps = 20
-funky = false
 
-for network in ("plane", "cylinder", "torus")
-    
-    savepath = supervisor.projectdir / "plots" / "path_int_$(network)_funky_$(funky).gif"
+
+for network in ("sphere", "mobius")
+
+    savepath = supervisor.projectdir / "plots" / "path_int_$(network).gif"
     exists(savepath) && continue
 
     # make network to get neurons lattice coordinates
@@ -29,7 +29,8 @@ for network in ("plane", "cylinder", "torus")
     w_x = range(can.X[1,1], can.X[1,end]; length=can.n[1])
     w_y = range(can.X[2,1], can.X[2,end]; length=can.n[2])
 
-    coord3d = by_column(embeddings[network], can.X)
+    d = can.name == "sphere" ? 3 : 2
+    coord3d = d == 2 ? by_column(embeddings[network], can.X) : can.X
 
     # --------------------------------- get data --------------------------------- #
     # load 3d iso embedding model and embedded data
@@ -50,23 +51,17 @@ for network in ("plane", "cylinder", "torus")
     filters = Dict{Symbol, Any}(
         :tag => tag,
         :network => network,
-        :funky => funky,
         :duration => 2500,
     )
 
-    try
-        data = ProjectSupervisor.fetch(supervisor; filters...)[2][1]
-    catch
-        @warn "No data for $network - funky: $funky. Maybe you need to run script 09a?"
-        continue
-    end
+    data = ProjectSupervisor.fetch(supervisor; filters...)[2][1]
     history = data["h"]
     trajectory = data["trajectory"]
     S = sum(history.S; dims=2)[:, 1, :]
     S_embedd = predict(iso, predict(pca, S))
     X = history.x_M_decoded
 
-    set_datadir(supervisor,  ((supervisor.datadir-1)).path)
+
     @info "Got data for $network" S M iso
 
     # ------------------------------ make animation ------------------------------ #
@@ -96,4 +91,3 @@ for network in ("plane", "cylinder", "torus")
 
     gif(anim, (savepath).path, fps = fps)
 end
-

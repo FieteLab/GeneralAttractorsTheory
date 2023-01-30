@@ -192,60 +192,71 @@ function run_simulation(
     # keep track of which callbacks have been invoked already
     cbs_called = Dict(k => false for k in keys(callbacks))
 
-    # do simulation steps and visualize   
-    # pbar = ProgressBar()
-    # Progress.with(pbar) do
-    #     job = addjob!(pbar, description = "Simulation", N = N)
-        for i = 1:N
-            # get activation for bump initialization
-            if i > simulation.trajectory.still
-                s₀ = nothing
-            end
 
-            # get trajectory data
-            v = isnothing(simulation.trajectory.V) ? nothing : simulation.trajectory.V[min(i+1, N), :]
+    function do_step(i)
+        # get activation for bump initialization
+        if i > simulation.trajectory.still
+            s₀ = nothing
+        end
 
-            # decode manifold bump position
-            s̄ = ∑ⱼ(simulation.S)
-            if decoder_initialized
-                decoded_x, on_mfld_x = decoder(s̄, simulation.can)
-            else
-                decoded_x, on_mfld_x = simulation.trajectory.X[i, :], decode_peak_location(s̄, simulation.can)
-            end
-            X̄[i, :] = decoded_x 
+        # get trajectory data
+        v = isnothing(simulation.trajectory.V) ? nothing : simulation.trajectory.V[min(i+1, N), :]
 
-            # step simulation
-            S̄ = step!(simulation, on_mfld_x, v; s₀ = s₀)
+        # decode manifold bump position
+        s̄ = ∑ⱼ(simulation.S)
+        if decoder_initialized
+            decoded_x, on_mfld_x = decoder(s̄, simulation.can)
+        else
+            decoded_x, on_mfld_x = simulation.trajectory.X[i, :], decode_peak_location(s̄, simulation.can)
+        end
+        X̄[i, :] = decoded_x 
 
-            # initialize decoder if necessary
-            if (i >= simulation.trajectory.still + 0) && !decoder_initialized
-                _x = decode_peak_location(S̄, simulation.can)
-                # prep decoder
-                decoder = Decoder(
-                    simulation.trajectory.X[i, :],
-                    _x;
-                    decoding_offset = simulation.trajectory.X[i, :] .- _x,
-                )
-                decoder_initialized = true
-            end
+        # step simulation
+        S̄ = step!(simulation, on_mfld_x, v; s₀ = s₀)
 
-            # add data to history
-            (time[framen] > discard_first_ms) && add!(history, framen, simulation, v, 
-                simulation.trajectory.X[i, :], decoded_x, on_mfld_x
+        # initialize decoder if necessary
+        if (i >= simulation.trajectory.still + 0) && !decoder_initialized
+            _x = decode_peak_location(S̄, simulation.can)
+            # prep decoder
+            decoder = Decoder(
+                simulation.trajectory.X[i, :],
+                _x;
+                decoding_offset = simulation.trajectory.X[i, :] .- _x,
             )
+            decoder_initialized = true
+        end
 
-            # call eventual callback functions
-            for (name, (cbtime, cb)) in callbacks
-                if time[framen] > cbtime && !cbs_called[name] == true
-                    @debug "Simulation callback $name called at time $(time[framen]), frame $framen"
-                    cb(simulation)
-                    cbs_called[name] = true
-                end
+        # add data to history
+        (time[framen] > discard_first_ms) && add!(history, framen, simulation, v, 
+            simulation.trajectory.X[i, :], decoded_x, on_mfld_x
+        )
+
+        # call eventual callback functions
+        for (name, (cbtime, cb)) in callbacks
+            if time[framen] > cbtime && !cbs_called[name] == true
+                @debug "Simulation callback $name called at time $(time[framen]), frame $framen"
+                cb(simulation)
+                cbs_called[name] = true
             end
+        end
 
-            framen += 1
-        #     update!(job)
-        # end
+        framen += 1
+    end
+
+    # do simulation steps and visualize   
+    if N > 250
+        pbar = ProgressBar()
+        Progress.with(pbar) do
+            job = addjob!(pbar, description = "Simulation", N = N)
+            for i = 1:N
+                do_step(i)
+                update!(job)
+            end
+        end
+    else
+        for i = 1:N
+            do_step(i)
+        end
     end
 
     return history, X̄

@@ -15,13 +15,12 @@ for (network, color) in zip(networks, networks_colors)
     filters = Dict{Symbol, Any}(
         :tag => "d3_embeddings",
         :can => network,
-        :dim => 3,
     )
 
-    _, M = ProjectSupervisor.fetch(supervisor; filters...) 
-    @assert length(M) == 1
-    M = M[1]
-    @assert size(M, 1) == 3
+    meta, M = ProjectSupervisor.fetch(supervisor; filters...) 
+    @assert length(M) == 2 network
+    M = M[2]
+    @assert size(M, 1) == 3 network
 
 
     zlims = if network == "plane" 
@@ -33,7 +32,7 @@ for (network, color) in zip(networks, networks_colors)
     end
 
     for (i, camera) in enumerate(camera_angles)
-        i == 1 && continue
+        # i == 1 && continue
         push!(plots, 
             scatter3d(
                 M[1, 1:5:end], M[2, 1:5:end], M[3, 1:5:end],

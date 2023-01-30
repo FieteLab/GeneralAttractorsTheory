@@ -20,8 +20,7 @@ function Plots.plot(traj::Trajectory)
     X̄ = remove_jumps_from_trajectory(traj.X̄)
  
     p1 = plot(
-        X[:, 1],
-        X[:, 2],
+        eachcol(X)...,
         lw = 3,
         color = :black,
         label = nothing,
@@ -30,12 +29,16 @@ function Plots.plot(traj::Trajectory)
         aspect_ratio = :equal,
         xlim = [traj.M.xmin[1], traj.M.xmax[1]],
         ylim = [traj.M.xmin[2], traj.M.xmax[2]],
+        right_margin = 12Plots.mm,
+        left_margin = 12Plots.mm,
+        top_margin = 12Plots.mm,
+        bottom_margin = 12Plots.mm,
+        dpi=400,
     )
 
     scatter!(
-        X[1:50:end, 1],
-        X[1:50:end, 2],
-        marker_z = norm.(eachrow(traj.V))[1:50:end],
+        eachcol(X[1:100:end, :]),
+        marker_z = norm.(eachrow(traj.V))[1:100:end],
         # color = :black,
         label = nothing,
         msw = .5, msa = .5,
@@ -43,8 +46,7 @@ function Plots.plot(traj::Trajectory)
     )
 
     p2 = plot(
-        X̄[:, 1],
-        X̄[:, 2],
+        eachcol(X̄),
         lw = 3,
         color = :red,
         label = nothing,
@@ -59,23 +61,31 @@ function Plots.plot(traj::Trajectory)
 end
 
 
-function Plots.plot(traj::Trajectory, i::Int; xmin = nothing, xmax = nothing)
+function Plots.plot(traj::Trajectory, i::Int; kwargs...)
     d = size(traj.X, 2)
 
-    t0 = traj.M isa Mobius ? max(1, i - 200) : 1
+    lims = d == 2 ? 
+        Dict(
+        :xlim => [traj.M.xmin[1], traj.M.xmax[1]],
+        :ylim => [traj.M.xmin[2], traj.M.xmax[2]],
+        ) : Dict(
+            :xlim => (-1.1, 1.1),
+            :ylim => (-1.1, 1.1),
+            :zlim => (-1.1, 1.1),
+        )
+
+         
+
     X = remove_jumps_from_trajectory(traj.X)
-    k, j = 1, 2
     plt = plot(
-        X[t0:i, k],
-        X[t0:i, j],
+        eachcol(X[1:i, :]),
         lw = 6,
         color = :black,
         grid = false,
         aspect_ratio = :equal,
         label = nothing,
-        camera = (0.075 * i, 20),
-        xlim = [traj.M.xmin[1], traj.M.xmax[1]],
-        ylim = ylim = [traj.M.xmin[2], traj.M.xmax[2]],
+        camera = (0.075 * i, 20);
+        lims...
     )
 
     plt

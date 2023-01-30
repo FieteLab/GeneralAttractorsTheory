@@ -6,7 +6,8 @@ module ProjectSupervisor
         get_entries,
         fetch,
         save_plot,
-        generate_or_load
+        generate_or_load,
+        to_df
 
     using ObjectivePaths, DataFrames, Term, MyterialColors, FileIO, UUIDs, Dates, LibGit2, YAML
     using Term.Tables
@@ -59,26 +60,9 @@ module ProjectSupervisor
             println(io, supervisor.gitrepo)
         end
 
-        df = DataFrame(meta)
+        df = to_df(meta)
         tprintln(io, "{$orange}Metadata $(size(df)):{/$orange}"; highlight=false)
-        "tag" ∉ keys(meta) && return
-        _meta = filter(k -> k.first ∈ ("date","time","folder", "tag"), meta)
-
-        # keep at most 5 entries
-        for k in keys(_meta)
-            length(_meta[k]) < 5 && continue
-            _meta[k] = rand(_meta[k], 5)
-        end
-
-        println()
-        tprintln(io, Table(_meta;
-            columns_style=["bold white", "default", "dim", "dim"],
-            footer = length,
-            footer_style = "blue",
-            header_style = "blue bold",
-        ))
-
-        println.(keys(supervisor.metadata))
+        println(io, df)
     end
     
 
@@ -149,15 +133,25 @@ module ProjectSupervisor
 
 
     # --------------------------------- metadata --------------------------------- #
-
-    function validate(meta::AbstractDict)
-        @assert eltype(keys(meta)) == String "Metadata keys must be Strings: $(eltype(keys(meta)))"
-        # make sure all entries have the same length
-        if "uid" ∈ keys(meta)
-            n_entries = unique(length.(values(meta)))
-            _counts = map(p -> (p.first, length(p.second)), collect(pairs(meta)))
-            @assert length(n_entries) <= 1 "Metadata entries have different lengths $n_entries- $_counts"
+    
+    """
+        Collate all metadata keys for all entries 
+        and form a dataframe with all metadata
+    """
+    function to_df(meta::AbstractDict)::DataFrame
+        allkeys = []
+        for entry in values(meta)
+            for k in keys(entry)
+                k ∉ allkeys && push!(allkeys, k)
+            end
         end
+
+        collated = Dict{Union{String, Symbol}, Vector{Any}}()
+        for k in allkeys
+            collated[Symbol(k)] = [get(entry, k, nothing) for entry in values(meta)]
+        end
+
+        return DataFrame(collated)
     end
 
     function load_or_create_metadata(fld::Folder)::Tuple{AbstractDict, ObjectivePaths.File}
@@ -168,14 +162,6 @@ module ProjectSupervisor
             Dict()
         end
         meta = Dict{String, Any}(meta)
-
-        # make sure vecs can accept any type
-        for (k, v) in pairs(meta)
-            length(v) == 0 && continue
-            meta[string(k)] = Any[v...]
-        end
-
-        validate(meta)
         return meta, path
     end
 
@@ -185,49 +171,20 @@ module ProjectSupervisor
     Remove obsolete entries pointing to files that no longer exist.
     """
     function update_metadata!(metadata::AbstractDict)::AbstractDict
-        "name" ∉ keys(metadata) && return metadata
-        to_remove = []
-        for (i, f) in enumerate(metadata["name"])
-            path = Folder(metadata["folder"][i]) / f
-            exists(path) && continue
-            
-            push!(to_remove, i)
+        kept = []
+        for (k, meta) in metadata
+            dest = Folder(meta["folder"]) / k
+            exists(dest) &&  push!(kept, k)
         end
 
-        for k in keys(metadata)
-            metadata[k] = deleteat!(metadata[k], to_remove)
-        end
+        removed = length(metadata) - length(kept)
+        removed > 0 && println("Removed $removed obsolete entries from metadata")
 
-        length(metadata["name"]) == 0 && (metadata = Dict{String, Any}())
-        metadata = Dict{String, Any}(metadata)
-        validate(metadata)
+        metadata = Dict(k => metadata[k] for k in kept)       
         return metadata
     end
 
-    # """
-
-    # Check if any entry in supervisor.metadata matches the given metadata.
-    # If so, return the uid of the entry, otherwise return nothing
-    # """
-    # function check_entry_exists(sup::Supervisor, metadata::AbstractDict, folder::Folder)::Union{Nothing, String}
-    #     uid = ""
-    #     for (k,v) in pairs(metadata)
-    #         k = string(k)
-
-    #         (v isa AbstractArray &&
-    #             k ∉ keys(sup.metadata) &&
-    #             v ∉ sup.metadata[k] &&
-    #             length(sup.metadata[k]) == 0 ) && return nothing
-
-    #         matches = sup.metadata[k] .== v
-    #         any(Bool.(matches)) || return nothing
-
-    #         fld = sup.metadata["folder"][sup.metadata[k] .== v][1]
-    #         fld == folder.path || return nothing
-    #         uid = sup.metadata["uid"][sup.metadata[k] .== v][1]
-    #     end
-    #     return uid
-    # end
+    
 
     function add_metadata_entry(
         sup::Supervisor,
@@ -238,6 +195,14 @@ module ProjectSupervisor
         savepath::ObjectivePaths.File,
         metadata::AbstractDict
     )
+
+        k = name(savepath)
+        k ∈ keys(sup.metadata) && begin
+            @warn "Metadata entry already exists for $k - overwriting"
+            delete!(sup.metadata, k)
+        end
+
+
         entry = Dict(
             "uid" => uid,
             "date" => date,
@@ -248,34 +213,14 @@ module ProjectSupervisor
             pairs(metadata)...
         )
 
-        n_prev_entries =  haskey(sup.metadata, "uid") ? length(sup.metadata["uid"]) : 0
-        for (k, v) in pairs(entry)
-            k = string(k)
-
-            # if metadata doesn't have this key, add it to the metadata
-            if k ∉ keys(sup.metadata)
-                sup.metadata[k] = repeat(Any[""], n_prev_entries)
-            end
-            
-            # store value
-            push!(sup.metadata[k], v)
-        end
-
-        # make sure we fill metadata keys not in this entry
-        ekeys = string.(keys(entry))
-        for k in string.(keys(sup.metadata))
-            k ∈ ekeys && continue
-            push!(sup.metadata[k], "")
-        end
-
-        validate(sup.metadata)
+        sup.metadata[k] = entry
     end
 
     function get_entries(sup::Supervisor; filter_values...)
-        df = DataFrame(sup.metadata)
+        df = to_df(sup.metadata)
         for (k, v) in pairs(filter_values)
             k = string(k)
-            k ∉ keys(sup.metadata) && continue
+            k ∉ names(df) && @warn "Metadata key $k does not exist" k names(df)
             df = df[df[:, k] .== v, :]
         end
         return df

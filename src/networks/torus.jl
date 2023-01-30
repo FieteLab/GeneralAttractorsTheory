@@ -4,6 +4,7 @@ function torus_maker(cantype;
         offset_size::Number = 0.2,
         α = 3.2,
         σ = :softrelu,
+        use_offset_fields::Bool = false
     )
     # number of neurons
     n = (n, n) # number of neurons per dimension
@@ -43,21 +44,25 @@ function torus_maker(cantype;
     # select a distance metric
     d = PeriodicEuclidean([2π, 2π])  # distance function over a torus manifold
 
-    # # offsets
-    # offsets = [
-    #     p -> torus_ψ1(p),
-    #     p -> -torus_ψ1(p),
-    #     p -> torus_ψ2(p),
-    #     p -> -torus_ψ2(p),
-    # ]
+    # offsets
+    if use_offset_fields
+        offsets = [
+            p -> torus_ψ1(p),
+            p -> -torus_ψ1(p),
+            p -> torus_ψ2(p),
+            p -> -torus_ψ2(p),
+        ]
 
-    # # one forms
-    # Ω = OneForm[
-    #     OneForm(1, (x, y) -> offset_size * torus_ψ1(x, y)),
-    #     OneForm(1, (x, y) -> offset_size * -torus_ψ1(x, y)),
-    #     OneForm(2, (x, y) -> offset_size * torus_ψ2(x, y)),
-    #     OneForm(2, (x, y) -> offset_size * -torus_ψ2(x, y)),
-    # ]
+        # one forms
+        Ω = OneForm[
+            OneForm(1, (x, y) -> offset_size * torus_ψ1(x, y)),
+            OneForm(1, (x, y) -> offset_size * -torus_ψ1(x, y)),
+            OneForm(2, (x, y) -> offset_size * torus_ψ2(x, y)),
+            OneForm(2, (x, y) -> offset_size * -torus_ψ2(x, y)),
+        ]
+    else
+        offsets, Ω = nothing, nothing
+    end
 
     return if cantype == :single 
         SingleCAN(
@@ -80,8 +85,8 @@ function torus_maker(cantype;
         offset_size = offset_size,
         σ = σ,
         α = α,
-        # offsets = offsets,
-        # Ω = Ω
+        offsets = offsets,
+        Ω = Ω
     )
     end
 end
