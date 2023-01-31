@@ -75,7 +75,7 @@ max_path_int_vel = Dict(
     "plane" => 0.04,
     "cylinder" => 0.04,
     "torus" => 0.04,
-    "sphere" => 0.0075,
+    "sphere" => 0.008,
     "mobius" => 0.04,
 )
 

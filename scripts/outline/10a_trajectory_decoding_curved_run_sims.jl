@@ -13,9 +13,7 @@ tag = "decoding_data"
 
 
 function do_10()
-
-    # ---------------------------------- get CAN --------------------------------- #
-
+    # get CAN
     duration = 2000
     still = 50  # initialization period        
 
@@ -33,12 +31,15 @@ function do_10()
         Δ = 25
         Vs = [vx, vy]
     else
-        v_mag = (cos.(range(0, 2π - .1, length=nframes)) ./ 2 .+ .5)
-        vx = sin.(range(0, 2π, length=nframes)) .* v_mag
-        vy = range(1, -2.5, length=nframes)
-        vz = range(-1, 1.0, length=nframes)
+        t  = 1:nframes 
+        μ  = sin.(0.004t)
+        vx = sin.(0.001t) ./ 5 .* μ
+        vy = cos.(0.004t) ./ 25 .* sin.(0.002t)
+        vz = cos.(0.003t) ./ 3 .* μ
+
+        σ = 0.1  # scaling
         Δ = 50
-        Vs = [vx, vy, vz]
+        Vs = [σ .* vx, σ .* vy, σ .* vz]
     end
 
 
@@ -53,10 +54,14 @@ function do_10()
         x₀ = x₀_traj,
         smoothing_window = 501,
         Vs = Vs,
+        # scale =  network == "sphere" ? .07 : 1.0,
     )
     trajplot = plot(trajectory; Δ=Δ)
     save_plot(supervisor, trajplot, "10_path_int_$(network)_traj")
+    display(trajplot)
+
     simulation = Simulation(can, trajectory; η = 0.0, b₀ = 1.0);
+
 
     # --------------------------------- simulate --------------------------------- #
 
@@ -83,9 +88,9 @@ function do_10()
 
     # --------------------------------- visualie --------------------------------- #
     plot_trajectory_and_decoded(trajectory, X̄) |> display
-    # animate_simulation_data(can, trajectory, h, X̄, embedding, 
-    #         (supervisor.projectdir / "plots" /"path_int_$(network)_sim.gif").path
-    # )
+    animate_simulation_data(can, trajectory, h, X̄, embedding, 
+            (supervisor.projectdir / "plots" /"path_int_$(network)_sim.gif").path
+    )
 end
 
 do_10()

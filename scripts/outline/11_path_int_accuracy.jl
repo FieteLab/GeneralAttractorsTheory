@@ -131,9 +131,9 @@ N_sims = 25
 duration = 500
 
 still = 50  # initialization period        
-funky = true
+funky = false
 
 # ("plane", "cylinder", "torus")
-for network in ("torus",)
+for network in ("plane", "cylinder")
     run_sims_and_save(network, funky, N_sims, η, duration, still)
 end

@@ -48,7 +48,7 @@ function make_path_int_can(network; funky=false, random_x0=false)
         can, x₀_traj, mobius_embedding
 
     elseif network == "sphere"
-        can = sphere_maker(:default; n=48, α=225) # 225
+        can = sphere_maker(:default; n=48, α=240) # 225
         x₀_traj = random_x0 ? nothing : ([1, 0, 0] ./ norm([1, 0, 0]))
         can, x₀_traj, sphere_embedding
     end
