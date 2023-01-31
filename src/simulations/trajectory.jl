@@ -254,9 +254,10 @@ function Trajectory(
             push!(Vs, v)
         end
     else
-        Vs = map(
-            v -> (v ./ maximum(v)) .* vmax, Vs
-        ) |> collect
+        # Vs = map(
+        #     v -> (v ./ (maximum(v) + eps())) .* vmax, Vs
+        # ) |> collect
+        Vs
     end
 
     """
@@ -278,7 +279,7 @@ function Trajectory(
 
         # make sure vmax magnitude is in range
         v = enforce_vmax(v, vmax)
-        v = enforce_vmin(v, 0.01)
+        v = enforce_vmin(v, 0.001)
  
         # update on mfld position
         x̂ = x + (v * dt)

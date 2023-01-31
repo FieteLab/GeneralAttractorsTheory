@@ -13,7 +13,7 @@ function mobius_maker(
     # number of neurons
     y_extent = abs(mfld.xmin[1]) + abs(mfld.xmax[1])
     n = isnothing(n) ? 
-            ((Int ∘ round)(y_extent / 0.05), (Int ∘ round)(2π / 0.2)) :
+            ((Int ∘ round)(y_extent / 0.02), (Int ∘ round)(2π / 0.2)) :
             (n, n)
 
     # cover space

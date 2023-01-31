@@ -109,19 +109,11 @@ Manifoldℝ²(m) = Manifoldℝ²(
 ℝ² = Manifoldℝ²(100)
 
 
-function Base.rand(m::Manifoldℝ²)
-    # generate a random point on the unit sphere
-    d = length(m.xmin)
-    x = zeros(d)
-    for i = 1:d
-        x[i] = rand(m.xmin[i]+0.25:0.001:m.xmax[i]-0.25)  # padding because of boundary effect on neural activity
-    end
-    x
-end
+
 
 function apply_boundary_conditions!(x::Vector, m::Manifoldℝ²)
-
     vel_correction_factors = [1, 1]
+
     # non periodic dimension
     δ = 0.2  # padding around boundary to account for bump size
     if x[1] <= m.xmin[1] + δ
@@ -144,6 +136,16 @@ function apply_boundary_conditions!(x::Vector, m::Manifoldℝ²)
     return x, vel_correction_factors
 end
 
+function Base.rand(m::Manifoldℝ²)
+    # generate a random point on the unit sphere
+    d = length(m.xmin)
+    δ = 0.25
+    x = zeros(d)
+    for i = 1:d
+        x[i] = rand(m.xmin[i]+δ:0.001:m.xmax[i]-δ)  # padding because of boundary effect on neural activity
+    end
+    x
+end
 
 # ---------------------------------------------------------------------------- #
 #                                   CYLINDER                                   #
@@ -188,16 +190,16 @@ function apply_boundary_conditions!(x::Vector, m::Cylinder)
 
 end
 
-# function Base.rand(m::Cylinder)
-#     # generate a random point on the unit sphere
-#     d = length(m.xmin)
-#     x = zeros(d)
-#     for i = 1:d
-#         δ = d == 2 ? 0.25 : 0.0
-#         x[i] = rand(m.xmin[i]+δ:0.001:m.xmax[i]-δ)  # padding because of boundary effect on neural activity
-#     end
-#     x
-# end
+function Base.rand(m::Cylinder)
+    # generate a random point on the unit sphere
+    d = length(m.xmin)
+    x = zeros(d)
+    for i = 1:d
+        δ = d == 2 ? 0.25 : 0.0
+        x[i] = rand(m.xmin[i]+δ:0.001:m.xmax[i]-δ)  # padding because of boundary effect on neural activity
+    end
+    x
+end
 
 # ---------------------------------------------------------------------------- #
 #                                     TORUS                                    #
@@ -276,8 +278,8 @@ end
 
 Mobius() = Mobius(
     "Mobius",
-    [-0.75, 0],
-    [0.75, 2π],
+    [-1.0, 0],
+    [1.0, 2π],
     [VectorField(MB_ψ1), VectorField(MB_ψ2)],
     MobiusEuclidean(),
     2, [0, 1]
@@ -310,19 +312,19 @@ function apply_boundary_conditions!(x::Vector, m::Mobius)
         x[2] = 2π + x[2]
         x[1] = -x[1]
     end
-    return x, vel_correction_factors
+    return x, [1, 1] # vel_correction_factors
 end
 
-# function Base.rand(m::Mobius)
-#     # generate a random point on the unit sphere
-#     d = length(m.xmin)
-#     x = zeros(d)
-#     for i = 1:d
-#         δ = d == 1 ? 0.25 : 0.0
-#         x[i] = rand(m.xmin[i]+δ:0.001:m.xmax[i]-δ)  # padding because of boundary effect on neural activity
-#     end
-#     x
-# end
+function Base.rand(m::Mobius)
+    # generate a random point on the unit sphere
+    d = length(m.xmin)
+    x = zeros(d)
+    for i = 1:d
+        δ = d == 1 ? 0.25 : 0.0
+        x[i] = rand(m.xmin[i]+δ:0.001:m.xmax[i]-δ)  # padding because of boundary effect on neural activity
+    end
+    x
+end
 
 
 # ---------------------------------------------------------------------------- #

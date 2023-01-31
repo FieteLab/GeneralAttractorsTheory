@@ -14,7 +14,7 @@ using GeneralAttractors.Simulations
 using GeneralAttractors.Analysis
 using GeneralAttractors.Kernels
 import GeneralAttractors: torus_maker, sphere_maker, mobius_maker, cylinder_maker, plane_maker
-import GeneralAttractors: torus_embedding, identity_embedding, mobius_embedding, cylinder_embedding, plane_embedding
+import GeneralAttractors: torus_embedding, identity_embedding, mobius_embedding, cylinder_embedding, plane_embedding, sphere_embedding
 import GeneralAttractors: toruscan, spherecan, mobiuscan, cylindercan, planecan
 using GeneralAttractors.ProjectSupervisor
 import GeneralAttractors: by_column
@@ -87,7 +87,7 @@ dimred_3d_params = AnalysisParameters(
     max_nPC = 400,  # max num of PCs
     pca_pratio = 0.999999999999999999,       # fraction of variance explained
     n_isomap_dimensions = 3,
-    isomap_k = 5,
+    isomap_k = 10,
     isomap_downsample = 50,
 )
 
@@ -95,7 +95,7 @@ dimred_10d_params = AnalysisParameters(
     max_nPC = 200,
     pca_pratio = 0.9999999,
     n_isomap_dimensions = 10,
-    isomap_k = 5,
+    isomap_k = 10,
     isomap_downsample = 50,  # time downsamplin
 )
 
@@ -104,7 +104,7 @@ dimred_50d_params = AnalysisParameters(
     max_nPC = 200,
     pca_pratio = 0.9999999,
     n_isomap_dimensions = 50,
-    isomap_k = 5,
+    isomap_k = 10,
     isomap_downsample = 50,  # time downsamplin
 )
 

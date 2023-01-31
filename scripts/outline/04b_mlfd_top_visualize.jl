@@ -15,14 +15,10 @@ for (network, color) in zip(networks, networks_colors)
     filters = Dict{Symbol, Any}(
         :tag => "d3_embeddings",
         :can => network,
+        :extension => "npz"
     )
 
-    meta, M = ProjectSupervisor.fetch(supervisor; filters...) 
-    @assert length(M) == 2 network
-    M = M[2]
-    @assert size(M, 1) == 3 network
-
-
+    M = ProjectSupervisor.fetch(supervisor; filters...)[2][1]
     zlims = if network == "plane" 
         [-20, 20]
     elseif network == "mobius"
@@ -37,16 +33,16 @@ for (network, color) in zip(networks, networks_colors)
             scatter3d(
                 M[1, 1:5:end], M[2, 1:5:end], M[3, 1:5:end],
                 msa=0, msw=0,
-                markersize = 3.0,
+                markersize = 1.0,
+                alpha=.25,
                 legend = false,
                 title = network,
                 xlabel = "Iso 1", ylabel = "Iso 2", zlabel = "Iso 3",
                 color = color, 
                 camera = camera,
-                alpha=.5,
                 zlim = zlims,
-                showaxis = false,
-                axis=nothing,
+            #     showaxis = false,
+            #     axis=nothing,
             )
         )
         # break
@@ -56,7 +52,8 @@ end
 
 fig = plot(plots..., 
         layout=(length(networks), 2), 
-        size=(800, 1000)
+        size=(1200, 1400)
         )
 
 save_plot(supervisor, fig, "04b_mfld_top_pointclouds")
+fig     

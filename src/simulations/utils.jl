@@ -15,9 +15,10 @@ end
 # ---------------------------------------------------------------------------- #
 
 
-function Plots.plot(traj::Trajectory)
+function Plots.plot(traj::Trajectory; Δ=50)
     X = remove_jumps_from_trajectory(traj.X)
     X̄ = remove_jumps_from_trajectory(traj.X̄)
+    zlim = size(traj.X, 2) > 2 ? [traj.M.xmin[3], traj.M.xmax[3]] : [-1, 1]
  
     p1 = plot(
         eachcol(X)...,
@@ -29,6 +30,7 @@ function Plots.plot(traj::Trajectory)
         aspect_ratio = :equal,
         xlim = [traj.M.xmin[1], traj.M.xmax[1]],
         ylim = [traj.M.xmin[2], traj.M.xmax[2]],
+        # zlim=zlim,
         right_margin = 12Plots.mm,
         left_margin = 12Plots.mm,
         top_margin = 12Plots.mm,
@@ -37,16 +39,16 @@ function Plots.plot(traj::Trajectory)
     )
 
     scatter!(
-        eachcol(X[1:100:end, :]),
-        marker_z = norm.(eachrow(traj.V))[1:100:end],
-        # color = :black,
+        eachcol(X[1:Δ:end, :])...,
+        marker_z = norm.(eachrow(traj.V))[1:Δ:end],
+        # marker_z = 1:size(X[1:Δ:end, :], 1),
         label = nothing,
         msw = .5, msa = .5,
         colorbar_title = "speed",
     )
 
     p2 = plot(
-        eachcol(X̄),
+        eachcol(X̄)...,
         lw = 3,
         color = :red,
         label = nothing,
@@ -78,13 +80,13 @@ function Plots.plot(traj::Trajectory, i::Int; kwargs...)
 
     X = remove_jumps_from_trajectory(traj.X)
     plt = plot(
-        eachcol(X[1:i, :]),
+        eachcol(X[1:i, :])...,
         lw = 6,
         color = :black,
         grid = false,
         aspect_ratio = :equal,
-        label = nothing,
-        camera = (0.075 * i, 20);
+        label = "input trajectory",
+        camera = (0.01 * i, 20);
         lims...
     )
 

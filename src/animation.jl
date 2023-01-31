@@ -1,7 +1,7 @@
 using Plots
 using Term.Progress
 
-function animate_simulation_data(can, traj, hist, X, φ, savepath; dt=0.5, frames_Δ=15, neurons_Δ = 5)
+function animate_simulation_data(can, traj, hist, X, φ, savepath; dt=0.5, frames_Δ=25, neurons_Δ = 11)
     coord3d = by_column(φ, can.X)
     nframes = size(traj.X, 1)
     skipframes = traj.still / dt |> floor |> Int
@@ -19,23 +19,28 @@ function animate_simulation_data(can, traj, hist, X, φ, savepath; dt=0.5, frame
             # plot trajectory
             p1 = plot(traj, fnum)
             plot!(
-                p1, X[1:fnum, 1], X[1:fnum, 2],
+                eachcol(X[1:fnum, :])...,
                 lw = 6, color=:red, alpha=.5,
                 label = "decoded",
                 )
 
             # plot neurons activation
             s = sum(hist.S[:, :, hist_frame], dims=2)[1:neurons_Δ:end]
-            p2 = scatter3d(
-                coord3d[1, 1:neurons_Δ:end], coord3d[2, 1:neurons_Δ:end], coord3d[3, 1:neurons_Δ:end],
-                marker_z = s,
-                ms = 5,  msw = 0.0,
-                alpha=0.5,
-                xlim = [minimum(coord3d[1,:])-.5, maximum(coord3d[1,:])+.5], 
-                ylim = [minimum(coord3d[2,:])-.5, maximum(coord3d[2,:])+.5], 
-                zlim = [minimum(coord3d[3,:])-.5, maximum(coord3d[3,:])+.5], 
-                size = (800, 800),
-                colorbar=false,
+            # p2 = scatter3d(
+            #     coord3d[1, 1:neurons_Δ:end], coord3d[2, 1:neurons_Δ:end], coord3d[3, 1:neurons_Δ:end],
+            #     marker_z = s,
+            #     ms = 5,  msw = 0.0,
+            #     alpha=0.5,
+            #     xlim = [minimum(coord3d[1,:])-.5, maximum(coord3d[1,:])+.5], 
+            #     ylim = [minimum(coord3d[2,:])-.5, maximum(coord3d[2,:])+.5], 
+            #     zlim = [minimum(coord3d[3,:])-.5, maximum(coord3d[3,:])+.5], 
+            #     size = (800, 800),
+            #     colorbar=false,
+            #     )
+
+            p2 = scatter(
+                eachrow(can.X)...,
+                marker_z=s,
                 )
 
  

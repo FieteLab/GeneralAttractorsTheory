@@ -121,7 +121,7 @@ function isomap_dimensionality_reduction(
     X::Matrix,
     params::AnalysisParameters = AnalysisParameters();)
     # fit
-    @info "Performing ISOMAP" size(X) params.n_isomap_dimensions params.isomap_downsample
+    @info "Performing ISOMAP" size(X) params.n_isomap_dimensions params.isomap_downsample params.isomap_k
     iso = ManifoldLearning.fit(
         Isomap,
         X[:, 1:params.isomap_downsample:end];

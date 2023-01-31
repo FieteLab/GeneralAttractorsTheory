@@ -14,15 +14,14 @@ tag = "decoding_data"
 
 # ---------------------------- plotting functions ---------------------------- #
 
-spatial_downsampling = 5
-temporal_downsampling = 25
-fps = 20
-funky = false
 
-for network in ("plane", "cylinder", "torus")
-    
+temporal_downsampling = 20
+fps = 30
+funky = true
+
+for network in ( "plane", "cylinder", "torus")
     savepath = supervisor.projectdir / "plots" / "path_int_$(network)_funky_$(funky).gif"
-    exists(savepath) && continue
+    # exists(savepath) && continue
 
     # make network to get neurons lattice coordinates
     can = network_makers[network](:single; n=48)
@@ -34,15 +33,23 @@ for network in ("plane", "cylinder", "torus")
     # --------------------------------- get data --------------------------------- #
     # load 3d iso embedding model and embedded data
     set_datadir(supervisor,  (supervisor.datadir / "mfld_top").path)
-    embs, M = ProjectSupervisor.fetch(
+
+
+    M, embs = ProjectSupervisor.fetch(
         supervisor; 
         tag="d3_embeddings", 
         can=network, 
-        dim=3
+        dim=3,
     )[2]
+    if M isa AbstractDict
+        M, embs = embs, M
+    end
+
+    
     pca = embs[:pca]
     iso = embs[:iso]
-    @assert size(M, 1) == 3 size(M)
+    # @assert size(M, 1) == 3 size(M)
+    @info "Got embedding model" pca iso M
 
 
     # load path integration data
@@ -51,13 +58,17 @@ for network in ("plane", "cylinder", "torus")
         :tag => tag,
         :network => network,
         :funky => funky,
-        :duration => 2500,
+        # :duration => 2500,
     )
 
+    data = nothing
     try
-        data = ProjectSupervisor.fetch(supervisor; filters...)[2][1]
-    catch
-        @warn "No data for $network - funky: $funky. Maybe you need to run script 09a?"
+        meta, datas = ProjectSupervisor.fetch(supervisor; filters...)
+        println(meta)
+        data = datas[1]
+    catch e
+        @warn "No data for $network - funky: $funky. Maybe you need to run script 09a?" 
+        set_datadir(supervisor, datadir)
         continue
     end
     history = data["h"]
@@ -66,8 +77,9 @@ for network in ("plane", "cylinder", "torus")
     S_embedd = predict(iso, predict(pca, S))
     X = history.x_M_decoded
 
-    set_datadir(supervisor,  ((supervisor.datadir-1)).path)
-    @info "Got data for $network" S M iso
+    set_datadir(supervisor, datadir)
+
+    @info "Got data for $network" S M iso supervisor.datadir.path
 
     # ------------------------------ make animation ------------------------------ #
 
@@ -76,7 +88,7 @@ for network in ("plane", "cylinder", "torus")
 
     # compute fps
     n_anim_frames = (nframes - skipframes)/temporal_downsampling  |> round |> Int
-    @info "Ready to animate" nframes skipframes n_anim_frames fps spatial_downsampling temporal_downsampling
+    @info "Ready to animate" nframes skipframes n_anim_frames fps  temporal_downsampling
 
     anim = Animation()
     pbar = ProgressBar()
@@ -87,7 +99,22 @@ for network in ("plane", "cylinder", "torus")
             fnum = max(i - skipframes, 1)
             hist_frame = (fnum)  ÷ history.average_over + 1
 
-            frame_content = path_int_gif_frame(trajectory, X, S, can, w_x, w_y, M, S_embedd, fnum, skipframes)
+            frame_content = path_int_gif_frame(
+                    size(trajectory.X, 2),
+                    trajectory,
+                    X,
+                    coord3d,
+                    S,
+                    can,
+                    w_x,
+                    w_y,
+                    M,
+                    S_embedd,
+                    fnum,
+                    skipframes,
+                    hist_frame;
+                    p3_extent = maximum(S_embedd) + maximum(S_embedd) * 0.1,
+            )
 
             frame(anim)
             update!(job)

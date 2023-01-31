@@ -20,6 +20,8 @@ function sphere_embedding(lon, lat)
     return [cos(ls) * cos(lon), cos(ls) * sin(lon), sin(ls)]
 end
 
+sphere_embedding(x, y, z) = [x, y, z]
+
 
 """
 Mobius band embedding in ℝ³

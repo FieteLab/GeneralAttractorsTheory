@@ -141,15 +141,22 @@ module ProjectSupervisor
     function to_df(meta::AbstractDict)::DataFrame
         allkeys = []
         for entry in values(meta)
-            for k in keys(entry)
+            for k in string.(keys(entry))
                 k ∉ allkeys && push!(allkeys, k)
             end
         end
 
+        function _get(k, v)
+            Symbol(k) ∈ keys(v) && return v[Symbol(k)]
+            string(k) ∈ keys(v) && return v[string(k)]
+            return nothing
+        end
+
         collated = Dict{Union{String, Symbol}, Vector{Any}}()
         for k in allkeys
-            collated[Symbol(k)] = [get(entry, k, nothing) for entry in values(meta)]
+            collated[Symbol(k)] = [_get(k, entry) for entry in values(meta)]
         end
+        collated[:extension] = [split(entry["name"], ".")[end] for entry in values(meta)]
 
         return DataFrame(collated)
     end

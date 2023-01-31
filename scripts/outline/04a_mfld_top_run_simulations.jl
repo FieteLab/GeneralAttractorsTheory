@@ -33,7 +33,7 @@ for can_name in networks
     # can params
     can_maker = network_makers[can_name]
     kernel_params = Dict(
-        k => minimum(v) for (k, v) in kernels_parameters_range[can_name][kernel_name]
+        k => mean(v) for (k, v) in kernels_parameters_range[can_name][kernel_name]
     )
     kernel = kernels[kernel_name](; kernel_params...)
 
