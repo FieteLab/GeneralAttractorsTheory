@@ -9,8 +9,8 @@ function animate_simulation_data(can, traj, hist, X, φ, savepath; dt=0.5, frame
     anim = Animation()
 
     pbar = ProgressBar()
-    Progress.with(pbar) do
-        job = addjob!(pbar, description = "Making animation", N = (Int ∘ ceil)((nframes - skipframes) / frames_Δ))
+    # Progress.with(pbar) do
+    #     job = addjob!(pbar, description = "Making animation", N = (Int ∘ ceil)((nframes - skipframes) / frames_Δ))
         for fnum in 1:frames_Δ:nframes
             fnum * dt < traj.still && continue
             # fnum % hist.average_over == 0 && (hist_frame += 1)
@@ -47,8 +47,8 @@ function animate_simulation_data(can, traj, hist, X, φ, savepath; dt=0.5, frame
             # plot(simulation, time[framen], framen, x, v, X̄, φ)
             plot(p1, p2, layout = (1, 2), size = (1200, 800))
             frame(anim)
-            update!(job)
-        end
+        #     update!(job)
+        # end
         
     end
 

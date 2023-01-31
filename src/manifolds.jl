@@ -49,11 +49,11 @@ end
 abstract type AbstractManifold end
 
 
-function Base.rand(m::AbstractManifold)
+function Base.rand(m::AbstractManifold; δ=0)
     d = length(m.xmin)
     x = zeros(d)
     for i = 1:d
-        x[i] = rand(m.xmin[i]:0.001:m.xmax[i])
+        x[i] = rand((m.xmin[i]+δ):0.001:(m.xmax[i]-δ))
     end
     x
 end
@@ -136,10 +136,9 @@ function apply_boundary_conditions!(x::Vector, m::Manifoldℝ²)
     return x, vel_correction_factors
 end
 
-function Base.rand(m::Manifoldℝ²)
+function Base.rand(m::Manifoldℝ²; δ=0.25)
     # generate a random point on the unit sphere
     d = length(m.xmin)
-    δ = 0.25
     x = zeros(d)
     for i = 1:d
         x[i] = rand(m.xmin[i]+δ:0.001:m.xmax[i]-δ)  # padding because of boundary effect on neural activity
@@ -190,13 +189,13 @@ function apply_boundary_conditions!(x::Vector, m::Cylinder)
 
 end
 
-function Base.rand(m::Cylinder)
+function Base.rand(m::Cylinder; δ=0.25)
     # generate a random point on the unit sphere
     d = length(m.xmin)
     x = zeros(d)
     for i = 1:d
-        δ = d == 2 ? 0.25 : 0.0
-        x[i] = rand(m.xmin[i]+δ:0.001:m.xmax[i]-δ)  # padding because of boundary effect on neural activity
+        _δ = d == 2 ? δ : 0.0
+        x[i] = rand(m.xmin[i]+_δ:0.001:m.xmax[i]-_δ)  # padding because of boundary effect on neural activity
     end
     x
 end
@@ -256,7 +255,7 @@ function apply_boundary_conditions!(x::Vector, ::Sphere)
     return x ./ norm(x), ones(length(x))
 end
 
-function Base.rand(::Sphere)
+function Base.rand(::Sphere; δ=0)
     # generate a random point on the unit sphere
     x = rand(3) .- 0.5
     return x ./ norm(x)
@@ -315,13 +314,13 @@ function apply_boundary_conditions!(x::Vector, m::Mobius)
     return x, [1, 1] # vel_correction_factors
 end
 
-function Base.rand(m::Mobius)
+function Base.rand(m::Mobius; δ=0.25)
     # generate a random point on the unit sphere
     d = length(m.xmin)
     x = zeros(d)
     for i = 1:d
-        δ = d == 1 ? 0.25 : 0.0
-        x[i] = rand(m.xmin[i]+δ:0.001:m.xmax[i]-δ)  # padding because of boundary effect on neural activity
+        _δ = d == 1 ? δ : 0.0
+        x[i] = rand(m.xmin[i]+_δ:0.001:m.xmax[i]-_δ)  # padding because of boundary effect on neural activity
     end
     x
 end

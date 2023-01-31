@@ -63,10 +63,15 @@ function random_variable(N::Int, μ::Number, σ::Number; smoothing_window = noth
     v = (rand(N) .- 0.5) .* σ .+ μ
 
    isnothing(smoothing_window) || (v = moving_average(v, smoothing_window))
-    return v
+    return cumsum(v) ./ maximum(cumsum(v)) ./ 20
 end
 
-
+function random_sine(N::Int, args...; kwargs...)
+    fn = rand() > 0.5 ? sin : cos
+    n = rand(.25:.1:2.5)
+    a = rand(0.1:.1:0.5)
+    return fn.(range(0, n * π, length=N)) .* a
+end
 
 """
     get_closest_neuron(x, X)
@@ -214,6 +219,7 @@ function Trajectory(
         scale::Number = 1,
         smoothing_window=11,
         Vs = nothing,
+        δ=0.2,  # padding for random sampling of x₀ from M manifold
     )   
     
     ψs::Vector = can.C.M.ψs # get manifold vector fields
@@ -232,7 +238,7 @@ function Trajectory(
 
     # get starting point
     x₀ = x₀ isa Number ? repeat([x₀], d) : x₀
-    x₀ = !isnothing(x₀) ? x₀ : rand(M)
+    x₀ = !isnothing(x₀) ? x₀ : rand(M; δ=δ)
     # x₀ = get_closest_neuron(x₀, can.X, can.metric)
     @assert length(x₀) == d "Got x₀: $(x₀) and d=$d"
 
@@ -247,7 +253,10 @@ function Trajectory(
             elseif modality == :constant
                 ones(T) .* μv[i]
             else
-                x = random_variable(T, μv[i], σv[i]; smoothing_window = smoothing_window) * scale
+                # x = random_variable(T, μv[i], σv[i]; smoothing_window = smoothing_window) * scale
+                x = random_sine(T) * scale
+                μ = random_sine(T)
+                x = x .* μ
                 ramp = [range(0, 1, length = 100)..., ones(T - 100)...]
                 x .* ramp
             end

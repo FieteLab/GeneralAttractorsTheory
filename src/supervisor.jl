@@ -353,12 +353,12 @@ module ProjectSupervisor
     end
 
 
-    function save_plot(sup::Supervisor, plt, name::AbstractString; dpi=300)
+    function save_plot(sup::Supervisor, plt, name::AbstractString; dpi=300, as_svg=true)
         meta = git_info(sup)
         path = (sup.projectdir / "plots" / (name*"_"*meta)).path
         
         savefig(plt, path * ".png")
-        savefig(plt, path * ".svg")
+        as_svg && savefig(plt, path * ".svg")
     end
     
 

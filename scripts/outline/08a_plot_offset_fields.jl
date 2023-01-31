@@ -9,14 +9,14 @@ density =Dict(
     "torus" => 1/10,
     "cylinder" => 1/4,
     "sphere" => 5,
-    "mobius" => 1/3
+    "mobius" => 1/5 
 )
 magnitude = Dict(
     "plane" => 0.9,
     "torus" => 0.25,
     "cylinder" => 0.5,
     "sphere" => 0.25,
-    "mobius" => 0.25
+    "mobius" => 0.15
 )
 
 for network in networks
@@ -45,7 +45,7 @@ for network in networks
 
     colors = [salmon, salmon_darker, indigo, indigo_darker, teal, teal_darker]
     for (j, (o, c)) in enumerate(zip(can.offsets, colors))
-        j % 2 != 1 && continue
+        # j % 2 != 1 && continue
         for pt in eachrow(pts)
             # draw "offset"
             v = pt + (o(pt) * magnitude[network])

@@ -20,36 +20,38 @@ end
 """
 Generate a CAN with multiple copies for path integration stuff.
 """
-make_path_int_can(network; funky=false, random_x0=false) = if network == "torus"
-    can = if funky
-            torus_maker(:defult; n=48, α=325, offset_size=0.15, use_offset_fields=true)
-        else
-            torus_maker(:defult; n=48, α=19, offset_size=0.3, use_offset_fields=false)
+function make_path_int_can(network; funky=false, random_x0=false) 
+    return if network == "torus"
+        can = if funky
+                torus_maker(:defult; n=48, α=325, offset_size=0.15, use_offset_fields=true)
+            else
+                torus_maker(:defult; n=48, α=18, offset_size=0.3, use_offset_fields=false)
+        end
+        x₀_traj = random_x0 ? nothing : [-20, -15]
+        can, x₀_traj, torus_embedding
+
+    elseif network == "cylinder"
+        can = cylinder_maker(:default; n=48, α=30)
+        x₀_traj = random_x0 ? nothing : [-20, -15]
+        can, x₀_traj, cylinder_embedding
+
+    elseif network == "plane"
+        can = plane_maker(:default; 
+                n=48, α=65, offset_size=0.1,
+                )
+        x₀_traj = random_x0 ? nothing : [-20, -15]
+        can, x₀_traj, plane_embedding
+
+    elseif network == "mobius"
+        can = mobius_maker(:defult; n=48, α=125)
+        x₀_traj = random_x0 ? nothing : [0.5, 0.5]
+        can, x₀_traj, mobius_embedding
+
+    elseif network == "sphere"
+        can = sphere_maker(:default; n=48, α=225) # 225
+        x₀_traj = random_x0 ? nothing : ([1, 0, 0] ./ norm([1, 0, 0]))
+        can, x₀_traj, sphere_embedding
     end
-    x₀_traj = random_x0 ? nothing : [-20, -15]
-    can, x₀_traj, torus_embedding
-
-elseif network == "cylinder"
-    can = cylinder_maker(:default; n=48, α=30)
-    x₀_traj = random_x0 ? nothing : [-20, -15]
-    can, x₀_traj, cylinder_embedding
-
-elseif network == "plane"
-    can = plane_maker(:default; 
-            n=48, α=70, offset_size=0.1,
-            )
-    x₀_traj = random_x0 ? nothing : [-20, -15]
-    can, x₀_traj, plane_embedding
-
-elseif network == "mobius"
-    can = mobius_maker(:defult; n=48, α=125)
-    x₀_traj = random_x0 ? nothing : [0.5, 0.5]
-    can, x₀_traj, mobius_embedding
-
-elseif network == "sphere"
-    can = sphere_maker(:default; n=48, α=225) # 225
-    x₀_traj = random_x0 ? nothing : ([1, 1, 0] ./ norm([1, 1, 0]))
-    can, x₀_traj, sphere_embedding
 end
 
 

@@ -16,7 +16,7 @@ function do_10()
 
     # ---------------------------------- get CAN --------------------------------- #
 
-    duration = 500
+    duration = 2000
     still = 50  # initialization period        
 
     network = "sphere"
@@ -28,18 +28,17 @@ function do_10()
 
     if network == "mobius"
         v_mag = (cos.(range(0, 2π - .1, length=nframes)) ./ 2 .+ .5)
-        vx = ones(nframes) / 50 .* v_mag
-        vy = cos.(range(0, 15π, length=nframes)) / 150 .* v_mag
+        vx = ones(nframes) / 71 .* v_mag
+        vy = cos.(range(0, 11π, length=nframes)) / 60 .* v_mag
         Δ = 25
-        vmax, Vs = 0.05, [vx, vy]
+        Vs = [vx, vy]
     else
         v_mag = (cos.(range(0, 2π - .1, length=nframes)) ./ 2 .+ .5)
         vx = sin.(range(0, 2π, length=nframes)) .* v_mag
-        # vy = cos.(range(0, 2π, length=nframes)) .* v_mag
         vy = range(1, -2.5, length=nframes)
         vz = range(-1, 1.0, length=nframes)
         Δ = 50
-        vmax, Vs = 0.0075, [vx, vy, vz]
+        Vs = [vx, vy, vz]
     end
 
 
@@ -49,7 +48,7 @@ function do_10()
         dt = dt,
         σv = 5,
         μv = 0,
-        vmax = vmax,
+        vmax = max_path_int_vel[network],
         still = still,
         x₀ = x₀_traj,
         smoothing_window = 501,
@@ -84,9 +83,9 @@ function do_10()
 
     # --------------------------------- visualie --------------------------------- #
     plot_trajectory_and_decoded(trajectory, X̄) |> display
-    animate_simulation_data(can, trajectory, h, X̄, embedding, 
-            (supervisor.projectdir / "plots" /"path_int_$(network)_sim.gif").path
-    )
+    # animate_simulation_data(can, trajectory, h, X̄, embedding, 
+    #         (supervisor.projectdir / "plots" /"path_int_$(network)_sim.gif").path
+    # )
 end
 
 do_10()

@@ -2,7 +2,7 @@ function sphere_maker(
     cantype;
     n::Int = 48,
     offset_size = 0.2,
-    k = LocalGlobalKernel(α = 2.5, σ = 40.5),
+    k = LocalGlobalKernel(α = 2.5, σ = 40),
     α = 46,
     σ = :softrelu,
     use_offset_fields::Bool = false

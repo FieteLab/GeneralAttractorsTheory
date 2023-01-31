@@ -2,7 +2,7 @@
 Definition of parameters and settins used throughout the analysis/plots.
 """
 
-using Plots, DataFrames, Term, Statistics, LinearAlgebra, ObjectivePaths
+using Plots, DataFrames, Term, Statistics, LinearAlgebra, ObjectivePaths, Distances
 import MyterialColors: Palette, green_dark, deep_purple, indigo, salmon, salmon_dark
 
 gr()   # for fast plotting
@@ -17,7 +17,8 @@ import GeneralAttractors: torus_maker, sphere_maker, mobius_maker, cylinder_make
 import GeneralAttractors: torus_embedding, identity_embedding, mobius_embedding, cylinder_embedding, plane_embedding, sphere_embedding
 import GeneralAttractors: toruscan, spherecan, mobiuscan, cylindercan, planecan
 using GeneralAttractors.ProjectSupervisor
-import GeneralAttractors: by_column
+import GeneralAttractors: by_column, MobiusEuclidean, SphericalDistance, moving_average
+using GeneralAttractors.ManifoldUtils
 
 datadir = "/Users/federicoclaudi/Desktop/GeneralAttractors/data"
 
@@ -61,6 +62,22 @@ embeddings = Dict(
     "plane" => plane_embedding,
 )
 
+metrics = Dict(
+    Manifoldℝ² => Euclidean(),
+    Cylinder => PeriodicEuclidean([2π, Inf]),
+    Torus => PeriodicEuclidean([2π, 2π]),
+    Sphere => SphericalDistance(),
+    Mobius => MobiusEuclidean(),
+)
+
+
+max_path_int_vel = Dict(
+    "plane" => 0.04,
+    "cylinder" => 0.04,
+    "torus" => 0.04,
+    "sphere" => 0.0075,
+    "mobius" => 0.04,
+)
 
 # ------------------------------ PLOTTING params ----------------------------- #
 networks_colors = getfield.(Palette(green_dark, deep_purple; N = length(networks)).colors, :string)
