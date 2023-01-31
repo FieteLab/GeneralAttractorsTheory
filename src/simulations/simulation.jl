@@ -93,6 +93,8 @@ function step!(
         isnothing(s₀) || (S[:, i] .*= s₀)
 
         # get activation
+        # o = map(x -> can.Ω[i](x, v), eachcol(can.X))
+        # Ṡ[:, i] .+= W[i] * S_tot +  can.α .* o .+ input
         Ṡ[:, i] .+= W[i] * S_tot .+  can.α * can.Ω[i](on_mfld_x, v) .+ input
     end
 
@@ -228,7 +230,7 @@ function run_simulation(
     end
 
     # do simulation steps and visualize   
-    if N > 250
+    if N > 250  # only show progress bar when its worthwhile
         pbar = ProgressBar()
         Progress.with(pbar) do
             job = addjob!(pbar, description = "Simulation", N = N)

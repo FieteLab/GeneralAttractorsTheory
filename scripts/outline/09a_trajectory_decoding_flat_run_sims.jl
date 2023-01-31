@@ -14,11 +14,11 @@ tag = "decoding_data"
 function run09()
 
     # ---------------------------------- get CAN --------------------------------- #
-    duration = 2000
+    duration = 500
     still = 50  # initialization period        
 
-    network = "plane"
-    funky = false
+    network = "torus"
+    funky = true
     can, x₀_traj, embedding = make_path_int_can(network; funky=funky)
 
     # ------------------------ make simulation trajecotry ------------------------ #

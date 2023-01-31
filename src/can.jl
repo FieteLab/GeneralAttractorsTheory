@@ -50,7 +50,7 @@ Base.show(io::IO, ::MIME"text/plain", ω::OneForm) = print(io, string(ω))
 
 Evaluate a one form at a point `x`.
 """
-function (ω::OneForm)(x::Vector)::Vector
+function (ω::OneForm)(x::AbstractVector)::Vector
     nargs = first(methods(ω.f)).nargs - 1
 
     if nargs == 1 && length(x) > 1
@@ -66,11 +66,11 @@ function (ω::OneForm)(x::Vector)::Vector
 end
 
 """
-    (ω::OneForm)(x::Vector, v::Vector)::number
+    (ω::OneForm)(x::AbstractVector, v::Vector)::number
 
 Evaluate ωₚ(v).
 """
-function (ω::OneForm)(x::Vector, v::Vector)::Number
+function (ω::OneForm)(x::AbstractVector, v::Vector)::Number
     return v ⋅ ω(x)
 end
 
