@@ -25,17 +25,22 @@ function do_10()
     nframes = (Int ∘ round)(duration / dt)
 
     if network == "mobius"
-        v_mag = (cos.(range(0, 2π - .1, length=nframes)) ./ 2 .+ .5)
-        vx = ones(nframes) / 71 .* v_mag
-        vy = cos.(range(0, 11π, length=nframes)) / 60 .* v_mag
+        t  = 1:nframes 
+        μ  = abs.(sin.(0.002t) .* .04) .+ .005
+
+        vx = range(1.1, .5, length = nframes) .* μ
+        vy = range(0.5, -0.5, length = nframes) .* μ
+
+        σ = 0.1  # scaling
         Δ = 25
         Vs = [vx, vy]
     else
         t  = 1:nframes 
-        μ  = sin.(0.004t)
-        vx = sin.(0.001t) ./ 5 .* μ
-        vy = cos.(0.004t) ./ 25 .* sin.(0.002t)
-        vz = cos.(0.003t) ./ 3 .* μ
+        μ  = abs.(sin.(0.002t) .* .04) .+ .005
+
+        vx = range(1.1, .5, length = nframes) .* μ
+        vy = range(0.5, -0.5, length = nframes) .* μ
+        vz = -range(1, 0, length = nframes) .* μ 
 
         σ = 0.1  # scaling
         Δ = 50
@@ -60,6 +65,7 @@ function do_10()
     save_plot(supervisor, trajplot, "10_path_int_$(network)_traj")
     display(trajplot)
 
+    
     simulation = Simulation(can, trajectory; η = 0.0, b₀ = 1.0);
 
 
@@ -88,9 +94,10 @@ function do_10()
 
     # --------------------------------- visualie --------------------------------- #
     plot_trajectory_and_decoded(trajectory, X̄) |> display
-    animate_simulation_data(can, trajectory, h, X̄, embedding, 
-            (supervisor.projectdir / "plots" /"path_int_$(network)_sim.gif").path
-    )
+    # animate_simulation_data(can, trajectory, h, X̄, embedding, 
+    #         (supervisor.projectdir / "plots" /"path_int_$(network)_sim.gif").path;
+    #         frames_Δ=80, neurons_Δ = 1
+    # )
 end
 
 do_10()

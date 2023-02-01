@@ -29,7 +29,6 @@ function piecewise_linear(
         return vals[idx]
     end
 
-
     # get value at each step
     t = 1:T |> collect
     return x.(t)
@@ -239,7 +238,6 @@ function Trajectory(
     # get starting point
     x₀ = x₀ isa Number ? repeat([x₀], d) : x₀
     x₀ = !isnothing(x₀) ? x₀ : rand(M; δ=δ)
-    # x₀ = get_closest_neuron(x₀, can.X, can.metric)
     @assert length(x₀) == d "Got x₀: $(x₀) and d=$d"
 
     @info "Generating trajectory" can.name M d σv μv modality
@@ -263,9 +261,6 @@ function Trajectory(
             push!(Vs, v)
         end
     else
-        # Vs = map(
-        #     v -> (v ./ (maximum(v) + eps())) .* vmax, Vs
-        # ) |> collect
         Vs
     end
 
@@ -288,7 +283,7 @@ function Trajectory(
 
         # make sure vmax magnitude is in range
         v = enforce_vmax(v, vmax)
-        v = enforce_vmin(v, 0.001)
+        v = enforce_vmin(v, 0.0)
  
         # update on mfld position
         x̂ = x + (v * dt)

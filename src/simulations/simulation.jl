@@ -98,6 +98,14 @@ function step!(
         Ṡ[:, i] .+= W[i] * S_tot .+  can.α * can.Ω[i](on_mfld_x, v) .+ input
     end
 
+    # print("\n")
+    # for i in 1:d
+    #     a = can.α * can.Ω[i](on_mfld_x, v)
+    #     a = round(a; digits=3)
+    #     s = a >= 0  ? " " : ""
+    #     print("$s $a\n")
+    # end
+
     # update activity
     simulation.S += (can.σ.(Ṡ) - S) / (simulation.τ)
 
