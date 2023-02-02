@@ -57,7 +57,7 @@ function run09()
     )
 
 
-    meta = metadata = Dict(
+    meta = Dict(
         "network" => network,
         "dt" => dt,
         "duration" => duration,

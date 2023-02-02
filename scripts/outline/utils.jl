@@ -20,18 +20,18 @@ end
 """
 Generate a CAN with multiple copies for path integration stuff.
 """
-function make_path_int_can(network; funky=false, random_x0=false) 
+function make_path_int_can(network; funky=false, random_x0=false, kwargs...) 
     return if network == "torus"
         can = if funky
-                torus_maker(:defult; n=48, α=325, offset_size=0.15, use_offset_fields=true)
+                torus_maker(:defult; n=48, α=75, offset_size=0.15, use_offset_fields=true, kwargs...) # for curly vfield α=325
             else
-                torus_maker(:defult; n=48, α=18, offset_size=0.3, use_offset_fields=false)
+                torus_maker(:defult; n=48, α=18, offset_size=0.3, use_offset_fields=false, kwargs...)
         end
         x₀_traj = random_x0 ? nothing : [-20, -15]
         can, x₀_traj, torus_embedding
 
     elseif network == "cylinder"
-        can = cylinder_maker(:default; n=48, α=30)
+        can = cylinder_maker(:default; n=48, α=30, kwargs...)
         x₀_traj = random_x0 ? nothing : [-20, -15]
         can, x₀_traj, cylinder_embedding
 
@@ -43,13 +43,13 @@ function make_path_int_can(network; funky=false, random_x0=false)
         can, x₀_traj, plane_embedding
 
     elseif network == "mobius"
-        can = mobius_maker(:defult; n=48, α=125)
+        can = mobius_maker(:defult; n=48, α=130, kwargs...)
         x₀_traj = random_x0 ? nothing : [0.5, 0.5]
         can, x₀_traj, mobius_embedding
 
     elseif network == "sphere"
-        can = sphere_maker(:default; n=28, α=240) # 225
-        x₀_traj = random_x0 ? nothing : ([1, 0, 0] ./ norm([1, 0, 0]))
+        can = sphere_maker(:default; n=48, α=235, kwargs...) # 225
+        x₀_traj = random_x0 ? nothing : ([0, 1, 0] ./ norm([0, 1, 0]))
         can, x₀_traj, sphere_embedding
     end
 end

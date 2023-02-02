@@ -4,16 +4,16 @@ function cylinder_maker(
     k::AbstractKernel = LocalGlobalKernel(α = 2.5, σ = 5.0), 
     offset_size::Number = 0.2,
     α = 3.2,
-    σ = :softrelu,
-    use_offset_fields::Bool = false
+    σ = :softrelu, 
+    r2_extent = 25,
+    cy_extent = 5,
+    kwargs...
 )
 
     # number of neurons
     n = (n, n) # number of neurons per dimension
 
-    # ℝ² → Cy cover map.
-    r2_extent = 25
-    cy_extent = 5
+    # ℝ² → Cy cover map.  
     ratio = r2_extent / cy_extent
     M = Manifoldℝ²(r2_extent)
 

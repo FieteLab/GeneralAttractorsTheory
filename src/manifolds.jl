@@ -159,10 +159,10 @@ end
     periodic_dimensions::Vector # label for which dimensions are periodic
 end
 
-Cylinder() = Cylinder(
+Cylinder(extent=5) = Cylinder(
     "Cylinder",
-    [0, -5],
-    [2π, 5],
+    [0, -extent],
+    [2π, extent],
     [ConstantVectorField(2, 1), ConstantVectorField(2, 2)],
     PeriodicEuclidean([2π]),
     2, [1, 0]
@@ -294,7 +294,7 @@ if it's along the periodic dimension gets its position module 2π.
 function apply_boundary_conditions!(x::Vector, m::Mobius)
     vel_correction_factors = [1, 1]
     # non periodic dimension
-    δ = 0.2  # padding around boundary to account for bump size
+    δ = 0.1  # padding around boundary to account for bump size
     if x[1] <= m.xmin[1] + δ
         x[1] = m.xmin[1] + δ
         vel_correction_factors[1] = 0

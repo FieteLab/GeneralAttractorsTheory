@@ -17,7 +17,7 @@ function do_10()
     duration = 2000
     still = 50  # initialization period        
 
-    network = "sphere"
+    network = "mobius"
     can, x₀_traj, embedding = make_path_int_can(network)
 
 
@@ -26,10 +26,10 @@ function do_10()
 
     if network == "mobius"
         t  = 1:nframes 
-        μ  = abs.(sin.(0.002t) .* .04) .+ .005
+        μ  = abs.(sin.(0.002t) .* .01)
 
-        vx = range(1.1, .5, length = nframes) .* μ
-        vy = range(0.5, -0.5, length = nframes) .* μ
+        vx = range(1.5, .5, length = nframes) .* μ
+        vy = cos.(0.008t) .* μ ./ 1.25
 
         σ = 0.1  # scaling
         Δ = 25
@@ -38,9 +38,13 @@ function do_10()
         t  = 1:nframes 
         μ  = abs.(sin.(0.002t) .* .04) .+ .005
 
-        vx = range(1.1, .5, length = nframes) .* μ
-        vy = range(0.5, -0.5, length = nframes) .* μ
-        vz = -range(1, 0, length = nframes) .* μ 
+        # vx = range(1.1, .5, length = nframes) .* μ
+        # vy = range(0.5, -0.5, length = nframes) .* μ
+        # vz = -range(1, 0, length = nframes) .* μ 
+
+        vx = range(.5, 1.0, length = nframes) .* μ
+        vy = range(0.5, 1.0, length = nframes) .* μ 
+        vz = range(1, 0, length = nframes) .* μ  
 
         σ = 0.1  # scaling
         Δ = 50
@@ -57,17 +61,19 @@ function do_10()
         vmax = max_path_int_vel[network],
         still = still,
         x₀ = x₀_traj,
-        smoothing_window = 501,
         Vs = Vs,
         # scale =  network == "sphere" ? .07 : 1.0,
     )
     trajplot = plot(trajectory; Δ=Δ)
     save_plot(supervisor, trajplot, "10_path_int_$(network)_traj")
     display(trajplot)
-
     
     simulation = Simulation(can, trajectory; η = 0.0, b₀ = 1.0);
 
+    # p = plot(trajectory.V[:, 1])
+    # plot!(p, trajectory.V[:, 2])
+    # plot!(p, trajectory.V[:, 3])
+    # display(p)
 
     # --------------------------------- simulate --------------------------------- #
 
@@ -94,10 +100,10 @@ function do_10()
 
     # --------------------------------- visualie --------------------------------- #
     plot_trajectory_and_decoded(trajectory, X̄) |> display
-    # animate_simulation_data(can, trajectory, h, X̄, embedding, 
-    #         (supervisor.projectdir / "plots" /"path_int_$(network)_sim.gif").path;
-    #         frames_Δ=80, neurons_Δ = 1
-    # )
+    animate_simulation_data(can, trajectory, h, X̄, embedding, 
+            (supervisor.projectdir / "plots" /"path_int_$(network)_sim.gif").path;
+            frames_Δ=100, neurons_Δ = 21
+    )
 end
 
 do_10()

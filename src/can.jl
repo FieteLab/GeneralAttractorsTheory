@@ -50,20 +50,8 @@ Base.show(io::IO, ::MIME"text/plain", ω::OneForm) = print(io, string(ω))
 
 Evaluate a one form at a point `x`.
 """
-function (ω::OneForm)(x::AbstractVector)::Vector
-    # nargs = first(methods(ω.f)).nargs - 1
-
-    # if nargs == 1 && length(x) > 1
-    #     o = zeros(length(x))
-    #     o[ω.i] = ω.f(x[ω.i])
-    #     return o
-    # elseif length(x) == 1
-    #     # one dimensional CAN
-    #     return [ω.f(x...)]
-    # else
-    return ω.f(x...)
-    # end
-end
+(ω::OneForm)(x::AbstractVector)::Vector = ω.f(x)
+norm(ω::OneForm, x::AbstractVector)::Number = norm(ω.f(x))
 
 """
     (ω::OneForm)(x::AbstractVector, v::Vector)::number
@@ -330,7 +318,13 @@ function get_one_forms(::Nothing, offsets::Vector)::Vector{OneForm}
     Ω = OneForm[]
     for (i, v) in enumerate(offsets)
         î = (Int ∘ ceil)(i / 2)
-        ω = OneForm(î, x -> v.θ[î])
+
+        f(x::Vector)::Vector = begin
+            y = zeros(size(x))
+            y[î] = v.θ[î]
+            return y
+        end
+        ω = OneForm(î, f)
         push!(Ω, ω)
     end
     Ω

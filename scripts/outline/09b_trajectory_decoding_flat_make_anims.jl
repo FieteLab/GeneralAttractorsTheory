@@ -9,7 +9,7 @@ import GeneralAttractors: animate_simulation_data
 using MultivariateStats, ManifoldLearning
 
 include("settings.jl")
-tag = "decoding_data"
+tag = "cylinder_to_torus" # "decoding_data"
 
 
 # ---------------------------- plotting functions ---------------------------- #
@@ -17,9 +17,9 @@ tag = "decoding_data"
 
 temporal_downsampling = 20
 fps = 30
-funky = true
+funky = false
 
-for network in ( "plane", "cylinder", "torus")
+for network in ( "torus", )
     savepath = supervisor.projectdir / "plots" / "path_int_$(network)_funky_$(funky).gif"
     # exists(savepath) && continue
 
@@ -45,10 +45,8 @@ for network in ( "plane", "cylinder", "torus")
         M, embs = embs, M
     end
 
-    
     pca = embs[:pca]
     iso = embs[:iso]
-    # @assert size(M, 1) == 3 size(M)
     @info "Got embedding model" pca iso M
 
 
@@ -58,7 +56,6 @@ for network in ( "plane", "cylinder", "torus")
         :tag => tag,
         :network => network,
         :funky => funky,
-        # :duration => 2500,
     )
 
     data = nothing
@@ -67,7 +64,7 @@ for network in ( "plane", "cylinder", "torus")
         println(meta)
         data = datas[1]
     catch e
-        @warn "No data for $network - funky: $funky. Maybe you need to run script 09a?" 
+        @warn "No data for $network - funky: $funky. Maybe you need to run script 09a?" supervisor.datadir.path 
         set_datadir(supervisor, datadir)
         continue
     end
@@ -75,7 +72,7 @@ for network in ( "plane", "cylinder", "torus")
     trajectory = data["trajectory"]
     S = sum(history.S; dims=2)[:, 1, :]
     S_embedd = predict(iso, predict(pca, S))
-    X = history.x_M_decoded
+    X = remove_jumps_from_trajectory(Matrix(history.x_M_decoded'))' |> Matrix
 
     set_datadir(supervisor, datadir)
 

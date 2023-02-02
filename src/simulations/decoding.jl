@@ -63,7 +63,7 @@ function (dec::Decoder)(s::Vector, can::AbstractCAN)::Tuple{Vector, Vector}
                     needs_correction
     end
 
-    dec.x += Δn
+    dec.x = apply_boundary_conditions!(dec.x + Δn, can.C.M)[1]
     dec.n = n̂
     return dec.x, n̂
 end

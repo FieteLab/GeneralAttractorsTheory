@@ -4,8 +4,7 @@ function sphere_maker(
     offset_size = 0.2,
     k = LocalGlobalKernel(α = 2.5, σ = 40.5),
     α = 46,
-    σ = :softrelu,
-    use_offset_fields::Bool = false
+    σ = :softrelu, kwargs...
 )
 
     # get neurons on S² ⊂ ℝ³

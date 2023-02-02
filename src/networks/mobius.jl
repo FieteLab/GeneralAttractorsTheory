@@ -5,8 +5,7 @@ function mobius_maker(
     n = nothing,  # not used but here for consistency with other methods
     α = 35,
     σ = :softrelu,
-    k = LocalGlobalKernel(α = 2.5, σ = 1.5),
-    use_offset_fields::Bool = false
+    k = LocalGlobalKernel(α = 2.5, σ = 1.5), kwargs...
 )
     mfld = Mobius()
 

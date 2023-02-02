@@ -4,8 +4,7 @@ function plane_maker(
     k::AbstractKernel = LocalGlobalKernel(α = 2.5, σ = 5.0), 
     offset_size::Number = 0.2,
     α = 3.2,
-    σ = :softrelu,
-    use_offset_fields::Bool = false
+    σ = :softrelu, kwargs...
 )
 
     # number of neurons

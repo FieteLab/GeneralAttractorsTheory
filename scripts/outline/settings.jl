@@ -19,6 +19,7 @@ import GeneralAttractors: toruscan, spherecan, mobiuscan, cylindercan, planecan
 using GeneralAttractors.ProjectSupervisor
 import GeneralAttractors: by_column, MobiusEuclidean, SphericalDistance, moving_average
 using GeneralAttractors.ManifoldUtils
+import GeneralAttractors.Simulations: remove_jumps_from_trajectory
 
 datadir = "/Users/federicoclaudi/Desktop/GeneralAttractors/data"
 

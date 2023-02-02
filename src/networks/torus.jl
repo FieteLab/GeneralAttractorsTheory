@@ -4,14 +4,18 @@ function torus_maker(cantype;
         offset_size::Number = 0.2,
         α = 3.2,
         σ = :softrelu,
-        use_offset_fields::Bool = false
+        use_offset_fields::Bool = false,
+        cover_manifold::Symbol = :default,
     )
     # number of neurons
     n = (n, n) # number of neurons per dimension
 
-    # ℝ² → T cover map.
-    """ ρ """
-    ρ(x, y) = [mod(x, 2π), mod(y, 2π)] # ρ: ℝ² → T
+
+    ρ(x, y) = if cover_manifold == :default
+            [mod(x, 2π), mod(y, 2π)] 
+    elseif cover_manifold == :cylinder
+        [x, mod(y, 2π)] 
+    end
     ρ(v) = ρ(v...)
 
     """
@@ -22,18 +26,29 @@ function torus_maker(cantype;
     in the cover space such that ρ(x̂, ŷ)=(x,y)
     """
     function ρⁱ(x, y; n = 40)
-        pts = zeros(2, n^2)
-        for (c, i) in enumerate(-n/2:(n/2-1)), (k, j) in enumerate(-n/2:(n/2-1))
-            x̂ = x + 2π * i
-            ŷ = y + 2π * j
-            pts[:, (c-1)*n+k] = [x̂, ŷ]
+        if cover_manifold == :default
+            pts = zeros(2, n^2)
+            for (c, i) in enumerate(-n/2:(n/2-1)), (k, j) in enumerate(-n/2:(n/2-1))
+                x̂ = x + 2π * i
+                ŷ = y + 2π * j
+                pts[:, (c-1)*n+k] = [x̂, ŷ]
+            end
+        else
+            pts = zeros(2, n^2)
+            for (k, j) in enumerate(-n/2:(n/2-1))
+                ŷ = y + 2π * j
+                pts[:, k] = [x, ŷ]
+            end
         end
         return pts
     end
-
     ρⁱ(w::Vector; n = 6) = ρⁱ(w...; n = n)
     
-    cover = CoverSpace(Manifoldℝ²(25), Torus(), ρ, ρⁱ)
+    cover = if cover_manifold == :default
+        CoverSpace(Manifoldℝ²(25), Torus(), ρ, ρⁱ)
+    elseif cover_manifold == :cylinder
+        CoverSpace(Cylinder(20), Torus(), ρ, ρⁱ)
+    end
 
     # define a function to get the coordinates of each neuron in the lattice
     function ξ(i::Int, j::Int)::Vector  # neurons coordinates function
@@ -55,10 +70,10 @@ function torus_maker(cantype;
 
         # one forms
         Ω = OneForm[
-            OneForm(1, (x, y) -> offset_size * torus_ψ1(x, y)),
-            OneForm(1, (x, y) -> offset_size * -torus_ψ1(x, y)),
-            OneForm(2, (x, y) -> offset_size * torus_ψ2(x, y)),
-            OneForm(2, (x, y) -> offset_size * -torus_ψ2(x, y)),
+            OneForm(1, (v) -> offset_size * torus_ψ1(v)),
+            OneForm(1, (v) -> offset_size * -torus_ψ1(v)),
+            OneForm(2, (v) -> offset_size * torus_ψ2(v)),
+            OneForm(2, (v) -> offset_size * -torus_ψ2(v)),
         ]
     else
         offsets, Ω = nothing, nothing

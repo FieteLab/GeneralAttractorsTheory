@@ -1,11 +1,6 @@
-using Plots
+using Plots, Random
 
 using Term.Progress
-using GeneralAttractors
-using GeneralAttractors.Simulations
-import GeneralAttractors.Simulations: plot_trajectory_and_decoded
-import GeneralAttractors: animate_simulation_data
-
 using MultivariateStats, ManifoldLearning
 
 include("settings.jl")
@@ -18,7 +13,7 @@ temporal_downsampling = 20
 fps = 30
 
 
-for network in ("sphere", "mobius")
+for network in ("mobius", )
     savepath = supervisor.projectdir / "plots" / "path_int_$(network).gif"
     # exists(savepath) && continue
 
@@ -68,12 +63,16 @@ for network in ("sphere", "mobius")
     end
     history = data["h"]
     trajectory = data["trajectory"]
+
+    idxs = randperm(size(history.S, 1))[1:size(pca.proj, 1)] |> sort
+    S_for_pca = mean(history.S; dims=2)[idxs, 1, :]
     S = mean(history.S; dims=2)[:, 1, :]
-    S_embedd = predict(iso, predict(pca, S))
-    X = history.x_M_decoded
+
+    S_embedd = predict(iso, predict(pca, S_for_pca))
+    X = remove_jumps_from_trajectory(Matrix(history.x_M_decoded'))' |> Matrix
 
     set_datadir(supervisor, datadir)
-    @info "Got data for $network" S M iso
+    @info "Got data for $network" S M S_embedd X
 
     # ------------------------------ make animation ------------------------------ #
 
@@ -82,12 +81,12 @@ for network in ("sphere", "mobius")
 
     # compute fps
     n_anim_frames = (nframes - skipframes)/temporal_downsampling  |> round |> Int
-    @info "Ready to animate" nframes skipframes n_anim_frames fps temporal_downsampling
+    @info "Ready to animate" nframes skipframes n_anim_frames fps temporal_downsampling w_x w_y
 
     anim = Animation()
-    pbar = ProgressBar()
-    Progress.with(pbar) do
-        job = addjob!(pbar, description = "Making animation: $network", N = n_anim_frames)
+    # pbar = ProgressBar()
+    # Progress.with(pbar) do
+    #     job = addjob!(pbar, description = "Making animation: $network", N = n_anim_frames)
         for i in 1:temporal_downsampling:nframes
             i < skipframes && continue
             fnum = max(i - skipframes, 1)
@@ -111,8 +110,8 @@ for network in ("sphere", "mobius")
             )
 
             frame(anim)
-            update!(job)
-        end
+        #     update!(job)
+        # end
     end
 
     gif(anim, (savepath).path, fps = fps)

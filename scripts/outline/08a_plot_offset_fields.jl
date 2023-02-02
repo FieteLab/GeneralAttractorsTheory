@@ -2,7 +2,7 @@ include("settings.jl")
 using MyterialColors
 import Base.Iterators: product as ×
 
-funky = false  # non trivial offset fields
+funky = true  # non trivial offset fields
 
 density =Dict(
     "plane" => 1/7,
@@ -13,7 +13,7 @@ density =Dict(
 )
 magnitude = Dict(
     "plane" => 0.9,
-    "torus" => 0.25,
+    "torus" => 0.15,
     "cylinder" => 0.5,
     "sphere" => 0.25,
     "mobius" => 0.15
@@ -42,7 +42,7 @@ for network in networks
     linecolor=:black,
     linewidth=0.6, label=nothing
     )
-
+``
     colors = [salmon, salmon_darker, indigo, indigo_darker, teal, teal_darker]
     for (j, (o, c)) in enumerate(zip(can.offsets, colors))
         # j % 2 != 1 && continue

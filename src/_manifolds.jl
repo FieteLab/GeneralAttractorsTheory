@@ -12,15 +12,21 @@ ring_ψ(x::Number) = (sin(x)+1.1)/2
 #                                  PLANE/TORUS                                 #
 # ---------------------------------------------------------------------------- #
 
-torus_ψ1(x) = torus_ψ1(x...)
-torus_ψ1(x, y) = [
-    cos(x),
-    sin(x),
-    ]
-# torus_ψ1(x, y) = [1, 1]
+# curl free vector field
+torus_ψ1(x, y) = [cos(x)/2 + 1, 0]
+torus_ψ2(x, y) = [0, cos(y)/2 + 1 ]
 
+# curly vector field
+# torus_ψ1(x, y) = [
+#     cos(x),
+#     sin(x),
+#     ]
+# torus_ψ2(x, y) =  [[0, 1] [-1, 0]]  * torus_ψ1(x, y)
+
+
+torus_ψ1(x) = torus_ψ1(x...)
 torus_ψ2(x) = torus_ψ2(x...)
-torus_ψ2(x, y) =  [[0, 1] [-1, 0]]  * torus_ψ1(x, y)
+
 
 # ---------------------------------------------------------------------------- #
 #                                    MOBIUS                                    #
@@ -85,17 +91,17 @@ normalize(x) = norm(x) > 0 ? x ./ norm(x) : x
 
 """ rotation around X axis """
 # sphere_ψx(x, y, z)::Vector = (z * ∂y - y * ∂z) |> normalize
-sphere_ψx(x, y, z)::Vector = [0, -z, y]
+sphere_ψx(x, y, z)::Vector = [0, -z, y] # |> normalize
 sphere_ψx(p) = sphere_ψx(p...)
 
 """ rotation around Y axis """
 # sphere_ψy(x, y, z)::Vector = (z * ∂x - x * ∂z) |> normalize
-sphere_ψy(x, y, z)::Vector = [z, 0, -x]
+sphere_ψy(x, y, z)::Vector = [z, 0, -x] # |> normalize
 sphere_ψy(p) = sphere_ψy(p...)
 
 """ rotation around Z axis """
 # sphere_ψz(x, y, z)::Vector = (x * ∂y - y * ∂x) |> normalize
-sphere_ψz(x, y, z)::Vector = [-y, x, 0]
+sphere_ψz(x, y, z)::Vector = [-y, x, 0] # |> normalize
 sphere_ψz(p) = sphere_ψz(p...)
 
 

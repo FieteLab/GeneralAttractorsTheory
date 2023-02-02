@@ -48,14 +48,13 @@ function run_sims_and_save(network, funky, N_sims, η, duration, still)
             vmax = max_path_int_vel[network],
             still = still,
             x₀ = x₀_traj,
-            smoothing_window = 501,
-            δ = 10,
-            scale=0.5,
+            δ = network ∈ ("torus", "plane", "cylinder") ? 10 : 0,
+            scale=network ∈ ("torus", "plane", "cylinder") ? 0.5 : 0,
         )
 
         # get simulation
         simulation = Simulation(can, trajectory; η = 0.0, b₀ = 1.0);
-        activate = get_can_initialization_weights(trajectory, can)
+        activate = get_can_initialization_weights(trajectory, can; δ = 0.25)
 
         # run 
         h, X̄ = @time run_simulation(
@@ -134,6 +133,6 @@ still = 50  # initialization period
 funky = false
 
 # ("plane", "cylinder", "torus")
-for network in ("plane", "cylinder")
+for network in ("mobius", )
     run_sims_and_save(network, funky, N_sims, η, duration, still)
 end
