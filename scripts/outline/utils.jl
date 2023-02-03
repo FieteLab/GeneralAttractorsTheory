@@ -43,7 +43,7 @@ function make_path_int_can(network; funky=false, random_x0=false, kwargs...)
         can, x₀_traj, plane_embedding
 
     elseif network == "mobius"
-        can = mobius_maker(:defult; n=48, α=130, kwargs...)
+        can = mobius_maker(:defult; n=48, α=130, offset_size=0.2, kwargs...)
         x₀_traj = random_x0 ? nothing : [0.5, 0.5]
         can, x₀_traj, mobius_embedding
 

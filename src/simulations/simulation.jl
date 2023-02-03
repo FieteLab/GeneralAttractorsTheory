@@ -93,7 +93,9 @@ function step!(
         isnothing(s₀) || (S[:, i] .*= s₀)
 
         # get activation
-        Ṡ[:, i] .+= W[i] * S_tot .+ can.α * can.Ω[i](on_mfld_x, v)  .+ input
+        # v_input = map(x -> can.Ω[i](x, v), eachcol(can.X)) .* can.α
+        v_input = can.α * can.Ω[i](on_mfld_x, v)
+        Ṡ[:, i] .+= W[i] * S_tot .+ v_input  .+ input
     end
 
     # update activity

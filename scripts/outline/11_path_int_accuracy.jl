@@ -16,7 +16,10 @@ as given by the CAN's coverspace metric.
 function measure_error(can, X, X̄)
     d = metrics[typeof(can.C.M)]
 
-    return [d(X[i, :], X̄[i, :]) for i in 1:size(X, 1)]
+    e =  [max(d(X[i, :], X̄[i, :]), eps()) for i in 1:size(X, 1)]
+    # replace nans with 0
+    e[isnan.(e)] .= 0.0
+    return e
 end
 
 
@@ -37,24 +40,30 @@ function run_sims_and_save(network, funky, N_sims, η, duration, still)
         
         # get can
         can, x₀_traj, embedding = make_path_int_can(network; funky=funky, random_x0=true)
+        x₀_traj = [1., 5.]
 
         # get trajectory
         trajectory = Trajectory(
             can;
             T = nframes,
             dt = dt,
-            σv = 1,
+            σv = [.75, .2],  # mobius values
             μv = 0,
             vmax = max_path_int_vel[network],
             still = still,
             x₀ = x₀_traj,
-            δ = network ∈ ("torus", "plane", "cylinder") ? 10 : 0,
-            scale=network ∈ ("torus", "plane", "cylinder") ? 0.5 : 0,
+            δ = network ∈ ("torus", "plane", "cylinder") ? 10 : 0.5,
+            scale=network ∈ ("torus", "plane", "cylinder") ? 0.5 : 0.5,
         )
 
         # get simulation
         simulation = Simulation(can, trajectory; η = 0.0, b₀ = 1.0);
-        activate = get_can_initialization_weights(trajectory, can; δ = 0.25)
+        activate = get_can_initialization_weights(trajectory, can; δ = 0.1)
+
+        # save plots of the trajectory and the decoded trajectory
+        trajplot = plot(trajectory; Δ=75)
+        display(trajplot)
+        save_plot(supervisor, trajplot, "11_path_int_error_$(network)_funky_$(funky)_traj_i_$(i)"; as_svg=false)
 
         # run 
         h, X̄ = @time run_simulation(
@@ -67,16 +76,9 @@ function run_sims_and_save(network, funky, N_sims, η, duration, still)
         # estimate error
         error = measure_error(can, trajectory.X, X̄)[still:end]
 
-        # save plots of the trajectory and the decoded trajectory
-        if  i % 10 == 0 || i == 1
-            trajplot = plot(trajectory; Δ=150)
-            display(trajplot)
-            save_plot(supervisor, trajplot, "11_path_int_error_$(network)_funky_$(funky)_traj_i_$(i)"; as_svg=false)
-        end
-
-        decplt = plot_trajectory_and_decoded(trajectory, X̄) 
+        decplt = plot_trajectory_and_decoded(trajectory, X̄; xlim=(-2.5, 2.5), ylim=(0, 6.28))
         display(decplt)
-        (i % 10 == 0 || i == 1) && save_plot(supervisor, decplt, "11_path_int_error_$(network)_funky_$(funky)_traj_i_$(i)"; as_svg=false)
+        save_plot(supervisor, decplt, "11_path_int_error_$(network)_funky_$(funky)_traj_i_$(i)"; as_svg=false)
 
         push!(runs_errors, moving_average(error, 51))
     end
@@ -114,6 +116,10 @@ function run_sims_and_save(network, funky, N_sims, η, duration, still)
         size=(1000, 500);
         plot_font_size_kwargs...
     )
+
+    # for e in runs_errors
+    #     plot!(fig, range(0, duration, length=nframes+1), e, alpha=0.1, color="black", label=nothing)
+    # end
 
     save_plot(supervisor, fig, "11_path_int_error_$(network)_funky_$(funky)_η_$(η)")
     display(fig)

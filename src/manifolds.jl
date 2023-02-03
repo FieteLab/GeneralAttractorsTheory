@@ -275,10 +275,10 @@ end
     periodic_dimensions::Vector # label for which dimensions are periodic
 end
 
-Mobius() = Mobius(
+Mobius(extent=2) = Mobius(
     "Mobius",
-    [-1.0, 0],
-    [1.0, 2π],
+    [-extent, 0],
+    [extent, 2π],
     [VectorField(MB_ψ1), VectorField(MB_ψ2)],
     MobiusEuclidean(),
     2, [0, 1]
@@ -294,7 +294,7 @@ if it's along the periodic dimension gets its position module 2π.
 function apply_boundary_conditions!(x::Vector, m::Mobius)
     vel_correction_factors = [1, 1]
     # non periodic dimension
-    δ = 0.1  # padding around boundary to account for bump size
+    δ = 0.5  # padding around boundary to account for bump size
     if x[1] <= m.xmin[1] + δ
         x[1] = m.xmin[1] + δ
         vel_correction_factors[1] = 0
@@ -319,7 +319,7 @@ function Base.rand(m::Mobius; δ=0.25)
     d = length(m.xmin)
     x = zeros(d)
     for i = 1:d
-        _δ = d == 1 ? δ : 0.0
+        _δ = d == 2 ? δ : 0.0
         x[i] = rand(m.xmin[i]+_δ:0.001:m.xmax[i]-_δ)  # padding because of boundary effect on neural activity
     end
     x

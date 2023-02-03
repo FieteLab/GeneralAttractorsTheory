@@ -47,6 +47,7 @@ function (dec::Decoder)(s::Vector, can::AbstractCAN)::Tuple{Vector, Vector}
     can.C.M == can.C.N && return (n̂ .- dec.decoding_offset, n̂)
 
     # get Δn relative to previous bump coordinates
+    # Δn = can.C.ρⁱ(n̂ .- dec.n)
     Δn = n̂ .- dec.n
 
     # scale Δn by the cover space scaling functions

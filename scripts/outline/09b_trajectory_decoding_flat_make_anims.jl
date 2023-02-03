@@ -1,4 +1,4 @@
-using Plots
+using Plots, Random
 
 using Term.Progress
 using GeneralAttractors
@@ -19,7 +19,9 @@ temporal_downsampling = 20
 fps = 30
 funky = false
 
-for network in ( "torus", )
+
+
+for network in ( "mobius", )
     savepath = supervisor.projectdir / "plots" / "path_int_$(network)_funky_$(funky).gif"
     # exists(savepath) && continue
 
@@ -71,7 +73,10 @@ for network in ( "torus", )
     history = data["h"]
     trajectory = data["trajectory"]
     S = sum(history.S; dims=2)[:, 1, :]
-    S_embedd = predict(iso, predict(pca, S))
+
+    idxs = randperm(size(history.S, 1))[1:size(pca.proj, 1)] |> sort
+    S_for_pca = mean(history.S; dims=2)[idxs, 1, :]
+    S_embedd = predict(iso, predict(pca, S_for_pca))
     X = remove_jumps_from_trajectory(Matrix(history.x_M_decoded'))' |> Matrix
 
     set_datadir(supervisor, datadir)

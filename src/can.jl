@@ -50,7 +50,7 @@ Base.show(io::IO, ::MIME"text/plain", ω::OneForm) = print(io, string(ω))
 
 Evaluate a one form at a point `x`.
 """
-(ω::OneForm)(x::AbstractVector)::Vector = ω.f(x)
+(ω::OneForm)(x::AbstractVector)::AbstractVector = ω.f(x)
 norm(ω::OneForm, x::AbstractVector)::Number = norm(ω.f(x))
 
 """

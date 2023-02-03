@@ -28,12 +28,12 @@ function sphere_maker(
 
     # define one forms
     Ω = [
-        OneForm(1, (x, y, z) -> offset_size * sphere_ψx(x, y, z)),
-        OneForm(1, (x, y, z) -> -offset_size * sphere_ψx(x, y, z)),
-        OneForm(2, (x, y, z) -> offset_size * sphere_ψy(x, y, z)),
-        OneForm(2, (x, y, z) -> -offset_size * sphere_ψy(x, y, z)),
-        OneForm(3, (x, y, z) -> offset_size * sphere_ψz(x, y, z)),
-        OneForm(3, (x, y, z) -> -offset_size * sphere_ψz(x, y, z)),
+        OneForm(1, (p) -> offset_size * sphere_ψx(p)),
+        OneForm(1, (p) -> -offset_size * sphere_ψx(p)),
+        OneForm(2, (p) -> offset_size * sphere_ψy(p)),
+        OneForm(2, (p) -> -offset_size * sphere_ψy(p)),
+        OneForm(3, (p) -> offset_size * sphere_ψz(p)),
+        OneForm(3, (p) -> -offset_size * sphere_ψz(p)),
     ]
 
 

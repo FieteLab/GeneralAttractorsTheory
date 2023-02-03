@@ -238,6 +238,7 @@ function Trajectory(
     # get starting point
     x₀ = x₀ isa Number ? repeat([x₀], d) : x₀
     x₀ = !isnothing(x₀) ? x₀ : rand(M; δ=δ)
+    x₀ = get_closest_neuron(x₀, can.X, can.metric)
     @assert length(x₀) == d "Got x₀: $(x₀) and d=$d"
 
     @info "Generating trajectory" can.name M d σv μv modality
@@ -252,7 +253,7 @@ function Trajectory(
                 ones(T) .* μv[i]
             else
                 # x = random_variable(T, μv[i], σv[i]; smoothing_window = smoothing_window) * scale
-                x = random_sine(T) * scale
+                x = random_sine(T) * scale .* σv[i]
                 μ = random_sine(T)
                 x = x .* μ
                 ramp = [range(0, 1, length = 100)..., ones(T - 100)...]

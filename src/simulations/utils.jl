@@ -347,7 +347,7 @@ end
 # ---------------------------------------------------------------------------- #
 #                               END OF SIMULATION                              #
 # ---------------------------------------------------------------------------- #
-function plot_trajectory_and_decoded(trajectory::Trajectory, X̄::Matrix)
+function plot_trajectory_and_decoded(trajectory::Trajectory, X̄::Matrix; kwargs...)
     X = remove_jumps_from_trajectory(trajectory.X)
     X̄ = remove_jumps_from_trajectory(X̄)
     d = size(X̄, 2)
@@ -359,6 +359,8 @@ function plot_trajectory_and_decoded(trajectory::Trajectory, X̄::Matrix)
         grid = false,
         aspect_ratio = d > 1 ? :equal : :auto,
         title = "Decoded trajectory",
+        size=(1000, 1000);
+        kwargs...
     )
 
     # scatter!([[x] for x in X[1, :]]..., ms = 5, alpha=.2, color = :black, label = nothing)

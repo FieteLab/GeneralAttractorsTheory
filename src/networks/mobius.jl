@@ -5,7 +5,9 @@ function mobius_maker(
     n = nothing,  # not used but here for consistency with other methods
     α = 35,
     σ = :softrelu,
-    k = LocalGlobalKernel(α = 2.5, σ = 1.5), kwargs...
+    k = LocalGlobalKernel(α = 2.5, σ = 1.5), 
+    cover_manifold::Symbol = :default,
+    kwargs...
 )
     mfld = Mobius()
 
@@ -16,7 +18,21 @@ function mobius_maker(
             (n, n)
 
     # cover space
-    cover = CoverSpace(mfld)
+    if cover_manifold == :default
+        cover = CoverSpace(mfld)
+    else
+        # create a cover space from the cylinder to the mobius strip
+        ρ(x, y) = [y, x]
+        ρ(v) = ρ(v...)
+
+        ρⁱ(x, y) = [y, x]
+        ρⁱ(v) = ρⁱ(v...)
+
+
+        cover = CoverSpace(
+            Cylinder(y_extent/2), mfld, ρ, ρⁱ;
+        )
+    end
 
     # coordinates function (from neurons index to lattice coordintes)
     sep = 2π / n[2]
@@ -38,10 +54,10 @@ function mobius_maker(
 
     # define one forms
     Ω = [
-        OneForm(1, (t, θ) -> offset_size * MB_ψ1(t, θ)),
-        OneForm(2, (t, θ) -> -offset_size * MB_ψ1(t, θ)),
-        OneForm(3, (t, θ) -> offset_size * MB_ψ2(t, θ)),
-        OneForm(4, (t, θ) -> -offset_size * MB_ψ2(t, θ)),
+        OneForm(1, (p) -> offset_size * MB_ψ1(p)),
+        OneForm(1, (p) -> -offset_size * MB_ψ1(p)),
+        OneForm(2, (p) -> offset_size * MB_ψ2(p)),
+        OneForm(2, (p) -> -offset_size * MB_ψ2(p)),
     ]
 
     # construct network

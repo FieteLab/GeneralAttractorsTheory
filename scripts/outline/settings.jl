@@ -77,7 +77,7 @@ max_path_int_vel = Dict(
     "cylinder" => 0.04,
     "torus" => 0.04,
     "sphere" => 0.004,
-    "mobius" => 0.04,
+    "mobius" => 0.02,
 )
 
 # ------------------------------ PLOTTING params ----------------------------- #
