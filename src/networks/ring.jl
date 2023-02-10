@@ -48,5 +48,5 @@ function ring_maker(
     end
 end
 
-ringcan = ring_maker(:can)
-ringcan_single = ring_maker(:single)
+# ringcan = ring_maker(:can)
+# ringcan_single = ring_maker(:single)

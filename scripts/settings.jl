@@ -15,7 +15,6 @@ using GeneralAttractors.Analysis
 using GeneralAttractors.Kernels
 import GeneralAttractors: torus_maker, sphere_maker, mobius_maker, cylinder_maker, plane_maker
 import GeneralAttractors: torus_embedding, identity_embedding, mobius_embedding, cylinder_embedding, plane_embedding, sphere_embedding
-import GeneralAttractors: toruscan, spherecan, mobiuscan, cylindercan, planecan
 using GeneralAttractors.ProjectSupervisor
 import GeneralAttractors: by_column, MobiusEuclidean, SphericalDistance, moving_average
 using GeneralAttractors.ManifoldUtils
@@ -40,11 +39,11 @@ networks = (
 )
 
 cans = Dict(
-    "torus" => toruscan, 
-    "sphere" => spherecan,
-    "mobius" => mobiuscan,
-    "cylinder" => cylindercan,
-    "plane" => planecan,
+    "torus" => torusmaker(:default), 
+    "sphere" => spheremaker(:default),
+    "mobius" => mobiusmaker(:default),
+    "cylinder" => cylindermaker(:default),
+    "plane" => planemaker(:default),
 )
 
 network_makers = Dict(

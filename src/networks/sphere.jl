@@ -66,5 +66,5 @@ function sphere_maker(
     end
 end
 
-spherecan = sphere_maker(:can)
-spherecan_single = sphere_maker(:single)
+# spherecan = sphere_maker(:can)
+# spherecan_single = sphere_maker(:single)

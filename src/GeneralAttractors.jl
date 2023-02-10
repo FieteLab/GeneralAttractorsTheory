@@ -42,12 +42,12 @@ include("networks/sphere.jl")
 include("networks/cylinder.jl")
 include("networks/plane.jl")
 
-export toruscan, toruscan_single, 
-        spherecan, spherecan_single, 
-        ringcan, ringcan_single, 
-        mobiuscan, mobiuscan_single, 
-        cylindercan, cylindercan_single,
-        planecan, planecan_single
+# export toruscan, toruscan_single, 
+#         spherecan, spherecan_single, 
+#         ringcan, ringcan_single, 
+#         mobiuscan, mobiuscan_single, 
+#         cylindercan, cylindercan_single,
+#         planecan, planecan_single
 export torus_maker, sphere_maker, ring_maker, mobius_maker, cylinder_maker, plane_maker
 
 end

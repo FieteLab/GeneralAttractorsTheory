@@ -107,5 +107,5 @@ function torus_maker(cantype;
 end
 
 
-toruscan = torus_maker(:can)
-toruscan_single = torus_maker(:single; k = LocalGlobalKernel(α = 1.0, σ = 50.0))
+# toruscan = torus_maker(:can)
+# toruscan_single = torus_maker(:single; k = LocalGlobalKernel(α = 1.0, σ = 50.0))

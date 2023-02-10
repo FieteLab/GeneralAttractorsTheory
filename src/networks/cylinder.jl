@@ -88,5 +88,5 @@ function cylinder_maker(
 end
 
 
-cylindercan = cylinder_maker(:can)
-cylindecan_single = cylinder_maker(:single)
+# cylindercan = cylinder_maker(:can)
+# cylindecan_single = cylinder_maker(:single)
