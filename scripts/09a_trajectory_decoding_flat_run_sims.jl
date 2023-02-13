@@ -37,7 +37,6 @@ function run09()
         vmax = max_path_int_vel[network],
         still = still,
         x₀ = x₀_traj,
-        smoothing_window = 501,
         Vs = [vx, vy],
     )
     trajplot = plot(trajectory)

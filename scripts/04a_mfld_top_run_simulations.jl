@@ -21,6 +21,7 @@ GENERATE_DATA && @info "Running $N_sims simulations in total."
 
 # sim params
 duration = 25
+error("Make sure to check that this duration gives the results we'd expect if you heatmap activityy")
 still = 15
 tag = "manifold_topology_data"
 

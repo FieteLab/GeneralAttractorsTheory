@@ -1,4 +1,4 @@
-import Term.Repr: @with_repr
+import Term.Repr: @with_repr, termshow
 using Statistics
 import ForwardDiff: jacobian
 
@@ -241,7 +241,7 @@ function Trajectory(
     x₀ = get_closest_neuron(x₀, can.X, can.metric)
     @assert length(x₀) == d "Got x₀: $(x₀) and d=$d"
 
-    @info "Generating trajectory" can.name M d σv μv modality
+    @debug "Generating trajectory" can.name M d σv μv modality
 
     # get velocity vector magnitude in components at each frame
     if isnothing(Vs)

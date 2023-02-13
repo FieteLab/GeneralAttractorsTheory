@@ -95,7 +95,7 @@ function constant_traj_sim(can::SingleCAN, duration, dt, still, τ, b₀; η=0.1
         still = still,
     )
 
-    return Simulation(can, trajectory; b₀ = b₀, τ = τ, η=0.1)
+    return Simulation(can, trajectory; b₀ = b₀, τ = τ, η=η)
 end
 
 """

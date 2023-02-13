@@ -17,13 +17,12 @@ function ring_maker(
     cover = CoverSpace(Ring())
 
     # offsets and one forms
-    offset_size = .15
-    offsets = [
-        p -> ring_ψ(p),
-        p -> -ring_ψ(p)
-    ]
+    # offsets = [
+    #     p -> ring_ψ(p),
+    #     p -> -ring_ψ(p)
+    # ]
 
-    Ω = OneForm[OneForm(1, (x) -> ring_ψ(x)), OneForm(1, (x) -> -ring_ψ(x))]
+    # Ω = OneForm[OneForm(1, (x) -> ring_ψ(x)), OneForm(1, (x) -> -ring_ψ(x))]
 
     # make network
     return if cantype == :single
@@ -37,7 +36,8 @@ function ring_maker(
             σ = σ,
         )
     else
-        CAN("ring", cover, n, ξ, d, k; 
+        CAN("ring", 
+        cover, n, ξ, d, k; 
         # offsets = offsets,
         # Ω = Ω,
         offset_size = offset_size, 

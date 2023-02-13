@@ -39,11 +39,11 @@ networks = (
 )
 
 cans = Dict(
-    "torus" => torusmaker(:default), 
-    "sphere" => spheremaker(:default),
-    "mobius" => mobiusmaker(:default),
-    "cylinder" => cylindermaker(:default),
-    "plane" => planemaker(:default),
+    "torus" => torus_maker(:default), 
+    "sphere" => sphere_maker(:default),
+    "mobius" => mobius_maker(:default),
+    "cylinder" => cylinder_maker(:default),
+    "plane" => plane_maker(:default),
 )
 
 network_makers = Dict(
