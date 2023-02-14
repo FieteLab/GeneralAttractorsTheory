@@ -1,143 +1,139 @@
 using Flux
-using Flux: @epochs, onehotbatch, mse, throttle
+import Flux: mse
 using Plots
+using FluxTraining
+import FluxTraining
+using MLDataUtils
 
 using GeneralAttractors
 using GeneralAttractors.Simulations
 import GeneralAttractors.Simulations: decode_peak_location, Decoder
 
 
+can_n = 48
 warmup_duration = 1000  
-trial_duration = 20
+trial_duration = 100
 
-x₀ = [3.14, 0]
+# x₀ = nothing # [3.14, 3.14]
 b₀ = 1.0
 τ = 5.0
 
+α = -270  # scaling factor for ω while generating ground truth data
+
 # ------------------------------ network params ------------------------------ #
-d , can_size = 2, 28^2
-n_hidden = 256
-n_training_trajectories = 1000
+d , can_size = 2, can_n^2
+n_hidden = 256 
+lr = 0.001
+
+n_training_trajectories = 50
+n_training_epochs = 250
+
+
+include("_learning.jl")
+
 
 # ---------------------------------- get CAN --------------------------------- #
-can = torus_maker(:single; n=28)
-
-# run CAN with no inputs to initialize state at x₀
-warmup_trajectory = ConstantTrajectory(
-    can;
-    T=warmup_duration,
-    x₀=x₀,
-)
-
-warmup, _ = run_simulation(
-    Simulation(can, warmup_trajectory; η=0.0, b₀=b₀);
-    discard_first_ms=0,
-    average_over_ms=0,
-)
+@isdefined(can) || begin
+    can = torus_maker(:single; n=can_n)
+end
 
 
-# ----------------------------------- train ---------------------------------- #
 
-function make_network()
-    encoder = Chain(
+# ------------------------------- generate data ------------------------------ #
+
+
+"""
+    make_data()
+
+Generate a dataset.
+It creates a bunch of trajectories and then gets the ground truth 
+correct data to train the network on. 
+"""
+function make_data()
+    data = []
+    @info "Generating data"
+    j = 1
+    for i in 1:n_training_trajectories
+        # run a "warmup" simulation to initialize the CAN at x₀
+        x₀ = rand(can.C.N)
+        
+        warmup_trajectory = ConstantTrajectory(
+            can;
+            T=warmup_duration,
+            x₀=x₀,
+        )
+
+        warmup, _ = run_simulation(
+            Simulation(can, warmup_trajectory; η=0.0, b₀=b₀);
+            discard_first_ms=warmup_duration-800,
+            average_over_ms=0,
+        )
+
+
+        # get data
+        trajectory = Trajectory(
+            can;
+            T=max(trial_duration, 500),  #  needs to be long enough to create a trajectory
+            vmax=0.01,
+            still=0, 
+            x₀=x₀,
+        )
+        
+        _, Ω = generate_groundtruth_data(trajectory, warmup)
+
+        for t in 1:trial_duration
+            x_t, v_t = trajectory.X[t, :], trajectory.V[t, :]
+            network_input = vcat(x_t, v_t)
+            push!(data, (network_input,  Ω[t]))
+            j += 1
+        end
+        println("   $(i)/$(n_training_trajectories)")
+    end
+
+
+    # split train/test 
+    train, test = splitobs(shuffleobs(data); at = 0.67)
+    @info "Data ready" train test train[1][1] train[2][1]
+
+    return train, test
+end
+
+@isdefined(train) || begin 
+    train, test = make_data()
+end
+
+# --------------------------------- training --------------------------------- #
+
+   
+function training_loop(train, test)
+    # make network
+    model = Chain(
         Dense(2d => n_hidden, relu),  # ẋ, x̂ → ṡ
         Dense(n_hidden => n_hidden, relu),
         Dense(n_hidden => can_size, relu),
-    )
+    ) 
 
-    decoder = Chain(
-        Dense(can_size => n_hidden, relu),
-        Dense(n_hidden => n_hidden, relu),
-        Dense(n_hidden => 2d, relu),
-    )
+    # callbacks
+    progCB = ProgressCB(length(train), n_training_epochs)
 
-    model = Chain(encoder, decoder)
+    # train
+    trainer = Learner(
+                model, mse; optimizer=Flux.ADAM(lr), 
+                callbacks=[
+                    progCB, 
+                    LossPlotterCB(),
+                    Recorder(),
+                    Metrics(Metric(Flux.mse, phase=TrainingPhase, name="MSE"),) ,
+                    throttle(Checkpointer("./data"), EpochEnd, freq=10)
+                ], 
+                usedefaultcallbacks = false,
+                data=(train, test))
 
-    opt_state = Flux.setup(Flux.Adam(0.01), model)
-    return model, encoder, decoder, opt_state
-end
-
-function loss(network_input, network_output) # , x_t, x̂_t)::Float64
-    autoencoder_loss = mse(network_output, network_input)
-    # can_loss = mse(x_t, x̂_t)
-    return autoencoder_loss # + can_loss
-end
-
-
-
-function initialize_can()
-    # initialize can state at end of warmup
-    S = warmup_history.S[:, 1, end]
-
-    # initialize S -> X decoder
-    x̂ = decode_peak_location(S, can)
-    decoder = Decoder(
-        trajectory.X[1, :],
-        x̂;
-        decoding_offset = trajectory.X[1, :] .- x̂,
-    )
-
-    return S, decoder
+    fit!(trainer, n_training_epochs)
+    stop!(progCB.progress)
 end
 
 
-function training_loop()
-    # make network
-    model, encoder, decoder, opt_state = make_network()
+encoder = training_loop(train, test)
 
-    @info "Got network" model encoder decoder opt_state
 
-    # get trajectory
-    # TODO: make this within the loop to change trajectory at each epoch
-    trajectory = Trajectory(
-        can;
-        T=max(trial_duration, 500),  #  needs to be long enough to create a trajectory
-        vmax=0.05,
-        still=0, 
-        x₀=x₀,
-    )
-    
-
-    # ruin over random trajectories
-    for training_run in 1:n_training_trajectories
-        # initialize CAN
-        S, can_decoder = initialize_can()
-
-        # run training loop over the entire trajectory
-        run_loss = 0
-        for t in 1:trial_duration
-            # prepare inputs to network
-            x_t, v_t = trajectory.X[t, :], trajectory.V[t, :]
-            network_input = vcat(x_t, v_t)
-
-  
-            # get loss
-            # run_loss += loss(network_input, network_input, x_t, x̂_t)
-
-            # update network
-            grads = Flux.gradient(model) do m
-                # encode/decode
-                # ω = encoder(network_input)  # input to the CAN
-                network_output = m(network_input)  # reconstructed input
-
-                # # update CAN's state given ω
-                # ṡ = (can.W * S .+ ω .+ b₀) .|> can.σ
-                # S = (ṡ - S)/τ
-
-                # # decode x from can's state
-                # x̂_t, _ = can_decoder(S, can)
-
-                l = loss(network_input, network_output) # , x_t, x̂_t)
-                run_loss += l
-                l
-            end
-
-            isnothing(grads[1]) && error("grads are nothing, something's wrong in the training loop.")
-
-            Flux.update!(opt_state, model, grads[1])
-        end
-        @info "RUN: {bold green}$(training_run){/bold green} loss: {red}$(round(run_loss; digits=3)){/red}"
-    end
-end
-
-encoder = training_loop()

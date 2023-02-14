@@ -255,7 +255,8 @@ mutable struct SingleCAN <: AbstractCAN
     d::Int                             # number of dimensions
     I::Vector{Tuple}                   # index (i,j...) of each neuron in the lattice
     X::Matrix                          # N × n_neurons matrix with coordinates of each neuron in lattice
-    W::Matrix                  # connectivity matrices with lateral offsets | length N
+    D::Matrix                          # matrix of pairwise distances between neurons
+    W::Matrix                          # connectivity matrices with lateral offsets | length N
     kernel::AbstractKernel             # connectivity kernel
     σ::Function                        # activation function
     metric::Metric
@@ -301,7 +302,7 @@ function SingleCAN(
 
     # finalize
     σ = σ isa Symbol ? activations[σ] : σ
-    return SingleCAN(name, C, n, length(n), lattice_idxs, X, W, kernel, σ, metric)
+    return SingleCAN(name, C, n, length(n), lattice_idxs, X, D,  W, kernel, σ, metric)
 end
 
 
