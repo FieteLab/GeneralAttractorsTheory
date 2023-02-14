@@ -4,6 +4,8 @@ using Plots
 using FluxTraining
 import FluxTraining
 using MLDataUtils
+using StatsBase
+using JLD2
 
 using GeneralAttractors
 using GeneralAttractors.Simulations
@@ -12,20 +14,20 @@ import GeneralAttractors.Simulations: decode_peak_location, Decoder
 
 can_n = 48
 warmup_duration = 1000  
-trial_duration = 100
+trial_duration = 500
 
 # x₀ = nothing # [3.14, 3.14]
 b₀ = 1.0
 τ = 5.0
 
-α = -270  # scaling factor for ω while generating ground truth data
+α = -280 # scaling factor for ω while generating ground truth data
 
 # ------------------------------ network params ------------------------------ #
 d , can_size = 2, can_n^2
 n_hidden = 256 
 lr = 0.001
 
-n_training_trajectories = 50
+n_training_trajectories = 2
 n_training_epochs = 250
 
 
@@ -50,7 +52,8 @@ It creates a bunch of trajectories and then gets the ground truth
 correct data to train the network on. 
 """
 function make_data()
-    data = []
+    N = n_training_trajectories * trial_duration
+    X, Y = zeros(2d, N), zeros(can_size, N)
     @info "Generating data"
     j = 1
     for i in 1:n_training_trajectories
@@ -81,25 +84,43 @@ function make_data()
         
         _, Ω = generate_groundtruth_data(trajectory, warmup)
 
-        for t in 1:trial_duration
+        for t in 10:trial_duration
             x_t, v_t = trajectory.X[t, :], trajectory.V[t, :]
             network_input = vcat(x_t, v_t)
-            push!(data, (network_input,  Ω[t]))
+            X[:, j] = network_input
+            Y[:, j] = Ω[t]
+        
             j += 1
         end
         println("   $(i)/$(n_training_trajectories)")
     end
 
 
+    # normalize data ∈ [0, 1 range]
+    X[isnan.(X)] .= 0
+    Y[isnan.(Y)] .= 0
+    x_transform = StatsBase.fit(UnitRangeTransform, X)
+    y_transform = StatsBase.fit(UnitRangeTransform, Y)
+
+    X = StatsBase.transform(x_transform, X)
+    Y = StatsBase.transform(y_transform, Y)
+    X[isnan.(X)] .= 0
+    Y[isnan.(Y)] .= 0
+    data = [(x, y) for (x, y) in zip(eachcol(X), eachcol(Y))]
+
+
+
     # split train/test 
     train, test = splitobs(shuffleobs(data); at = 0.67)
-    @info "Data ready" train test train[1][1] train[2][1]
+    @info "Data ready" train test train[1][1] train[1][2]
 
-    return train, test
+    return train, test, x_transform, y_transform
 end
 
 @isdefined(train) || begin 
-    train, test = make_data()
+    train, test, x_transform, y_transform = make_data();
+    save_object( "./data/x_transform.jld2", x_transform)
+    save_object( "./data/y_transform.jld2", y_transform)
 end
 
 # --------------------------------- training --------------------------------- #
@@ -118,18 +139,19 @@ function training_loop(train, test)
 
     # train
     trainer = Learner(
-                model, mse; optimizer=Flux.ADAM(lr), 
+                model, mse; 
+                optimizer=Flux.ADAM(lr), 
                 callbacks=[
                     progCB, 
                     LossPlotterCB(),
                     Recorder(),
-                    Metrics(Metric(Flux.mse, phase=TrainingPhase, name="MSE"),) ,
+                    Metrics(Metric(Flux.mse, phase=TrainingPhase, name="MSE"),),
                     throttle(Checkpointer("./data"), EpochEnd, freq=10)
                 ], 
                 usedefaultcallbacks = false,
                 data=(train, test))
 
-    fit!(trainer, n_training_epochs)
+    FluxTraining.fit!(trainer, n_training_epochs)
     stop!(progCB.progress)
 end
 

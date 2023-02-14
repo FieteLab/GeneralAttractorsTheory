@@ -113,6 +113,30 @@ end
 #                                   LEARNING                                   #
 # ---------------------------------------------------------------------------- #
 
+
+function run_model_on_trajectory(model, x_transform, y_transform, warmup, trajectory, can)
+    S, can_decoder = initialize_can(warmup, trajectory)    
+    x̄, Ω = [], []
+    for t in 1:size(trajectory.X, 1)
+        x = trajectory.X[t, :]
+        ẋ = trajectory.V[t, :]
+        J = jacobian(x, can)
+        v = J*ẋ
+
+        network_input = StatsBase.transform(x_transform, vcat(x, v))
+        ω = model(network_input)
+        ω = StatsBase.reconstruct(y_transform, ω)
+
+        Ṡ = (can.W * S .+ ω .+ b₀) .|> can.σ
+        S += (Ṡ - S)/τ
+
+        push!(x̄, can_decoder(S, can)[1])
+        push!(Ω, ω)
+    end
+
+    return x̄, Ω
+end
+
 # --------------------------- progress bar callback -------------------------- #
 mutable struct ProgressCB <: Callback
     progress::ProgressBar
@@ -126,7 +150,7 @@ function ProgressCB(n_steps::Int, n_epochs::Int)
     start!(pbar)
 
     job = addjob!(pbar; N = n_epochs, description="Training run")
-
+    update!(job; i=-2)
     return ProgressCB(pbar, n_steps,job, nothing)
 end
 
@@ -209,6 +233,9 @@ function FluxTraining.on(
 
     l_val = round(last(cb.validation_losses), digits=5)
     l_trn = round(last(cb.training_losses), digits=5)
+
+
+    @info "ready to plot" y0 y1 T l_val l_trn cb.validation_losses cb.training_losses
 
     plt = lineplot(
         T,
