@@ -9,25 +9,25 @@ using JLD2
 
 using GeneralAttractors
 using GeneralAttractors.Simulations
-import GeneralAttractors.Simulations: decode_peak_location, Decoder
+import GeneralAttractors.Simulations: decode_peak_location, Decoder, generate_groundtruth_data
 
 
-can_n = 48
+can_n = 30
 warmup_duration = 1000  
-trial_duration = 500
+trial_duration = 1000
 
 # x₀ = nothing # [3.14, 3.14]
 b₀ = 1.0
 τ = 5.0
 
-α = -280 # scaling factor for ω while generating ground truth data
+α = -110 # scaling factor for ω while generating ground truth data
 
 # ------------------------------ network params ------------------------------ #
 d , can_size = 2, can_n^2
 n_hidden = 256 
 lr = 0.001
 
-n_training_trajectories = 2
+n_training_trajectories = 10
 n_training_epochs = 250
 
 
@@ -82,7 +82,7 @@ function make_data()
             x₀=x₀,
         )
         
-        _, Ω = generate_groundtruth_data(trajectory, warmup)
+        _, Ω = generate_groundtruth_data(can, trajectory, warmup; α=α)
 
         for t in 10:trial_duration
             x_t, v_t = trajectory.X[t, :], trajectory.V[t, :]
@@ -107,8 +107,6 @@ function make_data()
     X[isnan.(X)] .= 0
     Y[isnan.(Y)] .= 0
     data = [(x, y) for (x, y) in zip(eachcol(X), eachcol(Y))]
-
-
 
     # split train/test 
     train, test = splitobs(shuffleobs(data); at = 0.67)

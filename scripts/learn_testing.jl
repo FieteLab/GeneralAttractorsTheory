@@ -5,19 +5,30 @@ using FluxTraining
 import FluxTraining
 using MLDataUtils
 using JLD2
+using StatsBase
 
 using GeneralAttractors
 using GeneralAttractors.Simulations
-import GeneralAttractors.Simulations: decode_peak_location, Decoder
+import GeneralAttractors.Simulations: generate_groundtruth_data
 
 
-include("_learning.jl")
 
 
-can_n = 48
+can_n = 30
+b₀ = 1.0
+τ = 5.0
+α = -110 # scaling factor for ω while generating ground truth data
+
+
 warmup_duration = 1000  
 trial_duration = 1500
 x₀= [3.14, 3.14]
+
+include("_learning.jl")
+
+@isdefined(can) || begin
+    can = torus_maker(:single; n=can_n)
+end
     
 warmup_trajectory = ConstantTrajectory(
     can;
@@ -42,7 +53,7 @@ trajectory = Trajectory(
 
 # get ground truth data
 println("Generating ground truth data")
-x̄, Ω = generate_groundtruth_data(trajectory, warmup)
+x̄, Ω = generate_groundtruth_data(can, trajectory, warmup; α=α)
 
 # get data through network
 model = loadmodel("data/checkpoint_epoch_056_loss_0.0039244010565047905.bson")
@@ -58,4 +69,4 @@ model_x̄, model_Ω = run_model_on_trajectory(
 
 plot(eachcol(trajectory.X)..., lw=4, color=:black, label="trajectory")
 plot!(eachrow(hcat(x̄...))..., lw=2, color=:red, label="ground truth")
-plot!(eachrow(hcat(model_x̄...))..., lw=2, color=:blue, label="model")
+# plot!(eachrow(hcat(model_x̄...))..., lw=2, color=:blue, label="model")
