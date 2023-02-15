@@ -8,13 +8,9 @@ import GeneralAttractors.Analysis.ManifoldAnalysis:
 
 # ------------------------------ networks makers ----------------------------- #
 
-function make_standard_single_torus_can(; kernel_name = :DoE)
-    can_maker = network_makers["torus"]
-    kernel_params = Dict(
-        k => mean(v) for (k, v) in kernels_parameters_range["torus"][kernel_name]
-    )
-    kernel = kernels[kernel_name](; kernel_params...)
-    return can_maker(:single; k=kernel)
+function make_single_can(network::String)
+    n = network ∈ ("ring", "line") ? 256 : 48
+    return network_makers[network](:single; n=n)
 end
 
 """
@@ -203,7 +199,7 @@ function do_tda(
     tda_model, tda_barcode_plot = tda_on_pointcloud(M, tda_params; 
             ms=5, color = tda_colors[1:max_d+1],
             plot_font_size_kwargs...)
-    save_plot(supervisor, tda_barcode_plot,save_plot_name);
+    save_plot(supervisor, tda_barcode_plot, save_plot_name);
 
 
     # get the number of persistence features based on the largest gap in the persitence

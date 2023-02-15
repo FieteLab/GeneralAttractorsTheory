@@ -1,5 +1,5 @@
 """
-Replicate some of the figures with a different kenel.
+Visualize different kind of kernels
 """
 
 

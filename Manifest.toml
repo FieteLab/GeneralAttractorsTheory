@@ -2,7 +2,7 @@
 
 julia_version = "1.8.3"
 manifest_format = "2.0"
-project_hash = "e3f0e7e9a404ea72a299611ec21a592ce5650269"
+project_hash = "27d964f9f8cd534a86a53bb3542b9c9774d3f596"
 
 [[deps.AbstractFFTs]]
 deps = ["ChainRulesCore", "LinearAlgebra"]
@@ -921,6 +921,12 @@ deps = ["Distributed", "Printf"]
 git-tree-sha1 = "d7a7aef8f8f2d537104f170139553b14dfe39fe9"
 uuid = "92933f4c-e287-5a05-a399-4b506db050ca"
 version = "1.7.2"
+
+[[deps.ProjectSupervisor]]
+deps = ["DataFrames", "Dates", "FileIO", "LibGit2", "MyterialColors", "ObjectivePaths", "Plots", "Term", "UUIDs", "YAML"]
+path = "../ProjectSupervisor"
+uuid = "d310f9bc-11a0-4cd7-a7e5-001710d1a948"
+version = "0.1.0"
 
 [[deps.PyCall]]
 deps = ["Conda", "Dates", "Libdl", "LinearAlgebra", "MacroTools", "Serialization", "VersionParsing"]

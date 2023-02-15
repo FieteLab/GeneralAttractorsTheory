@@ -5,6 +5,7 @@ using Distances: PeriodicEuclidean, evaluate, UnionMetric, SphericalAngle, Eucli
 import Base.Iterators: product as ×  # cartesian product
 using Term
 using YAML, NPZ, JLD2
+using ProjectSupervisor: Supervisor
 
 include("utils.jl")
 include("embeddings.jl")
@@ -31,23 +32,15 @@ using .Simulations
 import .Analysis
 
 
-include("supervisor.jl")
-using .ProjectSupervisor
-
 @info "Generating networks"
 include("networks/mobius.jl")
 include("networks/torus.jl")
 include("networks/ring.jl")
+include("networks/line.jl")
 include("networks/sphere.jl")
 include("networks/cylinder.jl")
 include("networks/plane.jl")
 
-# export toruscan, toruscan_single, 
-#         spherecan, spherecan_single, 
-#         ringcan, ringcan_single, 
-#         mobiuscan, mobiuscan_single, 
-#         cylindercan, cylindercan_single,
-#         planecan, planecan_single
-export torus_maker, sphere_maker, ring_maker, mobius_maker, cylinder_maker, plane_maker
+export torus_maker, sphere_maker, ring_maker, mobius_maker, cylinder_maker, plane_maker, line_maker
 
 end

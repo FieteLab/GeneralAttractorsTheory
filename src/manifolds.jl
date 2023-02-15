@@ -10,7 +10,7 @@ import ..GeneralAttractors: sphere_embedding, mobius_embedding
 
 export AbstractManifold, CoverSpace
 export ℝ², T, S²
-export Ring, Mobius, Sphere, Torus, Manifoldℝ², Cylinder
+export Ring, Mobius, Sphere, Torus, Manifoldℝ², Cylinder, Line
 
 include("_manifolds.jl")
 
@@ -61,6 +61,42 @@ end
 """ Ensure x in M """
 apply_boundary_conditions!(x, ::AbstractManifold) = (x, ones(length(x)))
 
+
+# ---------------------------------------------------------------------------- #
+#                                     LINE                                     #
+# ---------------------------------------------------------------------------- #
+
+@with_repr struct Line <: AbstractManifold
+    name::String
+    xmin::Vector
+    xmax::Vector
+    ψs::Vector{AbstractVectorField}
+    metric::Metric
+    d::Int  # dimensionality
+    periodic_dimensions::Vector # label for which dimensions are periodic
+end
+
+Line() = Line(
+    "line",
+    [-6],
+    [6],
+    [ConstantVectorField(1, 1)],
+    Euclidean(),
+    1, [0]
+)
+
+function apply_boundary_conditions!(x, ::Line)
+    δ = 0.25
+    x[1] = max(x.xmin[1]+δ, min(x.xmax[1]-δ, x[1]))
+    return x, 1
+end
+
+function Base.rand(m::Line; δ=0.25)
+    x = rand(m.xmin[1]+δ:0.001:m.xmax[1]-δ)
+    [x,]
+end
+
+
 # ---------------------------------------------------------------------------- #
 #                                     RING                                     #
 # ---------------------------------------------------------------------------- #
@@ -97,6 +133,7 @@ apply_boundary_conditions!(x, ::Ring) = mod.(x, 2π), 1
     d::Int  # dimensionality
     periodic_dimensions::Vector # label for which dimensions are periodic
 end
+
 Manifoldℝ²(m) = Manifoldℝ²(
     "ℝ²",
     [-m, -m],
@@ -107,14 +144,11 @@ Manifoldℝ²(m) = Manifoldℝ²(
 )
 ℝ² = Manifoldℝ²(100)
 
-
-
-
 function apply_boundary_conditions!(x::Vector, m::Manifoldℝ²)
     vel_correction_factors = [1, 1]
 
     # non periodic dimension
-    δ = 0.2  # padding around boundary to account for bump size
+    δ = 0.25  # padding around boundary to account for bump size
     if x[1] <= m.xmin[1] + δ
         x[1] = m.xmin[1] + δ
         vel_correction_factors[1] = 0
@@ -173,7 +207,7 @@ function apply_boundary_conditions!(x::Vector, m::Cylinder)
     
     vel_correction_facors = [1, 1]
     # non periodic dimension
-    δ = 0.2  # padding around boundary to account for bump size
+    δ = 0.25  # padding around boundary to account for bump size
     if x[2] <= m.xmin[2] + δ
         x[2] = m.xmin[2] + δ
         vel_correction_facors[2] = 0

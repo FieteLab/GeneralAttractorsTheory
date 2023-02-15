@@ -5,18 +5,19 @@ Definition of parameters and settins used throughout the analysis/plots.
 using Plots, DataFrames, Term, Statistics, LinearAlgebra, ObjectivePaths, Distances
 import MyterialColors: Palette, green_dark, deep_purple, indigo, salmon, salmon_dark
 import Plots: grid
+using ProjectSupervisor
+import ProjectSupervisor
 
 gr()   # for fast plotting
 # pyplot()  # for better plots quality
 
-install_term_stacktrace(; hide_frames=true)
+install_term_stacktrace(; hide_frames=false)
 
 using GeneralAttractors.Simulations
 using GeneralAttractors.Analysis
 using GeneralAttractors.Kernels
-import GeneralAttractors: torus_maker, sphere_maker, mobius_maker, cylinder_maker, plane_maker, ring_maker
-import GeneralAttractors: torus_embedding, identity_embedding, mobius_embedding, cylinder_embedding, plane_embedding, sphere_embedding, ring_embedding
-using GeneralAttractors.ProjectSupervisor
+import GeneralAttractors: torus_maker, sphere_maker, mobius_maker, cylinder_maker, plane_maker, ring_maker, line_maker
+import GeneralAttractors: torus_embedding, identity_embedding, mobius_embedding, cylinder_embedding, plane_embedding, sphere_embedding, ring_embedding, line_embedding
 import GeneralAttractors: by_column, MobiusEuclidean, SphericalDistance, moving_average
 using GeneralAttractors.ManifoldUtils
 import GeneralAttractors.Simulations: remove_jumps_from_trajectory
@@ -33,6 +34,7 @@ b₀ = 1.0
 dt = 0.5
 
 networks = (
+    "line",
     "ring",
     "torus", 
     "sphere", 
@@ -41,16 +43,10 @@ networks = (
     "plane"
 )
 
-# cans = Dict(
-#     "ring" => ring_maker(:default),
-#     "torus" => torus_maker(:default), 
-#     "sphere" => sphere_maker(:default),
-#     "mobius" => mobius_maker(:default),
-#     "cylinder" => cylinder_maker(:default),
-#     "plane" => plane_maker(:default),
-# )
+
 
 network_makers = Dict(
+    "line" => line_maker,
     "ring" => ring_maker,
     "torus" => torus_maker,
     "sphere" => sphere_maker,
@@ -60,6 +56,7 @@ network_makers = Dict(
 )
 
 embeddings = Dict(
+    "line" => line_embedding,
     "ring" => ring_embedding,
     "torus" => torus_embedding,
     "sphere" => identity_embedding,  # because the neurons are already "embedded" on the sphere
@@ -69,6 +66,7 @@ embeddings = Dict(
 )
 
 metrics = Dict(
+    Line => Euclidean(),
     Ring => PeriodicEuclidean([2π]),
     Manifoldℝ² => Euclidean(),
     Cylinder => PeriodicEuclidean([2π, Inf]),
@@ -79,6 +77,7 @@ metrics = Dict(
 
 
 max_path_int_vel = Dict(
+    "line" => 0.04,
     "ring" => 0.04,
     "plane" => 0.04,
     "cylinder" => 0.04,
@@ -114,8 +113,8 @@ plot_remove_axes = Dict(
 
 # ---------------------------- ANALYSIS paramters ---------------------------- #
 dimred_3d_params = AnalysisParameters(
-    max_nPC = 400,  # max num of PCs
-    pca_pratio = 0.999999999999999999,       # fraction of variance explained
+    max_nPC = 400,  
+    pca_pratio = 0.999999999999999999,     
     n_isomap_dimensions = 3,
     isomap_k = 10,
     isomap_downsample = 50,
@@ -126,7 +125,7 @@ dimred_10d_params = AnalysisParameters(
     pca_pratio = 0.9999999,
     n_isomap_dimensions = 10,
     isomap_k = 10,
-    isomap_downsample = 50,  # time downsamplin
+    isomap_downsample = 50,  
 )
 
 
@@ -135,125 +134,28 @@ dimred_50d_params = AnalysisParameters(
     pca_pratio = 0.9999999,
     n_isomap_dimensions = 50,
     isomap_k = 10,
-    isomap_downsample = 50,  # time downsamplin
+    isomap_downsample = 50,  
 )
 
 
 
 
-# --------------------------- kernel values ranges --------------------------- #
-
-"""
-For each kernel type and CAN architecture 
-"""
-
-kernels = (;
-   :mexican_hat => MexicanHatKernel, 
-   :DoE => DiffOfExpKernel,
-   :local_global => LocalGlobalKernel,
-   :constant => ConstantKernel,
-)
-
-
-δ = 0.01
-kernels_parameters_range = Dict(
-    "torus" => Dict(
-        :mexican_hat => Dict(
-            :α => 3:δ:16,
-            :σ => 3:δ:80,
-        ),
-        :DoE => Dict(
-            :a => 4:δ:20,
-            :λ => 10:δ:100,
-        ),
-        :local_global => Dict(
-            :α => 0.8:δ:8,
-            :σ => 100:δ:200,
-        ),
-        :constant => Dict(
-            :σ => 1.0:δ:2.0,
-            :β_minus => -1:δ:-.1
-        ),
-    ),
-
-"mobius" => Dict(
-        :mexican_hat => Dict(
-            :α => 3:δ:16,
-            :σ => 1:δ:30,
-        ),
-        :DoE => Dict(
-            :a => 4:δ:20,
-            :λ => 4:δ:30,
-        ),
-        :local_global => Dict(
-            :α => 0.8:δ:8,
-            :σ => 50:δ:75,
-        ),
-        :constant => Dict(
-            :σ => 0.5:δ:1.5,
-            :β_minus => -1:δ:-.1
-        ),
-    ),
-
-"cylinder" => Dict(
-        :mexican_hat => Dict(
-            :α => 3:δ:16,
-            :σ => 1:δ:30,
-        ),
-        :DoE => Dict(
-            :a => 4:δ:20,
-            :λ => 4:δ:30,
-        ),
-        :local_global => Dict(
-            :α => 0.8:δ:8,
-            :σ => 50:δ:75,
-        ),
-        :constant => Dict(
-            :σ => 0.5:δ:1.5,
-            :β_minus => -1:δ:-.1
-        ),
-    ),
-
-    "plane" => Dict(
-        :mexican_hat => Dict(
-            :α => 3:δ:16,
-            :σ => 1:δ:30,
-        ),
-        :DoE => Dict(
-            :a => 4:δ:20,
-            :λ => 4:δ:30,
-        ),
-        :local_global => Dict(
-            :α => 0.8:δ:8,
-            :σ => 50:δ:75,
-        ),
-        :constant => Dict(
-            :σ => 0.5:δ:1.0,
-            :β_minus => -1:δ:-.1
-        ),
-    ),
-
-    "sphere" => Dict(
-        :mexican_hat => Dict(
-            :α => 3:δ:16,
-            :σ => 1:δ:30,
-        ),
-        :DoE => Dict(
-            :a => 4:δ:20,
-            :λ => 4:δ:30,
-        ),
-        :local_global => Dict(
-            :α => 2:δ:10,
-            :σ => 50:δ:75,
-        ),
-        :constant => Dict(
-            :σ => 0.8:δ:1.2,
-            :β_minus => -1:δ:-.1
-        ),
-    ),
+tda_tresholds = Dict(
+    "line" => 12,
+    "ring" => 12,
+    "torus" => 20,
+    "sphere" => 18,
+    "mobius" => 16,
+    "cylinder" => 12,
+    "plane" => 25,
 )
 
 
 
+intrisnic_dimensionality_prms = AnalysisParameters(
+    intrinsic_d_nseeds = 250,
+    intrinsic_d_pratio = 0.75,
+    intrinsic_d_neighborhood_size = 500;
+)
 
 include("utils.jl")

@@ -11,23 +11,22 @@ for network in networks
     print(hLine("Doing $network"; style ="bold blue"))
 
     φ = embeddings[network]
-    can_maker = network_makers[network]
 
     # simulation params
-
     x₀ = if network == "sphere"
         [1, 0, 0]
     elseif network == "cylinder"
         [2π, -1] 
     elseif network ∉ ("line", "ring")
         [3.14, 2]
+    elseif network == "ring"
+        [3,]
     else
-        [1,]
+        [0,]
     end
 
     # plots params
-    n = network ∈ ("line", "ring") ? 256 : 64
-    can = can_maker(:single; n=n)
+    can = make_single_can(network)
 
     # run simulation
     h, _ = simulate_constant_traj_random_init(can, duration, dt, still, τ, b₀; x₀=x₀)
@@ -83,7 +82,8 @@ for network in networks
 
     else
         fig = plot(
-            can.X[1, :],  activity,
+            can.X[1, :],  
+            activity,
             lw=2, color=:black, 
             fillrange = 0,
             fillalpha = 0.25,
@@ -96,5 +96,5 @@ for network in networks
 
 
     display(fig)
-    save_plot(supervisor, fig, "f1_B_loc_actvitity_$(network)");
+    save_plot(supervisor, fig, "f3_B_loc_actvitity_$(network)");
 end

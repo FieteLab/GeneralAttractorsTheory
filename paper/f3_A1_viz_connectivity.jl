@@ -14,7 +14,7 @@ import GeneralAttractors: plot_distance_function, SphericalDistance, MobiusEucli
 # ----------------------------- plot connectivity ---------------------------- #
 
 for network in networks
-    can = network_makers[network](:single)
+    can = make_single_can(network)
 
     fig = if can.d == 2
         W = reshape(can.W[1,:], can.n)' |> Matrix
@@ -65,7 +65,7 @@ for network in networks
         )
     end
 
-    save_plot(supervisor, fig, "f1_A_connectivity_$network")
+    save_plot(supervisor, fig, "f3_A_connectivity_$network")
     display(fig)
 end
 
@@ -75,20 +75,20 @@ end
 
 d = PeriodicEuclidean([2π])
 p = plot_distance_function(d, plot_title = "Ring distance")
-save_plot(supervisor, p, "f1_A__distance_ring")
+save_plot(supervisor, p, "f3_A__distance_ring")
 
 d = PeriodicEuclidean([2π, 2π])  # distance function over a torus manifold
 p = plot_distance_function(d, plot_title = "Torus distance")
-save_plot(supervisor, p, "f1_A__distance_torus")
+save_plot(supervisor, p, "f3_A__distance_torus")
 
 
 d = PeriodicEuclidean([Inf, Inf])  
 p = plot_distance_function(d, plot_title = "Plane distance")
-save_plot(supervisor, p, "f1_A__distance_plane")
+save_plot(supervisor, p, "f3_A__distance_plane")
 
 d = PeriodicEuclidean([2π, Inf])
 p = plot_distance_function(d, plot_title = "Cylinder distance", layout = (4, 1))
-save_plot(supervisor, p, "f1_A__distance_cylinder")
+save_plot(supervisor, p, "f3_A__distance_cylinder")
 
 d = MobiusEuclidean()
 p = plot_distance_function(
@@ -97,7 +97,7 @@ p = plot_distance_function(
     layout = (1, 4),
     colorbar = nothing,
 )
-save_plot(supervisor, p, "f1_A__distance_mobius")
+save_plot(supervisor, p, "f3_A__distance_mobius")
 
 d = SphericalDistance()
 plot_distance_function(
