@@ -2,58 +2,99 @@
 include("settings.jl")
 
 
-duration = 25
+duration = 100
 still = 15
+network = "torus"
 
-for can_name in networks
-    print(hLine("Doing $can_name"; style ="bold blue"))
-    
-    φ = embeddings[can_name]
-    can_maker = network_makers[can_name]
+for network in networks
+    network == "sphere" && continue
+    print(hLine("Doing $network"; style ="bold blue"))
+
+    φ = embeddings[network]
+    can_maker = network_makers[network]
 
     # simulation params
 
-    x₀ = if can_name == "sphere"
+    x₀ = if network == "sphere"
         [1, 0, 0]
-    elseif can_name == "cylinder"
+    elseif network == "cylinder"
         [2π, -1] 
-    elseif name ∉ ("line", "ring")
-        [1, 0]
+    elseif network ∉ ("line", "ring")
+        [3.14, 2]
     else
         [1,]
     end
 
     # plots params
-    can = can_maker(can_type;)
+    n = network ∈ ("line", "ring") ? 256 : 64
+    can = can_maker(:single; n=n)
 
     # run simulation
     h, _ = simulate_constant_traj_random_init(can, duration, dt, still, τ, b₀; x₀=x₀)
 
+    activity = reshape(h.S[:, 1, end], can.n)
+
     # plot
     fig = if can.d == 2
         Δ = 2
-        activity = reshape(h.S[:, 1, end], can.n)
+        
+        n_idx = 200
+
         coords = by_column(φ, can.X[:, 1:Δ:end])
 
         w_x = range(can.X[1,1], can.X[1,end]; length=can.n[1])
         w_y = range(can.X[2,1], can.X[2,end]; length=can.n[2])
+        activity = reshape(h.S[:, 1, end], can.n)
 
+        main_plot = contourf(
+            w_x, w_y,
+            activity, title = "Activity ($network)",
+            aspect_ratio = :equal,
+            color=:bwr,
+            linewidth = 0.25,
+            msc=:black,
+            lc=:black,
+            grid = false,
+            levels=3,
+            )
 
-        x = can.X[1,:]
+        top_plot = plot(w_x, sum(activity; dims=1)[1, :], label=nothing; 
+                lw=3, color=:black, grid=false,
+                xlabel="θ", ylabel="activity"
+            )
 
-        # push!(plots, heatmap(activity, title=name))
-        # @info "cacca" can.X activity h.S[:, 1, end]
-        # plt = scatter3d(
-        #     can.X[1, :], can.X[2, :], h.S[:, 1, end],
-        #     marker_z = h.S[:, 1, end], msa=0, msw=0
-        # )
-        error("make contourf")
+            
+        side_plot = plot(
+                sum(activity; dims=2), w_y, label=nothing; 
+                lw=3, color=:black, grid=false,
+                xlabel="activity", ylabel="θ"
+        )
+        
+
+        plot(
+            plot(; plot_remove_axes...), 
+            top_plot, 
+            side_plot, 
+            main_plot, 
+            # grid(2, 2, heights=[.2, .8], widts=[.2, .8]),
+            size=(1000, 1000)
+        )
+        
+
     else
+        fig = plot(
+            can.X[1, :],  activity,
+            lw=2, color=:black, 
+            fillrange = 0,
+            fillalpha = 0.25,
+            fillcolor = :black,
+            label=nothing, xlabel="θ", ylabel="s(θ)",
+            title = "Activity $(network))",
+        )
 
     end
 
 
-
-    save_plot(supervisor, _fig, "f1_B_loc_actvitity_$(can_name)");
-    break
+    display(fig)
+    save_plot(supervisor, fig, "f1_B_loc_actvitity_$(network)");
 end

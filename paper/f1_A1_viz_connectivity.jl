@@ -32,11 +32,6 @@ for network in networks
             grid = false,
             )
 
-        x = can.X[1,:]
-        # scatter!(main_plot, [x[2]], [x[1]], color=:green, ms=10, msw=0, msa=0, label=nothing)
-
-
-
         top_plot = plot(w_x, W[1, :], label=nothing; 
                 lw=3, color=:black, grid=false
             )

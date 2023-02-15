@@ -5,7 +5,7 @@ function mobius_maker(
     n = nothing,  # not used but here for consistency with other methods
     α = 35,
     σ = :softrelu,
-    k = LocalGlobalKernel(α = 2.5, σ = 1.5), 
+    k = LocalGlobalKernel(α = 2.5, σ = 2.5), 
     cover_manifold::Symbol = :default,
     kwargs...
 )

@@ -76,6 +76,7 @@ Get a random initial condition for a CAN
 function random_init(can; x₀=nothing)
     x₀ = something(x₀, rand(can.C.N))
     d = map(i -> can.metric(x₀, can.X[:, i]), 1:size(can.X, 2))
+    
     activate = zeros(length(d))
     activate[d.<0.5] .= 1
     return x₀, activate
@@ -107,6 +108,7 @@ and constant input trajectory.
 function simulate_constant_traj_random_init(can, duration, dt, still, τ, b₀; x₀=nothing, 
     η=0.0, kwargs...
     )
+
     x₀, activate = random_init(can; x₀=x₀)
     sim = constant_traj_sim(can, duration, dt, still, τ, b₀; η=η)
     h, X = run_simulation(    

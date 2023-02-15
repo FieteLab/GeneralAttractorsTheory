@@ -1,7 +1,7 @@
 function plane_maker(
     cantype;
     n::Int = 48,
-    k::AbstractKernel = LocalGlobalKernel(α = 2.5, σ = 5.0), 
+    k::AbstractKernel = LocalGlobalKernel(α = 2.5, σ = 25.0), 
     offset_size::Number = 0.2,
     α = 3.2,
     σ = :softrelu, kwargs...
