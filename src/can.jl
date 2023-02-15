@@ -1,7 +1,7 @@
 module Can
 import Base.Iterators: product as ×  # cartesian product
 import Distances: Metric, pairwise
-import LinearAlgebra: ⋅, I
+import LinearAlgebra: ⋅, I, norm
 import ForwardDiff: jacobian
 
 
@@ -50,33 +50,31 @@ Base.show(io::IO, ::MIME"text/plain", ω::OneForm) = print(io, string(ω))
 
 Evaluate a one form at a point `x`.
 """
-function (ω::OneForm)(x::Vector)::Vector
-    nargs = first(methods(ω.f)).nargs - 1
-
-    if nargs == 1 && length(x) > 1
-        o = zeros(length(x))
-        o[ω.i] = ω.f(x[ω.i])
-        return o
-    elseif length(x) == 1
-        # one dimensional CAN
-        return [ω.f(x...)]
-    else
-        return ω.f(x...)
-    end
-end
+(ω::OneForm)(x::AbstractVector)::AbstractVector = ω.f(x)
+norm(ω::OneForm, x::AbstractVector)::Number = norm(ω.f(x))
 
 """
-    (ω::OneForm)(x::Vector, v::Vector)::number
+    (ω::OneForm)(x::AbstractVector, v::Vector)::number
 
 Evaluate ωₚ(v).
 """
-function (ω::OneForm)(x::Vector, v::Vector)::Number
+function (ω::OneForm)(x::AbstractVector, v::Vector)::Number
     return v ⋅ ω(x)
 end
 
 # ---------------------------------------------------------------------------- #
 #                                      CAN                                     #
 # ---------------------------------------------------------------------------- #
+
+function validate_ξ(ξ, N)
+    # check that ξ has the right form
+    nargs = first(methods(ξ)).nargs - 1
+    @assert N == nargs "ξ should accept $(N) arguments, accepts: $(nargs)"
+
+    rtype = Base.return_types(ξ, NTuple{N,Int})[1]
+    @assert rtype <: AbstractVector "ξ should return a Vector with neuron coordinates, not $rtype"
+end
+
 
 # --------------------------- activation functions --------------------------- #
 relu(x) = max(0, x)
@@ -141,7 +139,7 @@ mutable struct CAN <: AbstractCAN
     α::Number                           # scaling factor to make bump speed the same as input speed
 end
 
-Base.string(can::CAN) = "CAN (dim=$(length(can.n))) - n neurons: $(can.n)"
+Base.string(can::CAN) = "CAN $(can.name) (dim=$(length(can.n))) - n neurons: $(can.n)"
 Base.print(io::IO, can::CAN) = print(io, string(can))
 Base.show(io::IO, ::MIME"text/plain", can::CAN) = print(io, string(can))
 
@@ -167,12 +165,7 @@ function CAN(
     args...;
     kwargs...,
 ) where {N}
-    # check that ξ has the right form
-    nargs = first(methods(ξ)).nargs - 1
-    @assert N == nargs "ξ should accept $(N) arguments, accepts: $(nargs)"
-
-    rtype = Base.return_types(ξ, NTuple{N,Int})[1]
-    @assert rtype <: AbstractVector "ξ should return a Vector with neuron coordinates, not $rtype"
+    validate_ξ(ξ, N)
 
     # get the index of every neuron in the lattice | vector of length N `n` with elements of length d
     lattice_idxs::AbstractArray{NTuple{N,Int}} = ×(map(_n -> 1:_n, n)...) |> collect |> vec
@@ -214,7 +207,7 @@ function CAN(
     Ws::Vector{Matrix} = []
     for offset in offsets
         # get pairwise offset connectivity
-        D::Matrix = get_pairwise_distance(offset, X, metric, offset_size, φ)
+        D::Matrix = get_pairwise_distance_with_offset(offset, X, metric, offset_size, φ)
 
         # get connectivity matrix with kernel
         W = kernel.k.(D)
@@ -250,6 +243,70 @@ end
 
 
 # ---------------------------------------------------------------------------- #
+#                                  SINGLE CAN                                  #
+# ---------------------------------------------------------------------------- #
+"""
+A CAN that doesn't have multiple copies of the population with different offsets.
+"""
+mutable struct SingleCAN <: AbstractCAN
+    name::String
+    C::CoverSpace
+    n::NTuple{N,Int} where {N}         # number of neurons in each dimension
+    d::Int                             # number of dimensions
+    I::Vector{Tuple}                   # index (i,j...) of each neuron in the lattice
+    X::Matrix                          # N × n_neurons matrix with coordinates of each neuron in lattice
+    D::Matrix                          # matrix of pairwise distances between neurons
+    W::Matrix                          # connectivity matrices with lateral offsets | length N
+    kernel::AbstractKernel             # connectivity kernel
+    σ::Function                        # activation function
+    metric::Metric
+end
+
+
+Base.string(can::SingleCAN) = "SingleCAN $(can.name) (dim=$(length(can.n))) - n neurons: $(can.n)"
+Base.print(io::IO, can::SingleCAN) = print(io, string(can))
+Base.show(io::IO, ::MIME"text/plain", can::SingleCAN) = print(io, string(can))
+
+
+function SingleCAN(
+    name::String,
+    C::CoverSpace,
+    n::NTuple{N,Int},
+    ξ::Union{Matrix, Function},
+    metric::Metric,
+    kernel::AbstractKernel;
+    σ::Union{Symbol,Function} = :relu,
+) where {N}
+
+
+    # get the index of every neuron in the lattice | vector of length N `n` with elements of length d
+    lattice_idxs::AbstractArray{NTuple{N,Int}} = ×(map(_n -> 1:_n, n)...) |> collect |> vec
+    @debug "Got lattice" typeof(lattice_idxs) size(lattice_idxs)
+
+    # get the coordinates of every neurons
+    X::Matrix = if ξ isa Matrix
+        ξ
+    else
+        validate_ξ(ξ, N)
+        ξ̂(t::Tuple) = ξ(t...)
+        hcat(ξ̂.(lattice_idxs)...)  # matrix, size d × N
+    end
+    @debug "X" size(X) typeof(X) eltype(X)
+
+    # get connectivity
+    # get pairwise offset connectivity
+    D::Matrix = pairwise(metric, X, X)
+
+    # get connectivity matrix with kernel
+    W = kernel.k.(D)
+
+    # finalize
+    σ = σ isa Symbol ? activations[σ] : σ
+    return SingleCAN(name, C, n, length(n), lattice_idxs, X, D,  W, kernel, σ, metric)
+end
+
+
+# ---------------------------------------------------------------------------- #
 #                                   ONE FORMS                                  #
 # ---------------------------------------------------------------------------- #
 
@@ -262,7 +319,13 @@ function get_one_forms(::Nothing, offsets::Vector)::Vector{OneForm}
     Ω = OneForm[]
     for (i, v) in enumerate(offsets)
         î = (Int ∘ ceil)(i / 2)
-        ω = OneForm(î, x -> v.θ[î])
+
+        f(x::Vector)::Vector = begin
+            y = zeros(size(x))
+            y[î] = v.θ[î]
+            return y
+        end
+        ω = OneForm(î, f)
         push!(Ω, ω)
     end
     Ω
@@ -286,7 +349,7 @@ abstract type AbstractWeightOffset end
 """
 Compute pairwise distance between neurons after applying weights offsets.
 """
-function get_pairwise_distance end
+function get_pairwise_distance_with_offset end
 
 
 """
@@ -366,7 +429,7 @@ end
 
 
 
-function get_pairwise_distance(
+function get_pairwise_distance_with_offset(
     offset::ConstantOffset,
     X::Matrix,
     metric::Metric,
@@ -397,7 +460,7 @@ Construct offsets given a list of vector field functions
 function get_offsets(offsets::Vector{Function}, ::Int, n::Tuple)::Vector{FieldOffset}
     @assert length(offsets) >= 2length(n) "Got $(length(offsets)) offset fields, expected at least: $(2length(n))"
 
-    # get "base" offsets and use them as displacements for visuals
+    # get "base" offsets and use them as displacements FOR PLOTTING ONLY
     k = length(offsets)
     displacements = map(i -> 1.5 .* [cos(i * 2π / k), sin(i * 2π / k)], 1:k)
 
@@ -408,21 +471,28 @@ end
 """
 Get pairwise neurons distance given vector field offsets applied directly to the neurons lattice
 """
-function get_pairwise_distance(
+function get_pairwise_distance_with_offset(
     offset::FieldOffset,
     X::Matrix,
     metric::Metric,
     offset_size::Number,
     ::Nothing,
 )::Matrix
-    δx = by_column(offset.ψ, X)
+    # δx = by_column(offset.ψ, X)
+
+    # n = norm(δx)
+
+    δx = hcat(map(x -> offset.ψ(x), eachcol(X))...)
+
     pairwise(metric, X .- (offset_size .* δx), X)
+    # X̂ = by_column(x -> x .- offset.ψ(x), X)
+    # pairwise(metric, X̂, X)
 end
 
 
 """
 ---
-    get_pairwise_distance(
+    get_pairwise_distance_with_offset(
         offset::FieldOffset,
         X::Matrix,
         metric::Metric,
@@ -434,13 +504,14 @@ Offset vectors in the pairwise distance are computed on an embedding of
 the base manifold. Prior to computing the distance, neurons coordinates are 
 offset according to a vector given by a vector field defined over the embedded manifold. 
 """
-function get_pairwise_distance(
+function get_pairwise_distance_with_offset(
     offset::FieldOffset,
     X::Matrix,
     metric::Metric,
     offset_size::Number,
     φ::Function,
 )::Matrix
+    error("why was this called")
     # get coordinates in embedding space
     Y = by_column(φ, X)  # matrix q × n | q: embedding dimension, n: number of points
 

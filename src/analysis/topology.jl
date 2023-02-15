@@ -15,14 +15,6 @@ using Ripserer
 using PersistenceDiagrams: PersistenceDiagram
 using Statistics
 
-import GeneralAttractors:
-    load_simulation_history,
-    save_data,
-    load_data,
-    save_model,
-    load_model,
-    savepath,
-    checkpath
 
 import ...Simulations: History
 import ...Analysis: AnalysisParameters
@@ -31,7 +23,6 @@ include("analysis_viz.jl")
 
 export pca_dimensionality_reduction,
     isomap_dimensionality_reduction,
-    estimate_manifold_topology,
     estimate_intrinsic_dimensionality
 
 # ----------------------------------- utils ---------------------------------- #
@@ -50,7 +41,7 @@ https://towardsdatascience.com/detecting-knee-elbow-points-in-a-graph-d13fc517a6
 function find_fraction_variance_explained_elbow(σ::Vector{Float64})::Int
     length(σ) == 1 && return 1
     # check input
-    @assert σ[1] > σ[end] string(σ)
+    @assert σ[1] > σ[end] "Fraction of variance explained should be decreasing, did you `cumsum`?"
 
     # fit a line through the first and last point
     # consider that σ₁ = f(x₁) - x₁=1
@@ -88,50 +79,13 @@ end
 #                                      PCA                                     #
 # ---------------------------------------------------------------------------- #
 
-"""
-    pca_dimensionality_reduction(
-        simulation_name::String, 
-        params::AnalysisParameters=AnalysisParameters(),
-    )
-
-    Reduce dimensionality of simulation data through PCA.
-    It assumes a file "./data/simulation_name.bson" exists
-    and loads its content to perform PCA.
-    Then saves "./data/simulation_name_pca.bson" with the
-    PCA projected data.
-"""
-function pca_dimensionality_reduction(
-    simulation_folder::String,
-    simulation_name::String,
-    params::AnalysisParameters = AnalysisParameters();
-    visualize = false,
-)::Nothing
-    (
-        checkpath(simulation_folder, simulation_name * "_pca_space", "npz") &&
-        !params.debug
-    ) && return
-
-    history = load_simulation_history(simulation_folder, simulation_name * "_history")
-    @info "loaded history" history.S history.v
-
-    pca_dimensionality_reduction(
-        population_average(history),
-        simulation_folder,
-        simulation_name,
-        params,
-        visualize = visualize,
-    )
-end
 
 
 
 function pca_dimensionality_reduction(
     S::Matrix,
-    simulation_folder::String,
-    simulation_name::String,
     params::AnalysisParameters = AnalysisParameters();
-    visualize = false,
-)::Nothing
+)
     # get number of PCs
     nPC = if !isnothing(params.max_nPC)
         params.max_nPC
@@ -145,66 +99,29 @@ function pca_dimensionality_reduction(
     S_pca_space = predict(pca_model, S)
     @info "pca fitting completed $(length(principalvars(pca_model))) PCs" size(S_pca_space)
 
-    # plot fraction of variance explained
-    visualize &&
-        plot(
-            cumsum(fraction_variance_explained(pca_model)),
-            legend = nothing,
-            ylabel = "cum frac var",
-            xlabel = "PC",
-            lw = 4,
-            color = :black,
-            title = "Fraction of variance explained",
-        ) |> display
-
-    visualize &&
-        nPC == 3 &&
-        animate_3d_scatter(
-            S_pca_space,
-            simulation_folder,
-            "$(simulation_name)_PCA_projection";
-            alpha = 0.25,
-            title = simulation_name,
-        )
-
-    # save results to file
-    save_model(pca_model, simulation_folder, simulation_name * "_pca_model", :PCA)
-    save_data(S_pca_space, simulation_folder, simulation_name * "_pca_space")
-    nothing
+   return pca_model, S_pca_space
 end
 
 
 # ---------------------------------------------------------------------------- #
 #                                    ISOMAP                                    #
 # ---------------------------------------------------------------------------- #
-"""
-isomap_dimensionality_reduction(
-        simulation_name::String, 
-        params::AnalysisParameters=AnalysisParameters(),
-    )  
 
-    Performs ISOMAP dimensionality reduction on data that previously
-    underwent PCA dimensionality reduction
+"""
+    function isomap_dimensionality_reduction(
+        X::Matrix,
+        params::AnalysisParameters = AnalysisParameters();
+        visualize = true,
+    )::Nothing
+
+Embed a data matrix X of shape n_cells × n_timepoints
+into a lower dimensional space using ISOMAP.
 """
 function isomap_dimensionality_reduction(
-    simulation_folder::String,
-    simulation_name::String,
-    params::AnalysisParameters = AnalysisParameters();
-    visualize = true,
-)::Nothing
-    (
-        checkpath(simulation_folder, simulation_name * "_isomap_space", "npz") &&
-        !params.debug
-    ) && return
-
-    # load
-    X = real.(load_data(simulation_folder, simulation_name * "_pca_space"))
-
-    # remove duplicate columns
-    X = hcat(unique(eachcol(X))...)
-
+    X::Matrix,
+    params::AnalysisParameters = AnalysisParameters();)
     # fit
-    @info "Performing ISOMAP" size(X) params.n_isomap_dimensions params.isomap_downsample
+    @info "Performing ISOMAP" size(X) params.n_isomap_dimensions params.isomap_downsample params.isomap_k
     iso = ManifoldLearning.fit(
         Isomap,
         X[:, 1:params.isomap_downsample:end];
@@ -214,19 +131,8 @@ function isomap_dimensionality_reduction(
     M = predict(iso, X)
     @info "isomap fitting completed" size(M)
 
-    # make animation of Isomap embedding
-    visualize && animate_3d_scatter(
-        M,
-        simulation_folder,
-        "$(simulation_name)_ISOMAP_projection";
-        alpha = 0.25,
-        title = simulation_name,
-    )
 
-    # save
-    save_model(iso, simulation_folder, simulation_name * "_isomap_model", :ISOMAP)
-    save_data(M, simulation_folder, simulation_name * "_isomap_space")
-    nothing
+    return iso, M
 end
 
 
@@ -246,21 +152,7 @@ end
 
     Ref: https://mtsch.github.io/Ripserer.jl/dev/
 """
-function tda_on_pointcloud(
-    simulation_folder::String,
-    simulation_name::String,
-    params::AnalysisParameters,
-    lower_dim_space::String = "pca",
-)
-    # load
-    X = load_data(simulation_folder, "$(simulation_name)_$(lower_dim_space)_space")
-    tda_on_pointcloud(X, params, simulation_folder)
-end
-
-
-function tda_on_pointcloud(X::Matrix, params::AnalysisParameters, simulation_folder::String)
-    (checkpath(simulation_folder, "tda_results", "png") && !params.debug) && return
-
+function tda_on_pointcloud(X::Matrix, params::AnalysisParameters; color=nothing, plot_kwargs...)
     # convert M in a vector of tuples for TDA
     n = (Int ∘ round)(size(X, 2) / params.tda_downsample_factor)
     X̄ = [Tuple(x) for x in rand(collect(eachcol(X)), n)]
@@ -276,32 +168,12 @@ function tda_on_pointcloud(X::Matrix, params::AnalysisParameters, simulation_fol
     )
 
     # plot results
-    plt = plot(plot(tda), barcode(tda), size = (1000, 800))
-    savefig(savepath(simulation_folder, "tda_results", "png"))
-    save_model(tda, simulation_folder, "tda_barcode", :TDA)
+    plt = plot(plot(tda, color=color), barcode(tda), size = (1000, 800); plot_kwargs...)
     return tda, plt
 end
 
 
-"""
-Run TDA and analyze barcode to infer topology.
 
-TODO: barcode analysis
-"""
-function estimate_manifold_topology(
-    simulation_name::String,
-    params::AnalysisParameters = AnalysisParameters(),
-)
-    return tda_on_pointcloud(simulation_name, params)
-end
-
-function estimate_manifold_topology(
-    X::Matrix,
-    params::AnalysisParameters = AnalysisParameters(),
-    savename::String = "test",
-)
-    return tda_on_pointcloud(X, params, savename)
-end
 
 # ---------------------------------------------------------------------------- #
 #                                   LOCAL PCA                                  #
@@ -317,37 +189,39 @@ function estimate_intrinsic_dimensionality(
 Fit PCA to local neighborhoods on the data manifold to estimate
 intrinsic dimensionality. 
 """
-function estimate_intrinsic_dimensionality(simulation_name::String, args...; kwargs...)
-
-    # load
-    M = load_data(simulation_name, "pca_space")
-    estimate_intrinsic_dimensionality(M, args...; kwargs...)
-end
-
-
 function estimate_intrinsic_dimensionality(
     M::Matrix,
     params::AnalysisParameters = AnalysisParameters();
-)
-    @info "Estimating intrinsic dimensionality" size(M) params.intrinsic_d_nseeds params.intrinsic_d_neighborhood_size
+    nntree = nothing,
+    Us = nothing,  # precomputed neighborhoods
+)::Vector{Int}
+    # @info "Estimating intrinsic dimensionality" size(M) params.intrinsic_d_nseeds params.intrinsic_d_neighborhood_size params.intrinsic_d_pratio
 
     # build nearest neighbor tree
-    nntree = KDTree(M; reorder = false, leafsize = 5)
+    nntree = isnothing(nntree) ? KDTree(M; reorder = false, leafsize = 5) : nntree
 
     # sample random points on the manifold
     seeds_idxs = rand(1:size(M, 2), params.intrinsic_d_nseeds)
     seeds = M[:, seeds_idxs]
 
     # get neighborhoods
-    k = (Int ∘ round)(params.intrinsic_d_neighborhood_size)
-    Us, _ = knn(nntree, seeds, k)
+    Us = if isnothing(Us) == true
+        k = (Int ∘ round)(params.intrinsic_d_neighborhood_size)
+        knn(nntree, seeds, k)[1]
+    else
+        Us
+    end
 
     # for each neighborhood fit PCA and get the number of PCs
     D = []  # store "dimensionality" of each tangent vector space
-    for U in Us
+    for (i, U) in enumerate(Us)
         @assert length(U) == k
-        pca_model = fit(PCA, M[:, U]; pratio = 0.999999, maxoutdim = size(M, 2))
-        d = find_fraction_variance_explained_elbow(principalvars(pca_model))
+        pca_model = fit(PCA, M[:, U]; 
+                    pratio = params.intrinsic_d_pratio, 
+                    maxoutdim = size(M, 2)
+        )
+        # d = find_fraction_variance_explained_elbow(principalvars(pca_model))
+        d = length(principalvars(pca_model))
         push!(D, d)
     end
     return D

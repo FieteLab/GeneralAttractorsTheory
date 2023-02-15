@@ -1,7 +1,7 @@
 module Kernels
 
 export AbstractKernel, Kernel, MexicanHatKernel, DiffOfExpKernel, LocalGlobalKernel
-
+export ConstantKernel
 """
     A `Kernel` represents a function used to compute the connectivity strength
         between neurons x₁ -> x₂ based on their distance Δx. 
@@ -68,7 +68,11 @@ struct MexicanHatKernel <: AbstractKernel
     k::Function
 
     function MexicanHatKernel(; α = 0.33, σ = 0.25, β = 0)
-        k(t) = α * 2 / (√(3σ) * π^(1 / 4)) * (1 - (t / σ)^2) * exp(-t^2 / (2σ)) - β
+        _k(t) = α * 2 / (√(3σ) * π^(1 / 4)) * (1 - (t / σ)^2) * exp(-t^2 / (2σ)) - β
+
+        # get the peak location to ensure we can set it at 0
+        peak = maximum(_k.(-4:.01:4))
+        k(t) = _k(t) - peak
         new(α, σ, k)
     end
 end
@@ -95,17 +99,20 @@ struct DiffOfExpKernel <: AbstractKernel
     k::Function
 
     function DiffOfExpKernel(;
-        a::Float64 = 1.0,
+        a::Float64 = 2.0,
         λ::Float64 = 5 / 2π,
         β::Float64 = 3 / (λ^2),
         γ::Float64 = 1.05 * β,
         δ::Float64 = 0.0,  # offset
     )
 
-        k(x) = begin
+        _k(x) = begin
             _x = abs(x)^2
             a * exp(-γ * _x) - exp(-β * _x) + δ
         end
+
+        peak = maximum(_k.(-4:.01:4))
+        k(t) = _k(t) - peak
         new(a, λ, β, γ, k)
     end
 end
@@ -118,7 +125,6 @@ end
     struct LocalGlobalKernel <: AbstractKernel
         α::Float64   # strength of local excitation
         σ::Float64   # width of local excitation
-        β::Float64   # strength of global inhibition
         k:: Function
 
 Kernel with local excitation and global inhibition. 
@@ -126,14 +132,36 @@ Kernel with local excitation and global inhibition.
 struct LocalGlobalKernel <: AbstractKernel
     α::Float64   # strength of local excitation
     σ::Float64   # width of local excitation
-    β::Float64   # strength of global inhibition
     k::Function
 
-    function LocalGlobalKernel(; α = 1.0, σ = 1.0, β = 0.25)
+    function LocalGlobalKernel(; α = 1.0, σ = 1.0)
 
-        k(x) = α * exp(-(x^2 / 2σ * 2)) - β
-        new(α, σ, β, k)
+        k(x) = α * exp(-(x^2 / 2σ * 2)) - α
+        new(α, σ, k)
     end
 end
 
+"""
+    ConstantKernel <: AbstractKernel
+        σ::Float64  # half width of the kernel
+        β_plus::Float64  # value of the kernel at x = 0
+        β_minus::Float64  # value of the kernel at x >/< σ
+
+Takes a value of β_plus at -σ < x < σ and β_minus otherwise.
+"""
+struct ConstantKernel <: AbstractKernel
+    σ::Float64  # half width of the kernel
+    β_plus::Float64  # value of the kernel at x = 0
+    β_minus::Float64  # value of the kernel at x >/< σ
+    k::Function
+
+    function ConstantKernel(; σ = 1.0, β_plus = 0.0, β_minus = -1.0)
+        k(x) = (x > σ || x < -σ) ? β_minus : β_plus
+        new(σ, β_plus, β_minus, k)
+    end
 end
+
+end # module Kernels
+
+
+

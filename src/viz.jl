@@ -2,20 +2,34 @@ import MyterialColors: red, green, black, white
 
 # ---------------------------------- kernel ---------------------------------- #
 function Plots.plot(K::AbstractKernel; σ = 4, kwargs...)
-    x = -σ:0.001:σ |> collect
+    x = range(-σ,σ; length=500) |> collect
     y = K.(x)
-    x̂ = x[argmin(y)]
     Plots.plot(
         x,
         y,
-        xlabel = "distance Δx",
-        ylabel = "w",
-        lw = 2,
-        label = nothing,
-        grid = false,
-        color = "black";
+        xlabel = get(kwargs, :xlabel, "distance Δx"),
+        ylabel = get(kwargs, :ylabel, "w"),
+        lw = get(kwargs, :lw, 2),
+        label = get(kwargs, :label, nothing),
+        grid = get(kwargs, :grid, false),
+        color = get(kwargs, :color, "black");
         kwargs...,
-        # xlim = [-σ*abs(x̂), σ*abs(x̂)],
+    )
+end
+
+function Plots.plot!(K::AbstractKernel; σ = 4, kwargs...)
+    x = range(-σ,σ; length=500) |> collect
+    y = K.(x)
+    Plots.plot!(
+        x,
+        y,
+        xlabel = get(kwargs, :xlabel, "distance Δx"),
+        ylabel = get(kwargs, :ylabel, "w"),
+        lw = get(kwargs, :lw, 2),
+        label = get(kwargs, :label, nothing),
+        grid = get(kwargs, :grid, false),
+        color = get(kwargs, :color, "black");
+        kwargs...,
     )
 end
 
@@ -33,6 +47,7 @@ function plot_distance_1d(d::PeriodicEuclidean; kwargs...)
         vline!([point], color = colors[i], label = nothing)
     end
     display(p)
+    return p
 end
 
 
@@ -80,6 +95,7 @@ function plot_distance_2d(
 
     plt = plot(pts..., size = (600, 600); kwargs...)
     display(plt)
+    return plt
 end
 
 """
@@ -89,9 +105,10 @@ Plot metrics of type PeriodicEuclidean
 """
 function plot_distance_2d(d::PeriodicEuclidean; kwargs...)
     upperbound(x) = isfinite(x) ? x : 1
+    
     # get coordinates mesh
-    x = range(0, upperbound(d.periods[1]), length = 100) |> collect
-    y = range(0, upperbound(d.periods[2]), length = 100) |> collect
+    x = range(0, upperbound(d.periods[1]), length = 500) |> collect
+    y = range(0, upperbound(d.periods[2]), length = 500) |> collect
 
     plot_distance_2d(d, x, y; kwargs...)
 end
@@ -107,7 +124,7 @@ Visualize N=dimensional periodic distance functions.
 function plot_distance_function(d::PeriodicEuclidean; kwargs...)
     ndims = length(d.periods)
 
-    if ndims == 1
+    return if ndims == 1
         plot_distance_1d(d; kwargs...)
     elseif ndims == 2
         plot_distance_2d(d; kwargs...)
@@ -121,16 +138,16 @@ plot_distance_function(d::MobiusEuclidean; kwargs...)
 Plot distance for metric of type MobiusEuclidean
 """
 function plot_distance_function(d::MobiusEuclidean; kwargs...)
-    x = -1/2:0.075:1.2 |> collect
+    x = -1:0.075:1 |> collect
     y = 0:0.075:2π |> collect
     X = (x × y) |> collect
     X = [[x...] for x in vec(X)]
 
-    plot_distance_2d(
+    return plot_distance_2d(
         d,
         x,
         y;
-        points = [[-1 / 2, 0], [0, 3], [0.5, 0.2], [0, 2π]],
+        points = [[-0.8, 0], [0, 3], [0.5, 0.2], [0, 2π]],
         kwargs...,
     )
 end
@@ -144,21 +161,36 @@ https://github.com/JuliaStats/Distances.jl/blob/master/src/haversine.jl
 For an embedding of the sphere see: https://stackoverflow.com/questions/10473852/convert-latitude-and-longitude-to-point-in-3d-space
 """
 function plot_distance_function(d::Union{SphericalDistance,SphericalAngle}; kwargs...)
-    long = range(-π + 0.01, π - 0.01, length = 100) |> collect
-    lat = range(-π / 2 + 0.01, π / 2 - 0.01, length = 100) |> collect
-    X = (long × lat) |> collect
-    X = [[x...] for x in vec(X)]
+    function fibonacci_sphere(n = 1000)
+        points = zeros(3, n)
+        ϕ = π * (3 - √5)  # golden angle in radians
 
-    points = [[-π, 0], [2, π / 2], [π - 1, π / 2 - 1], [π, -1]]
-    plot_distance_2d(
-        d,
-        long,
-        lat;
-        points = points,
-        xlabel = "longitude",
-        ylabel = "latitude",
-        kwargs...,
-    )
+        for i = 1:n
+            y = 1 - (i / float(n - 1)) * 2  # y goes from 1 to -1
+            radius = √(Complex(1 - y * y)) |> real  # radius at y
+
+            θ = ϕ * i  # golden angle increment
+
+            x = cos(θ) * radius
+            z = sin(θ) * radius
+
+            points[:, i] = [x, y, z]
+        end
+        return points
+    end
+
+    vips = ([1, 0, 0], [0, 0, 1], [0, 1, 0])
+    X = fibonacci_sphere(400)
+
+    plts = []
+    for p in vips
+        Δx = [evaluate(d, p, x) for x in eachcol(X)]
+        plt = scatter3d(eachrow(X)..., marker_z = Δx)
+        scatter3d!(plt, [p[1]], [p[2]], [p[3]], ms = 10, color = :red)
+        push!(plts, plt)
+    end
+
+    plot(plts...)
 end
 
 # ------------------------------- connectivity ------------------------------- #
@@ -406,38 +438,62 @@ end
 
 
 function plot_can_vector_fields!(plt, can, vel, x_actual, x_decoded)
-    if can.d ==1
+    if can.d == 1
         x0, x1 = minimum(can.X), maximum(can.X)
-        for x in range(x0, x1, length=50)
-            y = can.Ω[1]([x])[1][1] * 4
-            plot!(plt, [x, x], [0, y], 
-                ylim=[0, 2],
-                lw=2, color=:red, alpha=.5, label=nothing)
+        for x in range(x0, x1, length = 50)
+            # y = can.Ω[1]([x])[1][1] * 4
+
+            y = can.offsets[1](x)[1]
+            y = y > 0 ? y / y : y
+            plot!(
+                plt,
+                [x, x],
+                [0, y],
+                ylim = [0, 2],
+                lw = 2,
+                color = :red,
+                alpha = 0.5,
+                label = nothing,
+            )
         end
 
-        plot!(plt, [x_actual[1], x_actual[1]], [0, 1.5],
-            lw=4, color=:black, label=nothing
+        plot!(
+            plt,
+            [x_actual[1], x_actual[1]],
+            [0, 1.5],
+            lw = 4,
+            color = :black,
+            label = nothing,
         )
-        plot!(plt, [x_decoded[1], x_decoded[1]], [0, 1.5],
-            lw=4, color=:red, label=nothing
+        plot!(
+            plt,
+            [x_decoded[1], x_decoded[1]],
+            [0, 1.5],
+            lw = 4,
+            color = :red,
+            label = nothing,
         )
         return
     end
+    return
     n = size(can.X, 2)
     scaling = 25.0
-    
+
     colors = [white, white, red, red, green, green]
-    for i in 1:4:n
+    for i = 1:4:n
         x = can.X[:, i]
-        scatter!(plt, [[x] for x in x]..., label=nothing, color=:black, ms=3)
+        scatter!(plt, [[x] for x in x]..., label = nothing, color = :black, ms = 3)
 
         for (j, o) in enumerate(can.Ω)
             j % 2 == 0 && continue
-            v = o(x) * vel[(Int ∘ ceil)(j/2)]
-            plot!(plt,
-                [x[1], x[1]+v[1]*scaling],
-                [x[2], x[2]+v[2]*scaling],
-                lw=2, color=colors[j], label=nothing
+            v = o(x) * vel[(Int ∘ ceil)(j / 2)]
+            plot!(
+                plt,
+                [x[1], x[1] + v[1] * scaling],
+                [x[2], x[2] + v[2] * scaling],
+                lw = 2,
+                color = colors[j],
+                label = nothing,
             )
         end
     end

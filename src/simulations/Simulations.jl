@@ -8,9 +8,11 @@ using SparseArrays
 import ForwardDiff: jacobian
 
 import GeneralAttractors:
-    save_simulation_history, moving_average, savepath, save_model, save_data, by_column, plot_can_vector_fields!
+    moving_average,
+    by_column,
+    plot_can_vector_fields!
 import GeneralAttractors: show_oneforms, show_oneforms!
-import ..Can: AbstractCAN, offset_for_visual, OneForm, AbstractWeightOffset
+import ..Can: AbstractCAN, offset_for_visual, OneForm, AbstractWeightOffset, SingleCAN
 import ..ManifoldUtils:
     AbstractManifold,
     Manifoldℝ²,
@@ -20,13 +22,17 @@ import ..ManifoldUtils:
     sphere_embedding,
     CoverSpace,
     Ring,
-    apply_boundary_conditions!
+    apply_boundary_conditions!,
+    AbstractVectorField
 
 export Simulation, run_simulation
-export Trajectory
+export Trajectory, ConstantTrajectory
+export generate_groundtruth_data
 
 include("trajectory.jl")
 include("decoding.jl")
 include("simulation.jl")
 include("utils.jl")
+include("single_can_groundtruth.jl")
+
 end
