@@ -14,14 +14,14 @@ import GeneralAttractors.Simulations: generate_groundtruth_data, initialize_can_
 
 
 
-can_n = 30
+can_n = 64
 b₀ = 1.0
 τ = 5.0
-α = -110 # scaling factor for ω while generating ground truth data
+α = -600 # scaling factor for ω while generating ground truth data
 
 
 warmup_duration = 1000  
-trial_duration = 1000
+trial_duration = 500
 x₀= [3.14, 3.14]
 
 include("_learning.jl")
@@ -56,7 +56,7 @@ println("Generating ground truth data")
 x̄, Ω = generate_groundtruth_data(can, trajectory, warmup; α=α)
 
 # get data through network
-model = loadmodel("data/checkpoint_epoch_246_loss_0.003626402092629607.bson")
+model = loadmodel("data/checkpoint_epoch_246_loss_0.028259265397799865.bson")
 x_transform = load_object("./data/x_transform.jld2")
 y_transform = load_object("./data/y_transform.jld2")
 

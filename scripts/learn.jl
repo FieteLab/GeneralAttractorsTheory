@@ -4,6 +4,7 @@ using Plots
 using FluxTraining
 import FluxTraining
 using MLDataUtils
+import MLUtils: DataLoader
 using StatsBase
 using JLD2
 

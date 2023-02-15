@@ -10,7 +10,7 @@ using UnicodePlots
 # ---------------------------------------------------------------------------- #
 
 
-function run_model_on_trajectory(model, x_transform, y_transform, warmup, trajectory, can; β=1)
+function run_model_on_trajectory(model, x_transform, y_transform, warmup, trajectory, can; β=6)
     S, can_decoder = initialize_can_with_warmup(can, warmup, trajectory)    
     x̄, Ω = [], []
     for t in 1:size(trajectory.X, 1)
