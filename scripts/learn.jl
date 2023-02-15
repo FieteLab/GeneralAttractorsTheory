@@ -14,7 +14,7 @@ import GeneralAttractors.Simulations: decode_peak_location, Decoder, generate_gr
 
 can_n = 30
 warmup_duration = 1000  
-trial_duration = 1000
+trial_duration = 1500
 
 # x₀ = nothing # [3.14, 3.14]
 b₀ = 1.0
@@ -27,8 +27,8 @@ d , can_size = 2, can_n^2
 n_hidden = 256 
 lr = 0.001
 
-n_training_trajectories = 10
-n_training_epochs = 250
+n_training_trajectories = 100
+n_training_epochs = 50
 
 
 include("_learning.jl")
@@ -110,7 +110,16 @@ function make_data()
 
     # split train/test 
     train, test = splitobs(shuffleobs(data); at = 0.67)
-    @info "Data ready" train test train[1][1] train[1][2]
+    # @info "Data ready" train test train[1][1] train[1][2]
+
+    # create data loader objects
+    train = DataLoader(
+        (hcat(first.(train)...), hcat(last.(train)...)), 
+        batchsize=32, shuffle=true, partial=false
+    )
+    test = DataLoader(
+        (hcat(first.(test)...), hcat(last.(test)...)),
+        batchsize=32, shuffle=true, partial=false)
 
     return train, test, x_transform, y_transform
 end
@@ -147,9 +156,10 @@ function training_loop(train, test)
                     throttle(Checkpointer("./data"), EpochEnd, freq=10)
                 ], 
                 usedefaultcallbacks = false,
-                data=(train, test))
+                # data=(train, test)
+    )
 
-    FluxTraining.fit!(trainer, n_training_epochs)
+    FluxTraining.fit!(trainer, n_training_epochs, (train, test))
     stop!(progCB.progress)
 end
 

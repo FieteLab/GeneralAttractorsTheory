@@ -3,47 +3,6 @@ using Term.Progress
 import FluxTraining: Callback, EpochEnd, Phase, Read, StepEnd, TrainingPhase, EpochBegin, ValidationPhase
 using UnicodePlots
 
-# ---------------------------------------------------------------------------- #
-#                                     DATA                                     #
-# ---------------------------------------------------------------------------- #
-
-"""
-    generate_groundtruth_data(trajectory)
-
-Given a trajectory, generate ground-truth data on what `ω`,
-the velocity-dependent input to the network should be. 
-
-to test:
-    x̄, _ =  test()
-
-
-    plot(eachcol(trajectory.X)..., lw=4, color=:black)
-    plot!(eachrow(hcat(x̄...))..., lw=2, color=:red)
-
-"""
-function generate_groundtruth_data(trajectory, warmup)
-    S, can_decoder = initialize_can(warmup, trajectory)    
-    x̄, Ω = [], []
-    for t in 1:size(trajectory.X, 1)
-        i = argmax(S)
-        ∂w∂x, ∂w∂y = get_W_partial_derivatives(i)
-
-        x = trajectory.X[t, :]
-        ẋ = trajectory.V[t, :]
-        J = jacobian(x, can)
-
-        v = J*ẋ
-        ω = α * v[1] * ∂w∂x + α * v[2] * ∂w∂y
-        Ṡ = (can.W * S .+ ω .+ b₀) .|> can.σ
-        S += (Ṡ - S)/τ
-
-        push!(x̄, can_decoder(S, can)[1])
-        push!(Ω, ω)
-    end
-
-    return x̄, Ω
-end
-
 
 
 # ---------------------------------------------------------------------------- #
@@ -51,20 +10,20 @@ end
 # ---------------------------------------------------------------------------- #
 
 
-function run_model_on_trajectory(model, x_transform, y_transform, warmup, trajectory, can)
-    S, can_decoder = initialize_can(warmup, trajectory)    
+function run_model_on_trajectory(model, x_transform, y_transform, warmup, trajectory, can; β=1)
+    S, can_decoder = initialize_can_with_warmup(can, warmup, trajectory)    
     x̄, Ω = [], []
     for t in 1:size(trajectory.X, 1)
         x = trajectory.X[t, :]
         ẋ = trajectory.V[t, :]
-        J = jacobian(x, can)
+        J = cover_map_jacobian(x, can)
         v = J*ẋ
 
         network_input = StatsBase.transform(x_transform, vcat(x, v))
         ω = model(network_input)
         ω = StatsBase.reconstruct(y_transform, ω)
 
-        Ṡ = (can.W * S .+ ω .+ b₀) .|> can.σ
+        Ṡ = (can.W * S .+ β * ω .+ b₀) .|> can.σ
         S += (Ṡ - S)/τ
 
         push!(x̄, can_decoder(S, can)[1])
@@ -170,9 +129,6 @@ function FluxTraining.on(
 
     l_val = round(last(cb.validation_losses), digits=5)
     l_trn = round(last(cb.training_losses), digits=5)
-
-
-    @info "ready to plot" y0 y1 T l_val l_trn cb.validation_losses cb.training_losses
 
     plt = lineplot(
         T,

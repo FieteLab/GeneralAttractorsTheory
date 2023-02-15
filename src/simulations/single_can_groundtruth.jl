@@ -25,7 +25,7 @@ end
 jacobian of the cover map of a can
 """
 function cover_map_jacobian(x::Vector, can::SingleCAN)
-    J = ForwardDiff.jacobian(can.C.ρ, x)
+    J = jacobian(can.C.ρ, x)
     J[isnan.(J)] .= 0
     return J
 end
@@ -37,7 +37,7 @@ end
 Get the partial derivatives of the weight matrix 
 along each direction at neuron `i`.
 """
-function get_W_partial_derivatives!(o::Matrix, i::Int)
+function get_W_partial_derivatives!(o::Matrix, i::Int, can::SingleCAN, can_n::Int)
     o .*= 0
     Δx = can.X[1, :] .- can.X[1, i]
     wx = can.kernel(Δx)
@@ -78,16 +78,16 @@ to test:
 """
 function generate_groundtruth_data(
         can::SingleCAN, trajectory::Trajectory, warmup::History;
-        α::Number = -110
+        α::Number = -110, b₀=1, τ=5
     )::Tuple{Vector, Vector}
-
+    can_n = can.n[1]
     S, can_decoder = initialize_can_with_warmup(can, warmup, trajectory)    
     o = zeros(can.n)  # to store derivatives of weights
 
     x̄, Ω = [], []
     for t in 1:size(trajectory.X, 1)
         i = argmax(S)
-        ∂w∂x, ∂w∂y = get_W_partial_derivatives!(o, i)
+        ∂w∂x, ∂w∂y = get_W_partial_derivatives!(o, i, can, can_n)
 
         x = trajectory.X[t, :]
         ẋ = trajectory.V[t, :]

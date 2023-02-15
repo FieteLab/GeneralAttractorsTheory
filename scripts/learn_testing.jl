@@ -9,7 +9,7 @@ using StatsBase
 
 using GeneralAttractors
 using GeneralAttractors.Simulations
-import GeneralAttractors.Simulations: generate_groundtruth_data
+import GeneralAttractors.Simulations: generate_groundtruth_data, initialize_can_with_warmup, cover_map_jacobian
 
 
 
@@ -56,11 +56,11 @@ println("Generating ground truth data")
 x̄, Ω = generate_groundtruth_data(can, trajectory, warmup; α=α)
 
 # get data through network
-model = loadmodel("data/checkpoint_epoch_056_loss_0.0039244010565047905.bson")
+model = loadmodel("data/checkpoint_epoch_046_loss_0.0017836517875474487.bson")
 x_transform = load_object("./data/x_transform.jld2")
 y_transform = load_object("./data/y_transform.jld2")
 
-S, can_decoder = initialize_can(warmup, trajectory)    
+S, can_decoder = initialize_can_with_warmup(can, warmup, trajectory)    
 println("Running model on trajectory")
 model_x̄, model_Ω = run_model_on_trajectory(
     model, x_transform,  y_transform, warmup, trajectory, can
@@ -69,4 +69,4 @@ model_x̄, model_Ω = run_model_on_trajectory(
 
 plot(eachcol(trajectory.X)..., lw=4, color=:black, label="trajectory")
 plot!(eachrow(hcat(x̄...))..., lw=2, color=:red, label="ground truth")
-# plot!(eachrow(hcat(model_x̄...))..., lw=2, color=:blue, label="model")
+plot!(eachrow(hcat(model_x̄...))..., lw=2, color=:blue, label="model")
