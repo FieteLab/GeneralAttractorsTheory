@@ -6,3 +6,5 @@ Run PI for all different networks:
 Include some with noise and funky vector fields.
 Include some with "non cover" manifold relations
 """
+
+include("settings.jl")

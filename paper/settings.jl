@@ -4,6 +4,7 @@ Definition of parameters and settins used throughout the analysis/plots.
 
 using Plots, DataFrames, Term, Statistics, LinearAlgebra, ObjectivePaths, Distances
 import MyterialColors: Palette, green_dark, deep_purple, indigo, salmon, salmon_dark
+import Plots: grid
 
 gr()   # for fast plotting
 # pyplot()  # for better plots quality
@@ -13,8 +14,8 @@ install_term_stacktrace(; hide_frames=true)
 using GeneralAttractors.Simulations
 using GeneralAttractors.Analysis
 using GeneralAttractors.Kernels
-import GeneralAttractors: torus_maker, sphere_maker, mobius_maker, cylinder_maker, plane_maker
-import GeneralAttractors: torus_embedding, identity_embedding, mobius_embedding, cylinder_embedding, plane_embedding, sphere_embedding
+import GeneralAttractors: torus_maker, sphere_maker, mobius_maker, cylinder_maker, plane_maker, ring_maker
+import GeneralAttractors: torus_embedding, identity_embedding, mobius_embedding, cylinder_embedding, plane_embedding, sphere_embedding, ring_embedding
 using GeneralAttractors.ProjectSupervisor
 import GeneralAttractors: by_column, MobiusEuclidean, SphericalDistance, moving_average
 using GeneralAttractors.ManifoldUtils
@@ -22,7 +23,8 @@ import GeneralAttractors.Simulations: remove_jumps_from_trajectory
 
 datadir = "/Users/federicoclaudi/Desktop/GeneralAttractors/data"
 
-supervisor = Supervisor("GeneralAttractorsTheory")
+supervisor = Supervisor("GeneralAttractorsTheory"; 
+            plotsdir="/Users/federicoclaudi/Dropbox (Personal)/Postdoc/Writings/GeneralAttractors/plots")
 set_datadir(supervisor, datadir)
 
 # ---------------------------------- general --------------------------------- #
@@ -39,14 +41,14 @@ networks = (
     "plane"
 )
 
-cans = Dict(
-    "ring" => ring_maker(:default),
-    "torus" => torus_maker(:default), 
-    "sphere" => sphere_maker(:default),
-    "mobius" => mobius_maker(:default),
-    "cylinder" => cylinder_maker(:default),
-    "plane" => plane_maker(:default),
-)
+# cans = Dict(
+#     "ring" => ring_maker(:default),
+#     "torus" => torus_maker(:default), 
+#     "sphere" => sphere_maker(:default),
+#     "mobius" => mobius_maker(:default),
+#     "cylinder" => cylinder_maker(:default),
+#     "plane" => plane_maker(:default),
+# )
 
 network_makers = Dict(
     "ring" => ring_maker,
@@ -96,13 +98,18 @@ plot_font_size_kwargs = Dict(
     :xguidefontsize=>16,
     :yguidefontsize=>16,
     :zguidefontsize=>16,
-    :grid => false,
     :legendfontsize=>16,
     :right_margin => 12Plots.mm,
     :left_margin => 12Plots.mm,
     :top_margin => 12Plots.mm,
     :bottom_margin => 12Plots.mm,
     :dpi => 300,
+)
+
+plot_remove_axes = Dict(
+    :grid => false,
+    :showaxis => false,
+    :axis=>nothing,
 )
 
 # ---------------------------- ANALYSIS paramters ---------------------------- #

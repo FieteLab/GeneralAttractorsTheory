@@ -90,8 +90,8 @@ plane_embedding(p) = plane_embedding(p...)
 
 function ring_embedding end
 
-ring_embedding(Θ) = [cos(θ), sin(θ), 0]
-ring_embedding(p) = ring_embedding(p...)
+ring_embedding(Θ::Number) = [cos(θ), sin(θ), 0]
+ring_embedding(p::AbstractVector) = ring_embedding(p...)
 
 
 # ---------------------------------------------------------------------------- #

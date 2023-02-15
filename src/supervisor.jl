@@ -26,12 +26,13 @@ module ProjectSupervisor
     mutable struct Supervisor
         projectdir::Folder
         datadir::Folder
+        plotsdir::Folder
         gitrepo::Union{Nothing, GitRepo}
         metadatafile::ObjectivePaths.File
         metadata::AbstractDict
     end
 
-    function Supervisor(project_name::String)
+    function Supervisor(project_name::String; plotsdir=nothing)
         fld = Folder(pwd()) / project_name
         while !isnothing(fld) && !exists(fld)
             fld = (fld - 2) / project_name
@@ -42,8 +43,12 @@ module ProjectSupervisor
         datadir = fld / "data"
         exists(datadir) || mkdir(datadir)
 
+        # get/create a plots dir
+        plotsdir = isnothing(plotsdir) ? fld / "plots" : Folder(plotsdir)
+        exists(plotsdir) || mkdir(plotsdir)
+
         meta, meta_path = load_or_create_metadata(datadir)
-        Supervisor(fld, datadir, get_gitrepo(fld), meta_path, meta)
+        Supervisor(fld, datadir, plotsdir, get_gitrepo(fld), meta_path, meta)
     end
 
 
@@ -353,9 +358,9 @@ module ProjectSupervisor
     end
 
 
-    function save_plot(sup::Supervisor, plt, name::AbstractString; dpi=300, as_svg=true)
+    function save_plot(sup::Supervisor, plt, name::AbstractString; as_svg=true)
         meta = git_info(sup)
-        path = (sup.projectdir / "plots" / (name*"_"*meta)).path
+        path = (sup.plotsdir / name).path
         
         savefig(plt, path * ".png")
         as_svg && savefig(plt, path * ".svg")
