@@ -12,9 +12,9 @@ using GeneralAttractors.Simulations
 import GeneralAttractors.Simulations: decode_peak_location, Decoder, generate_groundtruth_data
 
 
-can_n = 30
+can_n = 64
 warmup_duration = 1000  
-trial_duration = 1500
+trial_duration = 250
 
 # x₀ = nothing # [3.14, 3.14]
 b₀ = 1.0
@@ -24,11 +24,11 @@ b₀ = 1.0
 
 # ------------------------------ network params ------------------------------ #
 d , can_size = 2, can_n^2
-n_hidden = 256 
+n_hidden = 128 
 lr = 0.001
 
-n_training_trajectories = 100
-n_training_epochs = 50
+n_training_trajectories = 5
+n_training_epochs = 250
 
 
 include("_learning.jl")

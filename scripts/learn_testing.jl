@@ -21,7 +21,7 @@ b₀ = 1.0
 
 
 warmup_duration = 1000  
-trial_duration = 1500
+trial_duration = 1000
 x₀= [3.14, 3.14]
 
 include("_learning.jl")
@@ -45,7 +45,7 @@ warmup, _ = run_simulation(
 
 trajectory = Trajectory(
     can;
-    T=max(trial_duration, 500),  #  needs to be long enough to create a trajectory
+    T=trial_duration,  #  needs to be long enough to create a trajectory
     vmax=0.01,
     still=0, 
     x₀=x₀,
@@ -56,7 +56,7 @@ println("Generating ground truth data")
 x̄, Ω = generate_groundtruth_data(can, trajectory, warmup; α=α)
 
 # get data through network
-model = loadmodel("data/checkpoint_epoch_046_loss_0.0017836517875474487.bson")
+model = loadmodel("data/checkpoint_epoch_246_loss_0.003626402092629607.bson")
 x_transform = load_object("./data/x_transform.jld2")
 y_transform = load_object("./data/y_transform.jld2")
 
