@@ -78,7 +78,6 @@ Ring() = Ring(
     "ring",
     [0],
     [2π],
-    # [VectorField(ring_ψ)], 
     [ConstantVectorField(1, 1)],
     PeriodicEuclidean([2π]), 1, [1]
 )

@@ -1,10 +1,10 @@
 function ring_maker(
     cantype;
-    n::Int = 64,
+    n::Int = 256,
     offset_size = 0.15,
     σ = :softrelu,
     α = 25,
-    k = LocalGlobalKernel(α = 2.5, σ = 0.25)
+    k = LocalGlobalKernel(α = 1, σ = 1)
 )
     # neurons position and distance function
     n = (n,)  # number of neurons in the ring
@@ -15,14 +15,6 @@ function ring_maker(
 
     # cover map
     cover = CoverSpace(Ring())
-
-    # offsets and one forms
-    # offsets = [
-    #     p -> ring_ψ(p),
-    #     p -> -ring_ψ(p)
-    # ]
-
-    # Ω = OneForm[OneForm(1, (x) -> ring_ψ(x)), OneForm(1, (x) -> -ring_ψ(x))]
 
     # make network
     return if cantype == :single
@@ -38,8 +30,6 @@ function ring_maker(
     else
         CAN("ring", 
         cover, n, ξ, d, k; 
-        # offsets = offsets,
-        # Ω = Ω,
         offset_size = offset_size, 
         σ = σ, 
         α = α
@@ -47,6 +37,3 @@ function ring_maker(
 
     end
 end
-
-# ringcan = ring_maker(:can)
-# ringcan_single = ring_maker(:single)

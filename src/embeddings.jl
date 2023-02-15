@@ -9,6 +9,11 @@ identity_embedding(x, y) = [x, y]
 identity_embedding(x, y, z) = [x, y, z]
 identity_embedding(p) = identity_embedding(p...)
 
+
+# ---------------------------------------------------------------------------- #
+#                                    SPHERE                                    #
+# ---------------------------------------------------------------------------- #
+
 """
 Classic sphere embedding in ℝ³
 """
@@ -22,6 +27,10 @@ end
 
 sphere_embedding(x, y, z) = [x, y, z]
 
+
+# ---------------------------------------------------------------------------- #
+#                                    MOBIUS                                    #
+# ---------------------------------------------------------------------------- #
 
 """
 Mobius band embedding in ℝ³
@@ -39,6 +48,9 @@ mobius_embedding(p) = mobius_embedding(p...)
 mobius_embedding(x::Matrix) = hcat(map(mobius_embedding, eachcol(x))...)
 
 
+# ---------------------------------------------------------------------------- #
+#                                     TORUS                                    #
+# ---------------------------------------------------------------------------- #
 
 function torus_embedding end
 
@@ -49,6 +61,10 @@ end
 torus_embedding(p) = torus_embedding(p...)
 
 
+# ---------------------------------------------------------------------------- #
+#                                   CYLINDER                                   #
+# ---------------------------------------------------------------------------- #
+
 function cylinder_embedding end
 
 function cylinder_embedding(θ, z)
@@ -58,9 +74,30 @@ end
 cylinder_embedding(p) = cylinder_embedding(p...)
 
 
+# ---------------------------------------------------------------------------- #
+#                                     PLANE                                    #
+# ---------------------------------------------------------------------------- #
+
 function plane_embedding end
 
-function plane_embedding(x, y)
-    return [x, y, 0.0]
-end
+plane_embedding(x, y) = [x, y, 0.0]
 plane_embedding(p) = plane_embedding(p...)
+
+
+# ---------------------------------------------------------------------------- #
+#                                     RING                                     #
+# ---------------------------------------------------------------------------- #
+
+function ring_embedding end
+
+ring_embedding(Θ) = [cos(θ), sin(θ), 0]
+ring_embedding(p) = ring_embedding(p...)
+
+
+# ---------------------------------------------------------------------------- #
+#                                     LINE                                     #
+# ---------------------------------------------------------------------------- #
+
+function line_embedding end
+
+line_embedding(x) = [x, 0, 0]
