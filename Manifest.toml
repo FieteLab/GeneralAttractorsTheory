@@ -1209,7 +1209,7 @@ version = "0.1.1"
 
 [[deps.Term]]
 deps = ["AbstractTrees", "CodeTracking", "Dates", "Highlights", "InteractiveUtils", "Logging", "Markdown", "MyterialColors", "OrderedCollections", "Parameters", "ProgressLogging", "REPL", "SnoopPrecompile", "Tables", "UUIDs", "Unicode", "UnicodeFun"]
-git-tree-sha1 = "07b55e8405ce4e33b6e8cd866574efb351a2d2e7"
+path = "../Term.jl"
 uuid = "22787eb5-b846-44ae-b979-8e399b8463ab"
 version = "2.0.0"
 

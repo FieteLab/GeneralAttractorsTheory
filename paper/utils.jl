@@ -125,8 +125,12 @@ end
 Load a subset of the data from the supervisor with multiple simulations and concatenate
 activations. 
 """
-function load_and_concat_activations(; filters...)
+function load_and_concat_activations(; expected_n=nothing, filters...)
     _, data = ProjectSupervisor.fetch(supervisor; filters...)
+
+    if expected_n !== nothing
+        @assert length(data) == expected_n "Expected $(expected_n) simulations, got $(length(data))."
+    end
     
     # stack activations over time
     X = hcat(
@@ -134,7 +138,7 @@ function load_and_concat_activations(; filters...)
             d -> d["S"][:, 1, end-5:end], data
         )...
     )
-    @info "Loaded $(length(data)) simulations." X
+    @info "Loaded $(length(data)) simulations."
     return X
 end
 

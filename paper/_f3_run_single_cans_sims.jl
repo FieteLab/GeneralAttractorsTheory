@@ -8,7 +8,7 @@ Including with noise.
 include("settings.jl")
 
 
-
+move_to_datadir(supervisor, "mfld_top")
 
 
 
@@ -18,24 +18,20 @@ GENERATE_EMBEDDINGS = true
 GENERATE_DEUBUG_PLOTS = false
 
 # number of sims
-n_sims_per_network = 5000
+n_sims_per_network = 1500
 N_sims = n_sims_per_network * length(networks)
 GENERATE_DATA && @info "Running $N_sims simulations in total."
 
 # sim params
-duration = 50
+duration = 25
 still = 15
 tag = "manifold_topology_data"
 
-η = 0.5
-
 # noise
+η = 1.0
 
-if η == 0.0
-    move_to_datadir(supervisor, "mfld_top")
-else
-    move_to_datadir(supervisor, "mfld_top_noise")
-end
+
+
 
 # -------------------------------- run & save -------------------------------- #
 
@@ -52,14 +48,17 @@ for network in networks
     for i in 1:n_sims_per_network
         i % 100 == 0 && tprintln("   doing $i/$n_sims_per_network - `$(network)`")
 
-        save_name = η == 0.0 ? can.name : "$(can.name)_noise_$(η)"
+        save_name = "$(can.name)_noise_$(η)"
         save_name = replace(save_name, "." => "_")
+
+        name = "history_$(network)_$(i)_noise_$(η)"
+        name = replace(name, "." => "_")
 
         generate_or_load(
             supervisor,
             save_name;
             fmt = "jld2", 
-            name = "history_$(network)_$(i)",
+            name = name,
             metadata = Dict(
                 :can => can.name,
                 :dt => dt,
@@ -83,14 +82,26 @@ end
 
 GENERATE_EMBEDDINGS && @info "Dimensionality reduction embeddings"
 for network in networks
+
+    (η > 0 && network ∉ ("ring", "torus", "sphere")) && continue
+
+
     GENERATE_EMBEDDINGS || break
     print(hLine(network; style="red"))
-    filters = Dict{Symbol, Any}(
-        :tag => tag,
-        :can => network,
-    )
+    if η > 0
+        filters = Dict{Symbol, Any}(
+            :tag => tag,
+            :can => network,
+            :η => η,
+        )
+    else
+        filters = Dict{Symbol, Any}(
+            :tag => tag,
+            :can => network,
+        )
+    end
 
-    X = load_and_concat_activations(; filters...) 
+    X = load_and_concat_activations(; expected_n=n_sims_per_network, filters...) 
 
     # embed in 3 and 10 dimensions
     for (dim, params) in zip(("d3_", "d10_", "d50_"), (dimred_3d_params, dimred_10d_params, dimred_50d_params))
@@ -99,12 +110,20 @@ for network in networks
             :dim => parse(Int, dim[2:end-1]),
             :params => Dict(params),
             :tag  => "$(dim)embeddings",
+            :η => η,
         )
+
+
+        name = "$(network)_$(dim)_noise_$(η)"
+        name = replace(name, "." => "_")
+
+        fld = "embeddings_noise_$(η)"
+        fld = replace(fld, "." => "_")
 
         generate_or_load(
             supervisor, 
-            "embeddings";
-            name = "$(network)_$(dim)",
+            fld;
+            name = name,
             fmt = "npz",
             metadata = meta,
             load_existing=false

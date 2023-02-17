@@ -1,0 +1,131 @@
+"""
+Run N simulations with random trajectories to estimate PI
+accuracy.
+"""
+
+include("settings.jl")
+move_to_datadir(supervisor, "PI")
+
+
+N_sims = 50
+still = 50
+duration = 1000
+funky = false
+η=0.0
+nframes = (Int ∘ round)(duration / dt)
+
+# TODO add for alternative cover spaces
+
+
+
+function PI_trajectory_maker(can, x₀_traj)
+    M, N = typeof(can.C.M), typeof(can.C.N)
+
+    kwargs = Dict(
+        :T => nframes,
+        :dt => dt,
+        :μv => 0,
+        :vmax => max_path_int_vel[can.name],
+        :still => still,
+        :x₀ => x₀_traj,
+        :scale=>0.5,
+    )
+
+    trajectory = if M == Manifoldℝ² && N ∈ (Manifoldℝ², Cylinder, Torus)
+        Trajectory(
+            can;
+            σv = [.75, .2],  # mobius values
+            δ = 10,
+            kwargs...
+        )
+    elseif M == N == Mobius
+        Trajectory(
+            can;
+            σv = [.75, .2],  # mobius values
+            δ = 10,
+            kwargs...
+        )
+    elseif M == N == Sphere
+        Trajectory(
+            can;
+            σv = [.75, .2],  # mobius values
+            δ = 10,
+            kwargs...
+        )
+    else
+        error("No trajectory maker for $M and $N")
+    end
+
+    return trajectory
+end
+
+"""
+Make a large number of simulations with random trajectories for 
+one CAN and save the data
+"""
+function run_sims_and_save(network, funky, N_sims, η, still)
+    for i in 1:N_sims
+        if i % 10 == 0 || i == 1
+            println(
+                hLine("run $i / $N_sims - $(network), η=$(η)"; style="bold blue")
+            )
+        end
+
+        savename = "$(network)_funky_$(funky)_noise_$(η)_$(i)"
+        savename = replace(savename, "." => "_")
+        metadata = Dict(
+            :can => network,
+            :funky => funky,
+            :noise => η,
+            :i => i,
+        )
+
+        generate_or_load(
+            supervisor,
+            save_name;
+            fmt = "jld2", 
+            name = name,
+            metadata = metadata,
+            load_existing = false,
+        ) do
+        
+            # get can
+            can, x₀_traj, _ = make_path_int_can(network; funky=funky, random_x0=true)
+
+            # get trajectory
+            trajectory = PI_trajectory_maker(can, x₀_traj)
+
+            # get simulation
+            simulation = Simulation(can, trajectory; η = 0.0, b₀ = 1.0);
+            activate = get_can_initialization_weights(trajectory, can; δ = 0.1)
+
+            # save plots of the trajectory and the decoded trajectory
+            trajplot = plot(trajectory; Δ=75)
+            display(trajplot)
+
+            
+            # run 
+            h, X̄ = @time run_simulation(
+                simulation;
+                discard_first_ms = still,
+                average_over_ms = 0,
+                s₀ = 1.0 .* activate,
+            )
+
+            # plot decoded
+            decplt = plot_trajectory_and_decoded(trajectory, X̄; xlim=(-2.5, 2.5), ylim=(0, 6.28))
+            display(decplt)
+
+            # return data to store
+            Dict("h" => h, "trajectory"=>trajectory, "decoded" => X̄)
+        end
+    end
+end
+
+
+for network in networks
+    η > 0 && network ∉ ("ring", "torus", "sphere") && continue
+    funky == true && network != "torus" && continue
+    
+    run_sims_and_save(network, funky, N_sims, η, still)
+end
