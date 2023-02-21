@@ -227,7 +227,7 @@ function Base.rand(m::Cylinder; δ=0.25)
     d = length(m.xmin)
     x = zeros(d)
     for i = 1:d
-        _δ = d == 2 ? δ : 0.0
+        _δ = d == 1 ? δ : 0.0
         x[i] = rand(m.xmin[i]+_δ:0.001:m.xmax[i]-_δ)  # padding because of boundary effect on neural activity
     end
     x
@@ -352,7 +352,7 @@ function Base.rand(m::Mobius; δ=0.25)
     d = length(m.xmin)
     x = zeros(d)
     for i = 1:d
-        _δ = d == 2 ? δ : 0.0
+        _δ = d == 1 ? δ : 0.0
         x[i] = rand(m.xmin[i]+_δ:0.001:m.xmax[i]-_δ)  # padding because of boundary effect on neural activity
     end
     x

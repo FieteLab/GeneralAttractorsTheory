@@ -10,7 +10,7 @@ using NearestNeighbors
 Try to estimate the dimensionality of the data and the intrinsic
 dimensionality of the activity manifold with PCA/local PCA. 
 
-PLOT_ACTIVITY_PCA_VARIANCE_EXPLAINED
+PLOT_EXTRINSIC_DIMENSIONALITY
 Plot the fraction of variance explained by the first 250PCs for each 
 network's activity.
 
@@ -28,11 +28,14 @@ import GeneralAttractors.Analysis.ManifoldAnalysis:
         fraction_variance_explained, find_fraction_variance_explained_elbow, pca_dimensionality_reduction
 move_to_datadir(supervisor, "mfld_top")
 
-PLOT_ACTIVITY_PCA_VARIANCE_EXPLAINED = true
-ESTIMATE_LOCAL_PCA_PARAMS_SENSITIVITY = true
-ESTIMATE_INTRINSIC_DIMENSIONALITY = true
+PLOT_EXTRINSIC_DIMENSIONALITY = true
+ESTIMATE_LOCAL_PCA_PARAMS_SENSITIVITY = false
+ESTIMATE_INTRINSIC_DIMENSIONALITY = false
 
-if PLOT_ACTIVITY_PCA_VARIANCE_EXPLAINED
+
+
+
+if PLOT_EXTRINSIC_DIMENSIONALITY
     dim_est_params = AnalysisParameters(
         max_nPC = 250,  # max num of PCs
         pca_pratio = 0.999999,       # fraction of variance explained
@@ -51,6 +54,7 @@ if PLOT_ACTIVITY_PCA_VARIANCE_EXPLAINED
         filters = Dict{Symbol, Any}(
             :tag => "manifold_topology_data",
             :can => network,
+            :η => 0.0,
         )
 
         X = load_and_concat_activations(; filters...) 
@@ -87,6 +91,7 @@ if ESTIMATE_LOCAL_PCA_PARAMS_SENSITIVITY
     filters = Dict{Symbol, Any}(
         :tag => "d10_embeddings",
         :can => network,
+        :η => 0.0,
     )
     _, M = ProjectSupervisor.fetch(supervisor; filters...) 
     @assert length(M) == 1 length(M)
@@ -146,6 +151,7 @@ if ESTIMATE_INTRINSIC_DIMENSIONALITY
         filters = Dict{Symbol, Any}(
             :tag => "d10_embeddings",
             :can => network,
+            :η => 0.0,
         )
         _, M = ProjectSupervisor.fetch(supervisor; filters...) 
         @assert length(M) == 1 length(M)

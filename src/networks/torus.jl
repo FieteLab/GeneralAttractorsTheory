@@ -6,6 +6,7 @@ function torus_maker(cantype;
         σ = :softrelu,
         use_offset_fields::Bool = false,
         cover_manifold::Symbol = :default,
+        kwargs...
     )
     # number of neurons
     n = (n, n) # number of neurons per dimension

@@ -117,7 +117,7 @@ dimred_3d_params = AnalysisParameters(
     pca_pratio = 0.999999999999999999,     
     n_isomap_dimensions = 3,
     isomap_k = 10,
-    isomap_downsample = 50,
+    isomap_downsample = 10,
 )
 
 dimred_10d_params = AnalysisParameters(
@@ -125,7 +125,7 @@ dimred_10d_params = AnalysisParameters(
     pca_pratio = 0.9999999,
     n_isomap_dimensions = 10,
     isomap_k = 10,
-    isomap_downsample = 50,  
+    isomap_downsample = 10,  
 )
 
 
@@ -134,21 +134,9 @@ dimred_50d_params = AnalysisParameters(
     pca_pratio = 0.9999999,
     n_isomap_dimensions = 50,
     isomap_k = 10,
-    isomap_downsample = 50,  
+    isomap_downsample = 10,  
 )
 
-
-
-
-tda_tresholds = Dict(
-    "line" => 12,
-    "ring" => 12,
-    "torus" => 20,
-    "sphere" => 18,
-    "mobius" => 16,
-    "cylinder" => 12,
-    "plane" => 25,
-)
 
 
 

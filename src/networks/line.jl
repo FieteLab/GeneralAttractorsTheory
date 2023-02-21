@@ -4,7 +4,8 @@ function line_maker(
     offset_size = 0.15,
     σ = :softrelu,
     α = 25,
-    k = LocalGlobalKernel(α = 1, σ = 1)
+    k = LocalGlobalKernel(α = 1, σ = 1),
+    kwargs...
 )
     # neurons position and distance function
     n = (n,)  # number of neurons in the ring

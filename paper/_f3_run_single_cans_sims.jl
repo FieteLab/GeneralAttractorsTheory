@@ -18,7 +18,7 @@ GENERATE_EMBEDDINGS = true
 GENERATE_DEUBUG_PLOTS = false
 
 # number of sims
-n_sims_per_network = 1500
+n_sims_per_network = 2500
 N_sims = n_sims_per_network * length(networks)
 GENERATE_DATA && @info "Running $N_sims simulations in total."
 
@@ -88,18 +88,12 @@ for network in networks
 
     GENERATE_EMBEDDINGS || break
     print(hLine(network; style="red"))
-    if η > 0
-        filters = Dict{Symbol, Any}(
-            :tag => tag,
-            :can => network,
-            :η => η,
-        )
-    else
-        filters = Dict{Symbol, Any}(
-            :tag => tag,
-            :can => network,
-        )
-    end
+    filters = Dict{Symbol, Any}(
+        :tag => tag,
+        :can => network,
+        :η => η,
+    )
+
 
     X = load_and_concat_activations(; expected_n=n_sims_per_network, filters...) 
 
@@ -113,12 +107,10 @@ for network in networks
             :η => η,
         )
 
+        _η = replace(string(η), "."=>"_")
+        name = "$(network)_$(dim)_noise_$(_η)"
 
-        name = "$(network)_$(dim)_noise_$(η)"
-        name = replace(name, "." => "_")
-
-        fld = "embeddings_noise_$(η)"
-        fld = replace(fld, "." => "_")
+        fld = "embeddings_noise_$(_η)"
 
         generate_or_load(
             supervisor, 
@@ -130,7 +122,13 @@ for network in networks
         ) do
             pca, X̄ = pca_dimensionality_reduction(X, params)
             iso, X̄ = isomap_dimensionality_reduction(X̄, params)
-            store_data(supervisor, "embeddings"; name = "$(network)_$(dim)embedding", fmt="bson", data=Dict(:iso=>iso, :pca=>pca), metadata = meta)
+
+            # save embeddings in a separate file
+            emb_name = "$(network)_$(dim)embedding_noise_$(_η)"
+            store_data(supervisor, 
+                    "embeddings"; name = emb_name, fmt="bson", data=Dict(:iso=>iso, :pca=>pca), metadata = meta)
+
+                    
             X̄  # save transformed data
         end
     end

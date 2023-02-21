@@ -14,7 +14,7 @@ import GeneralAttractors: plot_distance_function, SphericalDistance, MobiusEucli
 # ----------------------------- plot connectivity ---------------------------- #
 
 for network in networks
-    can = make_single_can(network)
+    can = make_single_can(network; cy_extent = 1)
 
     fig = if can.d == 2
         W = reshape(can.W[1,:], can.n)' |> Matrix

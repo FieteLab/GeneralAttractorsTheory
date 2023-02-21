@@ -4,13 +4,13 @@ import OrderedCollections: OrderedDict
 using Term.Tables
 import GeneralAttractors.Analysis.ManifoldAnalysis: 
         tda_on_pointcloud, estimate_intrinsic_dimensionality
-
+using MultivariateStats, ManifoldLearning
 
 # ------------------------------ networks makers ----------------------------- #
 
-function make_single_can(network::String)
+function make_single_can(network::String; kwargs...)
     n = network ∈ ("ring", "line") ? 256 : 48
-    return network_makers[network](:single; n=n)
+    return network_makers[network](:single; n=n, kwargs...)
 end
 
 """
@@ -162,9 +162,12 @@ largest itnerval approach.
 """
 function get_n_persistence_features(intervals)
     per = persistence.(intervals) |> sort
-    gaps = per[2:end] .- per[1:end-1]
-    largest = argmax(gaps)
-    return length(per) - largest
+    # gaps = per[2:end] .- per[1:end-1]
+    # largest = argmax(gaps)
+    # return length(per) - largest
+
+    # get the number of internvals > 1
+    return length(per[per .> 6])
 end
 
 """
@@ -180,21 +183,36 @@ and run TDA on it. save barcode and persistence diagram plot
 and give the number of relevant features. 
 """
 function do_tda(
+    network::String,
+    η::Float64,
     supervisor::Supervisor, 
     data_filters::Dict,
     save_plot_name::String;
     max_d = 1,
     tresh = 20
     )
+
+    th = if network == "sphere"
+        15
+    elseif network == "torus"
+        if η == 0.0
+            14
+        else
+            18
+        end
+    else
+        12
+    end
+
     tda_params = AnalysisParameters(
         tda_threshold = tresh,       # threshold to reduce TDA computation 
-        tda_downsample_factor = 10,        # temporal downsampling of data for TDA
+        tda_downsample_factor = 5,        # temporal downsampling of data for TDA
         tda_dim_max = max_d,        # max feature dimension, starting at 0
     )
     
     # load data
     _, M = ProjectSupervisor.fetch(supervisor; data_filters...) 
-    @assert length(M) == 1 length(M)
+    @assert length(M) == 1 "Loaded too much data with filters $(length(M)) $data_filters"
     M = M[1]
     # @assert size(M, 1) == 10 size(M)
 
@@ -203,13 +221,24 @@ function do_tda(
     tda_model, tda_barcode_plot = tda_on_pointcloud(M, tda_params; 
             ms=5, color = tda_colors[1:max_d+1],
             plot_font_size_kwargs...)
-    save_plot(supervisor, tda_barcode_plot, save_plot_name);
+
 
 
     # get the number of persistence features based on the largest gap in the persitence
-    features = OrderedDict(
-        map(d -> d=>get_n_persistence_features(tda_model[d]), 1:max_d+1)...
-    )
+    features = nothing
+    try
+        features = OrderedDict(
+            map(d -> d=>get_n_persistence_features(tda_model[d]), 1:max_d+1)...
+        )
+    catch
+        @warn "TDA failed for $(data_filters[:can])."
+        return
+    end
+
+    # save persistence plot
+    plt = plot(tda_barcode_plot, size=(800, 600), plot_title="$(network) - Betti: " * string(values(features)))
+    save_plot(supervisor, plt, save_plot_name);
+    display(plt)
 
     # print the result
     Panel(

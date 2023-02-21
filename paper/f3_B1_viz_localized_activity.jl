@@ -1,13 +1,19 @@
 
+"""
+Visualize a bump of activity on the neural lattice
+"""
+
+
 include("settings.jl")
 
 
-duration = 100
+duration = 500
 still = 15
 network = "torus"
 
 for network in networks
     network == "sphere" && continue
+    # network != "mobius" && continue
     print(hLine("Doing $network"; style ="bold blue"))
 
     φ = embeddings[network]
@@ -16,7 +22,7 @@ for network in networks
     x₀ = if network == "sphere"
         [1, 0, 0]
     elseif network == "cylinder"
-        [2π, -1] 
+        [3, 0] 
     elseif network ∉ ("line", "ring")
         [3.14, 2]
     elseif network == "ring"

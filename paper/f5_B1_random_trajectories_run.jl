@@ -17,7 +17,10 @@ nframes = (Int ∘ round)(duration / dt)
 # TODO add for alternative cover spaces
 
 
-
+"""
+Generate a known fixed trajectory based on the topology
+of the variable and neural manifolds defined in the cover space.
+"""
 function PI_trajectory_maker(can, x₀_traj)
     M, N = typeof(can.C.M), typeof(can.C.N)
 
@@ -82,9 +85,9 @@ function run_sims_and_save(network, funky, N_sims, η, still)
 
         generate_or_load(
             supervisor,
-            save_name;
+            "PI_$(network)";
             fmt = "jld2", 
-            name = name,
+            name = save_name,
             metadata = metadata,
             load_existing = false,
         ) do
