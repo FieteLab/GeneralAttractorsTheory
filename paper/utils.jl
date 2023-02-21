@@ -17,7 +17,16 @@ end
 Generate a CAN with multiple copies for path integration stuff.
 """
 function make_path_int_can(network; funky=false, random_x0=false, kwargs...) 
-    return if network == "torus"
+    return if network == "line"
+        can = line_maker(:default; n=256, α=21, kwargs...)
+        x₀_traj = random_x0 ? nothing : [2]
+        can, x₀_traj, line_embedding
+    elseif network == "ring"
+        can = ring_maker(:default; n=256, α=21, kwargs...)
+        x₀_traj = random_x0 ? nothing : [π/2]
+        can, x₀_traj, ring_embedding
+    
+    elseif network == "torus"
         can = if funky
                 torus_maker(:defult; n=48, α=75, offset_size=0.15, use_offset_fields=true, kwargs...) # for curly vfield α=325
             else

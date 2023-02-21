@@ -36,12 +36,37 @@ function generate_fixed_trajectory(can, network, x₀_traj)
             can;
             T = nframes,
             dt = dt,
-            σv = 5,
-            μv = 0,
             vmax = max_path_int_vel[network],
             still = still,
             x₀ = x₀_traj,
             Vs = [vx, vy],
+        )
+    elseif M == N == Ring
+        v_mag = (cos.(range(0, 2π - .1, length=nframes)) ./ 2 .+ .5)
+        vx = sin.(range(0, 1, length=nframes)) .* v_mag ./ 10
+
+        Trajectory(
+            can;
+            T = nframes,
+            dt = dt,
+            vmax = max_path_int_vel[network],
+            still = still,
+            x₀ = x₀_traj,
+            Vs = [vx],
+        )
+
+    elseif M == N == Line
+        v_mag = (cos.(range(0, 2π - .1, length=nframes)) ./ 2 .+ .5)
+        vx = sin.(range(0, .5, length=nframes)) .* v_mag ./ 10
+
+        Trajectory(
+            can;
+            T = nframes,
+            dt = dt,
+            vmax = max_path_int_vel[network],
+            still = still,
+            x₀ = x₀_traj,
+            Vs = [vx],
         )
 
     elseif M ==  N == Mobius
@@ -59,8 +84,6 @@ function generate_fixed_trajectory(can, network, x₀_traj)
             can;
             T = nframes,
             dt = dt,
-            σv = 5,
-            μv = 0,
             vmax = max_path_int_vel[network],
             still = still,
             x₀ = x₀_traj,
@@ -83,8 +106,6 @@ function generate_fixed_trajectory(can, network, x₀_traj)
             can;
             T = nframes,
             dt = dt,
-            σv = 5,
-            μv = 0,
             vmax = max_path_int_vel[network],
             still = still,
             x₀ = x₀_traj,
@@ -104,6 +125,7 @@ function run_network_on_fixed_trajectory(network)
 
     trajectory = generate_fixed_trajectory(can, network, x₀_traj)
     trajplot = plot(trajectory)
+
     save_plot(supervisor, trajplot, "f5_fix_traj_PI_$(network)_funky_$(funky)_trajectory")
     simulation = Simulation(can, trajectory; η = 0.0, b₀ = b₀);
 
@@ -141,9 +163,6 @@ end
 
 
 for network in networks
-
-    network != "torus" && continue
-
     print(hLine(network; style="red"))
     run_network_on_fixed_trajectory(network)
 end

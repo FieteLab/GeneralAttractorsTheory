@@ -85,9 +85,9 @@ Line() = Line(
     1, [0]
 )
 
-function apply_boundary_conditions!(x, ::Line)
+function apply_boundary_conditions!(x, m::Line)
     δ = 0.25
-    x[1] = max(x.xmin[1]+δ, min(x.xmax[1]-δ, x[1]))
+    x[1] = max(m.xmin[1]+δ, min(m.xmax[1]-δ, x[1]))
     return x, 1
 end
 

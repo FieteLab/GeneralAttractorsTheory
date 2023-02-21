@@ -18,6 +18,14 @@ end
 function Plots.plot(traj::Trajectory; Δ=50)
     X = remove_jumps_from_trajectory(traj.X)
     X̄ = remove_jumps_from_trajectory(traj.X̄)
+
+    if size(X, 2) == 1
+        plt = plot(X[traj.still:end], lw=5, color=:black, label="input trajectory")
+        plot!(X̄, lw=5, color=:red, label="output trajectory")
+        return plt
+    end
+
+
     zlim = size(traj.X, 2) > 2 ? [traj.M.xmin[3], traj.M.xmax[3]] : [-1, 1]
  
     p1 = plot(
