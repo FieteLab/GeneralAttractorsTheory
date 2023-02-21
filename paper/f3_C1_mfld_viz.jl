@@ -57,9 +57,8 @@ for (network, color) in zip(networks, networks_colors)
     end
 
     fig = plot(plots..., layout = (2, 1), size = (800, 800))
-    savefig(fig, "f3_mfld_top_$(network)_noise_$(_η).png")
-    display(fig)
-
+    save_plot(supervisor, fig, "f3_mfld_top_$(network)_noise_$(_η).png")
+    # display(fig)
     # break
 end
 

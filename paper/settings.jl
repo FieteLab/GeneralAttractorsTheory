@@ -140,7 +140,7 @@ dimred_50d_params = AnalysisParameters(
 
 
 
-intrisnic_dimensionality_prms = AnalysisParameters(
+intrinsic_dimensionality_prms = AnalysisParameters(
     intrinsic_d_nseeds = 250,
     intrinsic_d_pratio = 0.75,
     intrinsic_d_neighborhood_size = 500;

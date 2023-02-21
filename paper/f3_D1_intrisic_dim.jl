@@ -28,9 +28,9 @@ import GeneralAttractors.Analysis.ManifoldAnalysis:
         fraction_variance_explained, find_fraction_variance_explained_elbow, pca_dimensionality_reduction
 move_to_datadir(supervisor, "mfld_top")
 
-PLOT_EXTRINSIC_DIMENSIONALITY = true
+PLOT_EXTRINSIC_DIMENSIONALITY = false
 ESTIMATE_LOCAL_PCA_PARAMS_SENSITIVITY = false
-ESTIMATE_INTRINSIC_DIMENSIONALITY = false
+ESTIMATE_INTRINSIC_DIMENSIONALITY = true
 
 
 
@@ -71,16 +71,37 @@ if PLOT_EXTRINSIC_DIMENSIONALITY
             label = nothing,
             color = color,
         )
+        # scatter!(
+        #     1:length(σ), σ,
+        #     markersize = 3.0,
+        #     label = network,
+        #     color = color,
+        #     msa=0, msw=0,
+        # )
+
+        above = findfirst(σ .> 80)
+
         scatter!(
-            1:length(σ), σ,
-            markersize = 3.0,
-            label = network,
+            [above], [σ[above]],
+            markersize = 5.0,
+            label = nothing,
             color = color,
             msa=0, msw=0,
         )
+        plot!(
+            [above, above], [0, σ[above]],
+            lw = 1.5,
+            label = nothing,
+            color = color,
+            ls = :dash,
+        )
+        annotate!((above, 0, network))
+
+
         print(hLine(; style="dim"))
     end
 
+    display(plt)
     save_plot(supervisor, plt, "f3_D_extrinsic_dimensionality")
 end
 
@@ -159,7 +180,7 @@ if ESTIMATE_INTRINSIC_DIMENSIONALITY
         @assert size(M, 1) == 10 size(M)
 
 
-        d = estimate_intrinsic_dimensionality(M, intrisnic_dimensionality_prms)
+        d = estimate_intrinsic_dimensionality(M, intrinsic_dimensionality_prms)
         @info "Estimated intrinsic dimensionality of $network: $(d |> mean) ± $(d |> std)"
     end
 end

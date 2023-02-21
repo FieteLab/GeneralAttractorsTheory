@@ -2,7 +2,7 @@ function torus_maker(cantype;
         n::Int=48,
         k::AbstractKernel = LocalGlobalKernel(α = 2.5, σ = 2.0), 
         offset_size::Number = 0.2,
-        α = 3.2,
+        α = 3.1,
         σ = :softrelu,
         use_offset_fields::Bool = false,
         cover_manifold::Symbol = :default,

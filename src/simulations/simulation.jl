@@ -220,8 +220,8 @@ function run_simulation(
 
         # call eventual callback functions
         for (name, (cbtime, cb)) in callbacks
-            if time[framen] > cbtime && !cbs_called[name] == true
-                @debug "Simulation callback $name called at time $(time[framen]), frame $framen"
+            if (time[framen]) >= cbtime && !cbs_called[name] == true
+                @debug "Simulation callback $name called at time $(time[framen]), frame $framen" cb name time[framen] framen
                 cb(simulation)
                 cbs_called[name] = true
             end

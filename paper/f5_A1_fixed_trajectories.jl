@@ -8,6 +8,8 @@ Includes running simulations with noise and non-killing vector fields.
 
 include("settings.jl")
 
+import GeneralAttractors.Simulations: plot_trajectory_and_decoded
+
 move_to_datadir(supervisor, "path_int")
 tag = "decoding_data"
 
@@ -16,17 +18,14 @@ tag = "decoding_data"
 
 # ---------------------------------- get CAN --------------------------------- #
 duration = 500
-still = 50  # initialization period        
-
-network = "torus"
-funky = true
-can, x₀_traj, embedding = make_path_int_can(network; funky=funky)
+still = 150  # initialization period        
+funky = false
 
 nframes = (Int ∘ round)(duration / dt)
 
 # ------------------------ make simulation trajecotry ------------------------ #
 
-function generate_fixed_trajectory(can)
+function generate_fixed_trajectory(can, network, x₀_traj)
     M, N = typeof(can.C.M), typeof(can.C.N)
     trajectory = if M == Manifoldℝ² && N ∈ (Manifoldℝ², Cylinder, Torus)
         v_mag = (cos.(range(0, 2π - .1, length=nframes)) ./ 2 .+ .5)
@@ -99,40 +98,52 @@ function generate_fixed_trajectory(can)
 end
 
 
-trajectory = generate_fixed_trajectory(can)
-trajplot = plot(trajectory)
-save_plot(supervisor, trajplot, "f5_fix_traj_PI_$(network)_funky_$(funky)_trajectory")
-simulation = Simulation(can, trajectory; η = 0.0, b₀ = b₀);
+# TODO see why α not working
+function run_network_on_fixed_trajectory(network)
+    can, x₀_traj, _ = make_path_int_can(network; funky=funky)
+
+    trajectory = generate_fixed_trajectory(can, network, x₀_traj)
+    trajplot = plot(trajectory)
+    save_plot(supervisor, trajplot, "f5_fix_traj_PI_$(network)_funky_$(funky)_trajectory")
+    simulation = Simulation(can, trajectory; η = 0.0, b₀ = b₀);
 
 
-# --------------------------------- simulate --------------------------------- #
+    activate = get_can_initialization_weights(trajectory, can)
 
-activate = get_can_initialization_weights(trajectory, can)
-
-h, X̄ = @time run_simulation(
-    simulation;
-    discard_first_ms = still,
-    average_over_ms = 0,
-    s₀ = 1.0 .* activate,
-)
+    h, X̄ = run_simulation(
+        simulation;
+        discard_first_ms = still,
+        average_over_ms = 0,
+        s₀ = 1.0 .* activate,
+    )
 
 
-meta = Dict(
-    "network" => network,
-    "dt" => dt,
-    "duration" => duration,
-    "still" => still,
-    "tag" => tag,
-    "funky" => funky,
-    "M" => string(M),
-    "N" => string(N),
-)
+    meta = Dict(
+        "network" => network,
+        "dt" => dt,
+        "duration" => duration,
+        "still" => still,
+        "tag" => tag,
+        "funky" => funky,
+        "M" => string(can.C.M),
+        "N" => string(can.C.N),
+    )
 
 
-store_data(supervisor, "simulations"; 
-        fmt = "jld2", name="$(network)_sim_data_funky_$(funky)", 
-        data = Dict("h" => h, "trajectory"=>trajectory), metadata=meta
-)
+    store_data(supervisor, "simulations"; 
+            fmt = "jld2", name="$(network)_sim_data_funky_$(funky)", 
+            data = Dict("h" => h, "trajectory"=>trajectory), metadata=meta
+    )
 
-# --------------------------------- visualize -------------------------------- #
-plot_trajectory_and_decoded(trajectory, X̄) |> display
+
+    plot_trajectory_and_decoded(trajectory, X̄) |> display
+end
+
+
+for network in networks
+
+    network != "torus" && continue
+
+    print(hLine(network; style="red"))
+    run_network_on_fixed_trajectory(network)
+end
