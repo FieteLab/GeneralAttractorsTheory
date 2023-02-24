@@ -28,16 +28,15 @@ import GeneralAttractors.Analysis.ManifoldAnalysis:
         fraction_variance_explained, find_fraction_variance_explained_elbow, pca_dimensionality_reduction
 move_to_datadir(supervisor, "mfld_top")
 
-PLOT_EXTRINSIC_DIMENSIONALITY = false
+PLOT_EXTRINSIC_DIMENSIONALITY = true
 ESTIMATE_LOCAL_PCA_PARAMS_SENSITIVITY = false
-ESTIMATE_INTRINSIC_DIMENSIONALITY = true
-
+ESTIMATE_INTRINSIC_DIMENSIONALITY = false
 
 
 
 if PLOT_EXTRINSIC_DIMENSIONALITY
     dim_est_params = AnalysisParameters(
-        max_nPC = 250,  # max num of PCs
+        max_nPC = 150,  # max num of PCs
         pca_pratio = 0.999999,       # fraction of variance explained
     )
 
@@ -50,6 +49,7 @@ if PLOT_EXTRINSIC_DIMENSIONALITY
     )
 
     for (network, color) in zip(networks, networks_colors)
+        network != "cylinder" && continue
         print(hLine(network; style="red"))
         filters = Dict{Symbol, Any}(
             :tag => "manifold_topology_data",

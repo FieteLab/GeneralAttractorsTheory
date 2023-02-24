@@ -13,15 +13,15 @@ ring_ψ(x::Number) = (sin(x)+1.1)/2
 # ---------------------------------------------------------------------------- #
 
 # curl free vector field
-torus_ψ1(x, y) = [cos(x)/2 + 1, 0]
-torus_ψ2(x, y) = [0, cos(y)/2 + 1 ]
+# torus_ψ1(x, y) = [cos(x)/2 + 1, 0]
+# torus_ψ2(x, y) = [0, cos(y)/2 + 1 ]
 
 # curly vector field
-# torus_ψ1(x, y) = [
-#     cos(x),
-#     sin(x),
-#     ]
-# torus_ψ2(x, y) =  [[0, 1] [-1, 0]]  * torus_ψ1(x, y)
+torus_ψ1(x, y) = [
+    cos(x),
+    sin(x),
+    ]
+torus_ψ2(x, y) =  [[0, 1] [-1, 0]]  * torus_ψ1(x, y)
 
 
 torus_ψ1(x) = torus_ψ1(x...)

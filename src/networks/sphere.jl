@@ -2,6 +2,7 @@ function sphere_maker(
     cantype;
     n::Int = 48,
     offset_size = 0.2,
+    use_offset_fields = false,
     k = LocalGlobalKernel(α = 2.5, σ = 40.5),
     α = 46,
     σ = :softrelu, kwargs...
@@ -20,20 +21,25 @@ function sphere_maker(
     cover = CoverSpace(S²)  # trivial cover space
 
     # define offset vector fields
+    normalize(x) = norm(x) > 0 ? x ./ norm(x) : x
+    ψ_x = use_offset_fields ? normalize ∘ sphere_ψx : sphere_ψx
+    ψ_y = use_offset_fields ? normalize ∘ sphere_ψy : sphere_ψy
+    ψ_z = use_offset_fields ? normalize ∘ sphere_ψz : sphere_ψz
+
     offsets = [
-        p -> sphere_ψx(p), p -> -sphere_ψx(p),
-        p -> sphere_ψy(p), p -> -sphere_ψy(p), 
-        p -> sphere_ψz(p), p -> -sphere_ψz(p)
+        p -> ψ_x(p), p -> -ψ_x(p),
+        p -> ψ_y(p), p -> -ψ_y(p), 
+        p -> ψ_z(p), p -> -ψ_z(p)
     ]
 
     # define one forms
     Ω = [
-        OneForm(1, (p) -> offset_size * sphere_ψx(p)),
-        OneForm(1, (p) -> -offset_size * sphere_ψx(p)),
-        OneForm(2, (p) -> offset_size * sphere_ψy(p)),
-        OneForm(2, (p) -> -offset_size * sphere_ψy(p)),
-        OneForm(3, (p) -> offset_size * sphere_ψz(p)),
-        OneForm(3, (p) -> -offset_size * sphere_ψz(p)),
+        OneForm(1, (p) -> offset_size * ψ_x(p)),
+        OneForm(1, (p) -> -offset_size * ψ_x(p)),
+        OneForm(2, (p) -> offset_size * ψ_y(p)),
+        OneForm(2, (p) -> -offset_size * ψ_y(p)),
+        OneForm(3, (p) -> offset_size * ψ_z(p)),
+        OneForm(3, (p) -> -offset_size * ψ_z(p)),
     ]
 
 

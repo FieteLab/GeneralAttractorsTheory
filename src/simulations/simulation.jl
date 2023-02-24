@@ -204,11 +204,13 @@ function run_simulation(
         # initialize decoder if necessary
         if (i >= simulation.trajectory.still + 0) && !decoder_initialized
             _x = decode_peak_location(s̄, simulation.can)
+
+            offset = simulation.can.C.M == simulation.can.C>N ? 0 : simulation.trajectory.X[i, :] .- _x
             # prep decoder
             decoder = Decoder(
                 simulation.trajectory.X[i, :],
                 _x;
-                decoding_offset = simulation.trajectory.X[i, :] .- _x,
+                decoding_offset = offset,
             )
             decoder_initialized = true
         end

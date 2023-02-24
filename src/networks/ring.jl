@@ -5,6 +5,7 @@ function ring_maker(
     σ = :softrelu,
     α = 25,
     k = LocalGlobalKernel(α = 1, σ = 1),
+    cover_manifold = :default,
     kwargs...
 )
     # neurons position and distance function
@@ -15,7 +16,21 @@ function ring_maker(
     d = PeriodicEuclidean([2π])  # distance function
 
     # cover map
-    cover = CoverSpace(Ring())
+    if cover_manifold == :default
+        cover = CoverSpace(Ring())
+    else
+        ρ(x::Number) = x
+        ρ(x) = x[1]
+
+        ρⁱ(x::Number) = mod(x, 2π)
+        ρⁱ(x) = mod(x[1], 2π)
+
+        cover = CoverSpace(
+            Line(; d=Real(4π)),  # goes from -4π to 4π - 4x cover
+            Ring(),
+            ρ, ρⁱ,
+        )
+    end
 
     # make network
     return if cantype == :single

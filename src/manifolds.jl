@@ -76,23 +76,23 @@ apply_boundary_conditions!(x, ::AbstractManifold) = (x, ones(length(x)))
     periodic_dimensions::Vector # label for which dimensions are periodic
 end
 
-Line() = Line(
+Line(; d=6) = Line(
     "line",
-    [-6],
-    [6],
+    [-d],
+    [d],
     [ConstantVectorField(1, 1)],
     Euclidean(),
     1, [0]
 )
 
 function apply_boundary_conditions!(x, m::Line)
-    δ = 0.25
+    δ = 0.5
     x[1] = max(m.xmin[1]+δ, min(m.xmax[1]-δ, x[1]))
     return x, 1
 end
 
 function Base.rand(m::Line; δ=0.25)
-    x = rand(m.xmin[1]+δ:0.001:m.xmax[1]-δ)
+    x = rand((m.xmin[1]+δ):0.001:(m.xmax[1]-δ))
     [x,]
 end
 
@@ -148,7 +148,7 @@ function apply_boundary_conditions!(x::Vector, m::Manifoldℝ²)
     vel_correction_factors = [1, 1]
 
     # non periodic dimension
-    δ = 0.25  # padding around boundary to account for bump size
+    δ = 0.5  # padding around boundary to account for bump size
     if x[1] <= m.xmin[1] + δ
         x[1] = m.xmin[1] + δ
         vel_correction_factors[1] = 0
@@ -207,7 +207,7 @@ function apply_boundary_conditions!(x::Vector, m::Cylinder)
     
     vel_correction_facors = [1, 1]
     # non periodic dimension
-    δ = 0.25  # padding around boundary to account for bump size
+    δ = 0.5  # padding around boundary to account for bump size
     if x[2] <= m.xmin[2] + δ
         x[2] = m.xmin[2] + δ
         vel_correction_facors[2] = 0

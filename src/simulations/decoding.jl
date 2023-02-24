@@ -56,7 +56,7 @@ function (dec::Decoder)(s::Vector, can::AbstractCAN)::Tuple{Vector, Vector}
     end
 
     # correct for large shifts due to periodicity in neural manifold
-    if norm(Δn .* can.C.N.periodic_dimensions) > 1
+    if norm(Δn .* can.C.N.periodic_dimensions) > 1 && typeof(can.C.M) != typeof(can.C.N)
         needs_correction = abs.(Δn) .> 1
         Δn = Δn - sign.(Δn)  .* 
                     can.C.N.xmax .* 

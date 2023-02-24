@@ -358,6 +358,13 @@ end
 function plot_trajectory_and_decoded(trajectory::Trajectory, X̄::Matrix; kwargs...)
     X = remove_jumps_from_trajectory(trajectory.X)
     X̄ = remove_jumps_from_trajectory(X̄)
+
+    if size(X, 2) == 1
+        plt = plot(X, color=:black, label="traj.")
+        plot!(X̄, color=:red, label="decoded")
+        return plt
+    end
+
     d = size(X̄, 2)
     plt = plot(
         eachcol(X)...,
@@ -384,9 +391,11 @@ function plot_trajectory_and_decoded(trajectory::Trajectory, X̄::Matrix; kwargs
             lw = 3,
             color = :red,
             label = nothing,
-            xlim = [-1.1, 1.1],
+            xlim = [-1.1,1.1],
             ylim = [-1.1, 1.1],
             zlim = [-1.1, 1.1],
+            grid = false,
+            camera = (190, 30)
         )
     elseif d == 1
         plot!(X̄, lw = 3, color = :red, label = nothing)

@@ -21,6 +21,7 @@ import GeneralAttractors: torus_embedding, identity_embedding, mobius_embedding,
 import GeneralAttractors: by_column, MobiusEuclidean, SphericalDistance, moving_average
 using GeneralAttractors.ManifoldUtils
 import GeneralAttractors.Simulations: remove_jumps_from_trajectory
+import GeneralAttractors.Simulations: plot_trajectory_and_decoded
 
 datadir = "/Users/federicoclaudi/Desktop/GeneralAttractors/data"
 

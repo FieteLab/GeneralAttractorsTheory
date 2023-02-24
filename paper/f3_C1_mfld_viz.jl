@@ -6,7 +6,7 @@ include("settings.jl")
 move_to_datadir(supervisor, "mfld_top")
 pyplot()
 
-η = 1.0
+η = 0.0
 _η = replace(string(η), "." => "_")
 Δ = 1  # donwsampling
 
@@ -40,8 +40,8 @@ for (network, color) in zip(networks, networks_colors)
             scatter3d(
                 M[1, 1:Δ:end], M[2, 1:Δ:end], M[3, 1:Δ:end],
                 msa=0, msw=0,
-                markersize = 4, # 1.0,
-                alpha=.6,
+                markersize = 1, # 1.0,
+                alpha=.8,
                 legend = false,
                 title = network * " (η = $η)",
                 xlabel = "Iso 1", ylabel = "Iso 2", zlabel = "Iso 3",
@@ -57,7 +57,7 @@ for (network, color) in zip(networks, networks_colors)
     end
 
     fig = plot(plots..., layout = (2, 1), size = (800, 800))
-    save_plot(supervisor, fig, "f3_mfld_top_$(network)_noise_$(_η).png")
+    save_plot(supervisor, fig, "f3_mfld_top_$(network)_noise_$(_η)")
     # display(fig)
     # break
 end

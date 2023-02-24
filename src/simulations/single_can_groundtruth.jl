@@ -36,6 +36,12 @@ end
 
 Get the partial derivatives of the weight matrix 
 along each direction at neuron `i`.
+
+Arguments:
+- `o`: a matrix to store the partial derivatives
+- `i`: the index of the neuron to get the partial derivatives at
+- `can`: the can to get the partial derivatives from
+- `can_n`: the number of neurons in the can
 """
 function get_W_partial_derivatives!(o::Matrix, i::Int, can::SingleCAN, can_n::Int)
     o .*= 0
@@ -57,6 +63,16 @@ function get_W_partial_derivatives!(o::Matrix, i::Int, can::SingleCAN, can_n::In
     return ∂w∂x, ∂w∂y
 end
 
+function get_W_partial_derivatives!(o::Vector, i::Int, can::SingleCAN)
+    o .*= 0
+    Δx = can.X[1, :] .- can.X[1, i]
+    wx = can.kernel(Δx)
+    ∂w∂x = begin
+        o[2:end] = diff(wx)
+        o
+    end
+    return ∂w∂x
+end
 
 
 
@@ -79,28 +95,39 @@ to test:
 function generate_groundtruth_data(
         can::SingleCAN, trajectory::Trajectory, warmup::History;
         α::Number = -110, b₀=1, τ=5
-    )::Tuple{Vector, Vector}
+    )::Tuple{Vector, Vector, Matrix}
     can_n = can.n[1]
     S, can_decoder = initialize_can_with_warmup(can, warmup, trajectory)    
     o = zeros(can.n)  # to store derivatives of weights
 
+    n_steps = size(trajectory.X, 1)
+    history = zeros(length(S), n_steps)
+
     x̄, Ω = [], []
-    for t in 1:size(trajectory.X, 1)
+    for t in 1:n_steps
         i = argmax(S)
-        ∂w∂x, ∂w∂y = get_W_partial_derivatives!(o, i, can, can_n)
 
         x = trajectory.X[t, :]
         ẋ = trajectory.V[t, :]
         J = cover_map_jacobian(x, can)
-
         v = J*ẋ
-        ω = α * v[1] * ∂w∂x + α * v[2] * ∂w∂y
+
+        # get and sum partial derivatives to move the state
+        if can.d > 1
+            ∂w∂x, ∂w∂y = get_W_partial_derivatives!(o, i, can, can_n)            
+            ω = α * v[1] * ∂w∂x + α * v[2] * ∂w∂y
+        else
+            ∂w∂x = get_W_partial_derivatives!(o, i, can)
+            ω = α * v[1] * ∂w∂x
+        end
+
         Ṡ = (can.W * S .+ ω .+ b₀) .|> can.σ
         S += (Ṡ - S)/τ
 
         push!(x̄, can_decoder(S, can)[1])
         push!(Ω, ω)
+        history[:, t] .= S
     end
 
-    return x̄, Ω
+    return x̄, Ω, history
 end
