@@ -13,7 +13,7 @@ function initialize_can_with_warmup(can::SingleCAN, warmup::History, trajectory:
     decoder = Decoder(
         trajectory.X[1, :],
         x̂;
-        decoding_offset = trajectory.X[1, :] .- x̂,
+        decoding_offset = [0], # trajectory.X[1, :] .- x̂,
     )
 
     return S, decoder

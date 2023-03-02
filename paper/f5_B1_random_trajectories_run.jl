@@ -15,11 +15,9 @@ funky = false
 nframes = (Int ∘ round)(duration / dt)
 
 
-cover_manifold = :cylinder
+cover_manifold = :default
 
 tag = "PI_random_trajectories"
-
-# TODO add for alternative cover spaces
 
 
 """
@@ -149,7 +147,8 @@ end
 for network in networks
     η > 0 && network != "torus" && continue
     funky == true && network ∉ ("torus", "sphere") && continue
-    network ∉ ("torus",) && continue
+
+    network ∉ ("cylinder", "plane") && continue
     
     run_sims_and_save(network, funky, N_sims, η, still)
 end

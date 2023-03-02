@@ -46,7 +46,7 @@ function cylinder_maker(
     end
     ρⁱ(w::Vector; n = 6) = ρⁱ(w...; n = n)
 
-    cover = CoverSpace(M, Cylinder(), ρ, ρⁱ, [identity, cy_to_r2_scaling])
+    cover = CoverSpace(M, Cylinder(cy_extent), ρ, ρⁱ, [identity, cy_to_r2_scaling])
 
     # define a function to get the coordinates of each neuron in the lattice
     function ξ(i::Int, j::Int)::Vector  # neurons coordinates function

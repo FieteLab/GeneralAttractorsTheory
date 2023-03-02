@@ -15,7 +15,7 @@ mutable struct Decoder
     decoding_offset
 end
 
-Decoder(x::Vector, n::Vector; decoding_offset=zeros(length(X))) = Decoder(x, n, decoding_offset)
+Decoder(x::Vector, n::Vector; decoding_offset=zeros(length(x))) = Decoder(x, n, decoding_offset)
 
 
 

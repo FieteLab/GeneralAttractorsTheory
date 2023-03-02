@@ -93,7 +93,6 @@ function step!(
         isnothing(s₀) || (S[:, i] .*= s₀)
 
         # get activation
-        # v_input = map(x -> can.Ω[i](x, v), eachcol(can.X)) .* can.α
         v_input = can.α * can.Ω[i](on_mfld_x, v)
         Ṡ[:, i] .+= W[i] * S_tot .+ v_input  .+ input
     end
@@ -102,10 +101,10 @@ function step!(
     simulation.S += (can.σ.(Ṡ) - S) / (simulation.τ)
 
     # remove bad entries
-    # droptol!(simulation.S, 0.01)
-    # droptol!(simulation.Ṡ, 0.01)
-    # simulation.S = sparse(simulation.S)
-    # simulation.Ṡ = sparse(simulation.Ṡ)
+    droptol!(simulation.S, 0.01)
+    droptol!(simulation.Ṡ, 0.01)
+    simulation.S = sparse(simulation.S)
+    simulation.Ṡ = sparse(simulation.Ṡ)
 
     return ∑ⱼ(simulation.S)  # return the sum of all activations
 end

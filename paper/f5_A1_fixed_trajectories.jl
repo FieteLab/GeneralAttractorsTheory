@@ -103,7 +103,7 @@ end
 function run_network_on_fixed_trajectory(network; savename="", use_x₀=nothing, kwargs...)
     can, x₀_traj, _ = make_path_int_can(network; funky=funky, kwargs...)
     x₀_traj = use_x₀ === nothing ? x₀_traj : use_x₀
-    @info "X0" x₀_traj
+    @info "X0" x₀_traj can.C.M can.C.N
 
     trajectory = generate_fixed_trajectory(can, network, x₀_traj)
     trajplot = plot(trajectory)
@@ -130,7 +130,7 @@ function run_network_on_fixed_trajectory(network; savename="", use_x₀=nothing,
         "still" => still,
         "tag" => tag,
         "funky" => funky,
-        "M" => string(can.C.M),
+        "M" => string(can.C.M), 
         "N" => string(can.C.N),
         "η" => η,
     )
@@ -162,8 +162,10 @@ end
 # end
 
 
-network = "mobius"
+network = "cylinder"
 x0 = [-1.5, 2]
-run_network_on_fixed_trajectory(network; cover_manifold=:line, savename="alt_cover", 
+run_network_on_fixed_trajectory(network; 
+    # cover_manifold=:line, 
+    # savename="alt_cover", 
     # use_x₀=x0 
 )
