@@ -15,7 +15,7 @@ funky = false
 nframes = (Int ∘ round)(duration / dt)
 
 
-cover_manifold = :default
+cover_manifold = :cylinder
 
 tag = "PI_random_trajectories"
 
@@ -72,6 +72,13 @@ function PI_trajectory_maker(can, x₀_traj)
             δ = 0,
             kwargs...
         )
+    elseif M == Cylinder && N == Mobius
+        Trajectory(
+            can;
+            σv = [.75, .2],  # mobius values
+            δ = 10,
+            kwargs...
+        )
     else
         error("No trajectory maker for $M and $N")
     end
@@ -104,7 +111,7 @@ function run_sims_and_save(network, funky, N_sims, η, still; cover_manifold=:de
 
         generate_or_load(
             supervisor,
-            "PI_$(network)";
+            "PI_$(network)_$(cover_manifold)";
             fmt = "jld2", 
             name = savename,
             metadata = metadata,
@@ -148,7 +155,7 @@ for network in networks
     η > 0 && network != "torus" && continue
     funky == true && network ∉ ("torus", "sphere") && continue
 
-    network ∉ ("cylinder", "plane") && continue
+    network ∉ ("mobius", ) && continue
     
-    run_sims_and_save(network, funky, N_sims, η, still)
+    run_sims_and_save(network, funky, N_sims, η, still; cover_manifold=cover_manifold)
 end

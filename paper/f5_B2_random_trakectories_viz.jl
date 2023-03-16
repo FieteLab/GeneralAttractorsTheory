@@ -38,7 +38,7 @@ function error_at_checkpoint(e, l, checkpoint)
     return if isnothing(i)
         nothing
     else
-        isnan(e[i]) ? nothing : e[i]/l * 100  # error in percentage of distance
+        isnan(e[i]) ? nothing : (e[i]/checkpoint * 100) # /l * 100  # error in percentage of distance
     end
 end
 
@@ -49,19 +49,20 @@ end
 #                                      run                                     #
 # ---------------------------------------------------------------------------- #
 
-funky = false
+funky = true
 η = 0.0
+cover_manifold = "default"
 
 ρ(x) = x
 
-plt = plot()
+plt = plot(ylim=[0, 130])
 
 distance_thresholds = Dict(
-    "line" => Dict(:low => 1, :medium=>3, :high=>6),
-    "ring" => Dict(:low => .5, :medium=>1.5, :high=>3),
+    "line" => Dict(:low => 1, :medium=>3, :high=>2.5),
+    "ring" => Dict(:low => .5, :medium=>1.5, :high=>1.0),
     "torus" => Dict(:low => 1, :medium=>5, :high=>10),
-    "sphere" => Dict(:low => 0.5, :medium=>1.5, :high=>3),
-    "mobius" => Dict(:low => 1, :medium=>2, :high=>4),
+    "sphere" => Dict(:low => 0.5, :medium=>1.5, :high=>2),
+    "mobius" => Dict(:low => 1, :medium=>2, :high=>2.0),
     "cylinder" => Dict(:low => 1, :medium=>5, :high=>10),
     "plane" => Dict(:low => 1, :medium=>5, :high=>10),
 )
@@ -75,6 +76,7 @@ for (i, network) in enumerate(networks)
 
     η > 0 && network != "torus" && continue
     funky == true && network ∉ ("torus", "sphere") && continue
+    cover_manifold != "default" && network ∉ ("mobius", ) && continue
 
     # network ∈ ("plane", ) && continue
 
@@ -87,6 +89,7 @@ for (i, network) in enumerate(networks)
         :funky => funky, 
         :noise => η,
         :tag => tag,
+        # :cover_manifold => cover_manifold,
     )
 
 
@@ -97,6 +100,7 @@ for (i, network) in enumerate(networks)
     trajectories = getfield.(get.(data, "trajectory", nothing), :X)
     decoded_trajectories = get.(data, "decoded", nothing)
     distance_fn = metrics[typeof(can.C.M)]
+    @info "Loaded $(length(trajectories)) trajectories"
 
     errors = map(x -> measure_error(distance_fn, x[1], x[2]), zip(trajectories, decoded_trajectories))
     errors_at_checkpoints = Dict(
@@ -109,15 +113,19 @@ for (i, network) in enumerate(networks)
 
     # ----------------------------------- plot ----------------------------------- #
     for (j, (k, e)) in enumerate(errors_at_checkpoints)
+        k != :high && continue
         @info "Network $network got $(length(e)) errors at checkpoint $k"
+
+        # select 40 entries at random
+        e = length(e) > 40 ? e[1:40] : e
 
         length(e) == 0 && continue
         δ = xδ[k]
         X = zeros(length(e)) .+ 5i .+ δ
 
         push!(xticksmarks, 5i + δ)
-        push!(xticks, distance_thresholds[network][k])
-
+        # push!(xticks, distance_thresholds[network][k])
+        push!(xticks, network)
 
         boxplot!(
             X,
@@ -133,4 +141,4 @@ for (i, network) in enumerate(networks)
 end
 
 display(plt)
-save_plot(supervisor, plt, "f5_B_PI_random_trajectories_funky_$(funky)_noise_$(η)")
+save_plot(supervisor, plt, "f5_B_PI_random_trajectories_funky_$(funky)_noise_$(η)_cover_$(cover_manifold)")
