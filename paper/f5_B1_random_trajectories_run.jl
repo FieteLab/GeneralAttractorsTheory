@@ -54,7 +54,7 @@ function PI_trajectory_maker(can, x₀_traj)
         Trajectory(
             can;
             σv = [1.0, 1.0],  # mobius values
-            δ = 5,
+            δ = .5,
             x₀ = x₀_traj,
             kwargs...
         )
@@ -83,7 +83,7 @@ end
 Make a large number of simulations with random trajectories for 
 one CAN and save the data
 """
-function run_sims_and_save(network, funky, N_sims, η, still; savename="", cover_manifold=:default)
+function run_sims_and_save(network, funky, N_sims, η, still; cover_manifold=:default)
     for i in 1:N_sims
         if i % 10 == 0 || i == 1
             println(
@@ -91,7 +91,7 @@ function run_sims_and_save(network, funky, N_sims, η, still; savename="", cover
             )
         end
 
-        savename = savename * "$(network)_funky_$(funky)_noise_$(η)_$(i)"
+        savename = "$(network)_funky_$(funky)_noise_$(η)_$(i)"
         savename = replace(savename, "." => "_")
         metadata = Dict(
             :can => network,

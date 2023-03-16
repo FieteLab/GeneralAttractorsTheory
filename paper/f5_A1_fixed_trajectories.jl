@@ -162,7 +162,7 @@ end
 # end
 
 
-network = "cylinder"
+network = "plane"
 x0 = [-1.5, 2]
 run_network_on_fixed_trajectory(network; 
     # cover_manifold=:line, 

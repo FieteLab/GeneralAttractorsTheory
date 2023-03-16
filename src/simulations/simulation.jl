@@ -101,10 +101,10 @@ function step!(
     simulation.S += (can.σ.(Ṡ) - S) / (simulation.τ)
 
     # remove bad entries
-    droptol!(simulation.S, 0.01)
-    droptol!(simulation.Ṡ, 0.01)
-    simulation.S = sparse(simulation.S)
-    simulation.Ṡ = sparse(simulation.Ṡ)
+    # droptol!(simulation.S, 0.01)
+    # droptol!(simulation.Ṡ, 0.01)
+    # simulation.S = sparse(simulation.S)
+    # simulation.Ṡ = sparse(simulation.Ṡ)
 
     return ∑ⱼ(simulation.S)  # return the sum of all activations
 end
