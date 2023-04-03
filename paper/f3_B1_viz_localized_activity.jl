@@ -13,7 +13,7 @@ network = "torus"
 
 for network in networks
     network == "sphere" && continue
-    # network != "mobius" && continue
+    network != "plane" && continue
     print(hLine("Doing $network"; style ="bold blue"))
 
     φ = embeddings[network]
@@ -24,7 +24,7 @@ for network in networks
     elseif network == "cylinder"
         [3, 0] 
     elseif network ∉ ("line", "ring")
-        [3.14, 2]
+        [-9.9, -9.9]
     elseif network == "ring"
         [3,]
     else
@@ -32,7 +32,7 @@ for network in networks
     end
 
     # plots params
-    can = make_single_can(network)
+    can = make_single_can(network; k = LocalGlobalKernel(α = 1.5, σ = 250.0))
 
     # run simulation
     h, _ = simulate_constant_traj_random_init(can, duration, dt, still, τ, b₀; x₀=x₀)
@@ -95,7 +95,7 @@ for network in networks
             fillalpha = 0.25,
             fillcolor = :black,
             label=nothing, xlabel="θ", ylabel="s(θ)",
-            title = "Activity $(network))",
+            title = " $(network))",
         )
 
     end

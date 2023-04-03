@@ -49,7 +49,7 @@ if PLOT_EXTRINSIC_DIMENSIONALITY
     )
 
     for (network, color) in zip(networks, networks_colors)
-        network != "cylinder" && continue
+        # network != "cylinder" && continue
         print(hLine(network; style="red"))
         filters = Dict{Symbol, Any}(
             :tag => "manifold_topology_data",
@@ -57,9 +57,14 @@ if PLOT_EXTRINSIC_DIMENSIONALITY
             :η => 0.0,
         )
 
-        X = load_and_concat_activations(; filters...) 
+        X = nothing
+        try
+            X = load_and_concat_activations(; filters...) 
+        catch e
+            @warn "Could not load data for network $network" e
+            continue
+        end
         pca = pca_dimensionality_reduction(X, dim_est_params)[1]
-
         # get fraction of variance explained and dimensionality
         fvariance_explained = fraction_variance_explained(pca) 
         # plot

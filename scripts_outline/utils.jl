@@ -94,7 +94,7 @@ function constant_traj_sim(can::SingleCAN, duration, dt, still, τ, b₀; η=0.1
         T = nframes,
         still = still,
     )
-
+    @error "cacca" η
     return Simulation(can, trajectory; b₀ = b₀, τ = τ, η=η)
 end
 

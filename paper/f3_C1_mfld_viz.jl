@@ -3,17 +3,22 @@ Isomap embedding visualization of activity manifold
 """
 
 include("settings.jl")
-move_to_datadir(supervisor, "mfld_top")
-pyplot()
+move_to_datadir(supervisor, "mfld_top2")
+# pyplot()
 
-η = 0.0
+# η = 1.5
 _η = replace(string(η), "." => "_")
 Δ = 1  # donwsampling
 
 camera_angles = (100, 10),  (150, 70)
 
-for (network, color) in zip(networks, networks_colors)
-    (η > 0 && network ∉ ("ring", "torus", "sphere")) && continue
+# for (network, color) in zip(networks, networks_colors)
+
+network = "torus"
+color = "black"
+
+for η in (0.0, 1.5, 3.0, 5.0)
+    (η > 0 && network ∉ ("torus", )) && continue
 
     # load data
     filters = Dict{Symbol, Any}(
@@ -58,7 +63,7 @@ for (network, color) in zip(networks, networks_colors)
 
     fig = plot(plots..., layout = (2, 1), size = (800, 800))
     save_plot(supervisor, fig, "f3_mfld_top_$(network)_noise_$(_η)")
-    # display(fig)
+    display(fig)
     # break
 end
 

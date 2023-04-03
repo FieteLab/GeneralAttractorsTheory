@@ -4,18 +4,18 @@ accuracy.
 """
 
 include("settings.jl")
-move_to_datadir(supervisor, "PI")
+move_to_datadir(supervisor, "PI2")
 
 
 N_sims = 50
 still = 150
 duration = 1000 + still
 funky = false
-η=0.0
+η=0
 nframes = (Int ∘ round)(duration / dt)
 
 
-cover_manifold = :cylinder
+cover_manifold = :default
 
 tag = "PI_random_trajectories"
 
@@ -155,7 +155,7 @@ for network in networks
     η > 0 && network != "torus" && continue
     funky == true && network ∉ ("torus", "sphere") && continue
 
-    network ∉ ("mobius", ) && continue
+    network ∉ ("torus", ) && continue
     
     run_sims_and_save(network, funky, N_sims, η, still; cover_manifold=cover_manifold)
 end

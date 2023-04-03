@@ -1,15 +1,15 @@
 include("settings.jl")
 
-
 plots = []
+network = "sphere"
+neuron_n = 1600
 
-neuron_n = 1000
-
-for δ in (0.0, 0.2)
-    can = network_makers["torus"](:default; n=48, offset_size = δ, k = LocalGlobalKernel(α = 2.5, σ = 1.0))
-    n = δ == 0.0 ? 1 : 4
-    for i in 1:n
-        
+# for δ in (0.0, 0.2)
+δ = .25
+can = network_makers[network](:default; n=48, offset_size = δ)
+n = δ == 0.0 ? 1 : 6
+for i in 1:n
+    if network != "sphere"
         W = reshape(can.Ws[i][neuron_n,:], can.n)' |> Matrix
         w_x = range(can.X[1,1], can.X[1,end]; length=can.n[1])
         w_y = range(can.X[2,1], can.X[2,end]; length=can.n[2])
@@ -31,11 +31,41 @@ for δ in (0.0, 0.2)
             )
 
         scatter!(plt, [x[1]], [x[2]], color=:green, ms=2, msw=0, msa=0, label=nothing)
-        push!(plots, plt)
-        
-    end
-end
+    else
+        plt = scatter(
+            eachrow(can.X)...,
+            marker_z=can.Ws[i][neuron_n,:],
+            aspect_ratio = :equal,
+            color=:bwr,
+            linewidth = 0.25,
+            msa=0, msw=0,
+            ms=4,
+            lc=:black,
+            grid = false,
+            colorbar = false,
+            legend=false,
+            clims=(-.05, 0),
+            xlim=[-1.1, 1.1],
+            ylim=[-1.1, 1.1],
+            zlim=[-1.1, 1.1],
+        )
 
-fig = plot(plots..., layout=(1, 5), size=(1000, 800))
+        scatter!(
+            plt,
+            [can.X[1, neuron_n]],
+            [can.X[2, neuron_n]],
+            [can.X[3, neuron_n]],
+            color=:green,
+            ms=10,
+            msw=0,
+            msa=0,
+            label=nothing,
+        )
+    end
+    push!(plots, plt)
+end
+# end
+
+fig = plot(plots..., layout=(3, 2), size=(1000,1000),)
 display(fig)
-save_plot(supervisor, fig, "f5_C1_offset_connectivity")
+save_plot(supervisor, fig, "f5_C1_offset_connectivity_$(network)")

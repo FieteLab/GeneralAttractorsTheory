@@ -65,6 +65,13 @@ end
 
 
 """
+White noise with variance proportional to the square root of the activity of each neuron.
+"""
+function noise(S::AbstractVector, η::Number)::Vector
+    return rand(Float64, length(S)) .* (η .* sqrt.(S) )
+end
+
+"""
     step!(simulation::Simulation, x::Vector, v::Vector) 
 
 Step the simulation dynamics given that the "particle" is at `x`
@@ -85,7 +92,7 @@ function step!(
     d = size(S, 2)
 
     # get baseline and noise inputs
-    input = simulation.η > 0 ? (rand(Float64, size(S, 1)) .* simulation.η) .+ b₀ : b₀
+    input = simulation.η > 0 ? noise(∑ⱼ(simulation.S), simulation.η) .+ b₀ : b₀
 
     # update each population with each population's input
     for i = 1:d
@@ -126,7 +133,7 @@ function step!(
 
 
     # get baseline and noise inputs
-    input = simulation.η > 0 ? (rand(Float64, size(S, 1)) .* simulation.η) .+ b₀ : b₀
+    input = simulation.η > 0 ? noise(S[:, 1], simulation.η) .+ b₀ : b₀
 
     # enforce initial condition
     isnothing(s₀) || (S .*= s₀)
@@ -232,7 +239,7 @@ function run_simulation(
     end
 
     # do simulation steps and visualize   
-    if N > 250  # only show progress bar when its worthwhile
+    if N > 3000  # only show progress bar when its worthwhile
         pbar = ProgressBar()
         Progress.with(pbar) do
             job = addjob!(pbar, description = "Simulation", N = N)

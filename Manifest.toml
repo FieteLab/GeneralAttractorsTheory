@@ -2,7 +2,7 @@
 
 julia_version = "1.8.3"
 manifest_format = "2.0"
-project_hash = "dc8c9d08cd680651e8a119f6fb6d3bf7b5aada18"
+project_hash = "b318d7e408690936a837f1075c6cd977d3d559ed"
 
 [[deps.AbstractFFTs]]
 deps = ["ChainRulesCore", "LinearAlgebra"]
@@ -1298,7 +1298,7 @@ version = "0.1.1"
 deps = ["AbstractTrees", "CodeTracking", "Dates", "Highlights", "InteractiveUtils", "Logging", "Markdown", "MyterialColors", "OrderedCollections", "Parameters", "ProgressLogging", "REPL", "SnoopPrecompile", "Tables", "UUIDs", "Unicode", "UnicodeFun"]
 path = "../Term.jl"
 uuid = "22787eb5-b846-44ae-b979-8e399b8463ab"
-version = "2.0.0"
+version = "2.0.2"
 
 [[deps.Test]]
 deps = ["InteractiveUtils", "Logging", "Random", "Serialization"]

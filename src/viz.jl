@@ -78,6 +78,7 @@ function plot_distance_2d(
     pts = []
     for p in points
         Δx = [evaluate(d, p, x) for x in X]
+        Δx = maximum(Δx) .- Δx  # ! for colorbar
 
         _plot = contourf(
             x,
@@ -88,6 +89,7 @@ function plot_distance_2d(
             ylabel = ylabel,
             linewidth = 0.25,
             grid = false,
+            color=:Greens
         )
         scatter!([p[1]], [p[2]], color = :green, label = nothing, ms = 10, alpha = 1)
         push!(pts, _plot)

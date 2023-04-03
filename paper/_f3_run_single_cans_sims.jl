@@ -8,12 +8,12 @@ Including with noise.
 include("settings.jl")
 
 
-move_to_datadir(supervisor, "mfld_top")
+move_to_datadir(supervisor, "mfld_top2")
 
 
 
 
-GENERATE_DATA = true
+GENERATE_DATA = false
 GENERATE_EMBEDDINGS = true
 GENERATE_DEUBUG_PLOTS = false
 
@@ -28,7 +28,7 @@ still = 15
 tag = "manifold_topology_data"
 
 # noise
-η = 1.0
+η = 5.0
 
 
 
@@ -38,7 +38,7 @@ tag = "manifold_topology_data"
 for network in networks    
     GENERATE_DATA || break    
 
-    (η > 0 && network ∉ ("ring", "torus", "sphere")) && continue
+    (η > 0 && network ∉ ("torus",)) && continue
     print(hLine(network; style="red"))
 
     # can 
@@ -82,12 +82,12 @@ end
 
 GENERATE_EMBEDDINGS && @info "Dimensionality reduction embeddings"
 for network in networks
-
     (η > 0 && network ∉ ("ring", "torus", "sphere")) && continue
+    network != "torus" && continue
 
 
     GENERATE_EMBEDDINGS || break
-    print(hLine(network; style="red"))
+    print(hLine(network * " η:($η)"; style="red"))
     filters = Dict{Symbol, Any}(
         :tag => tag,
         :can => network,
@@ -127,8 +127,6 @@ for network in networks
             emb_name = "$(network)_$(dim)embedding_noise_$(_η)"
             store_data(supervisor, 
                     "embeddings"; name = emb_name, fmt="bson", data=Dict(:iso=>iso, :pca=>pca), metadata = meta)
-
-                    
             X̄  # save transformed data
         end
     end

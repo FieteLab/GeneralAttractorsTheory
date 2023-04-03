@@ -9,7 +9,7 @@ using StatsPlots
 # TODO make this work for non standard cover maps
 
 include("settings.jl")
-move_to_datadir(supervisor, "PI")
+move_to_datadir(supervisor, "PI2")
 tag = "PI_random_trajectories"
 
 """
@@ -49,13 +49,13 @@ end
 #                                      run                                     #
 # ---------------------------------------------------------------------------- #
 
-funky = true
-η = 0.0
+funky = false
+η = 1.5
 cover_manifold = "default"
 
 ρ(x) = x
 
-plt = plot(ylim=[0, 130])
+plt = plot(grid=false)
 
 distance_thresholds = Dict(
     "line" => Dict(:low => 1, :medium=>3, :high=>2.5),
@@ -72,13 +72,15 @@ xδ = Dict(
 )
 
 xticksmarks, xticks = [], []
-for (i, network) in enumerate(networks)
+# for (i, network) in enumerate(networks)
 
+network = "torus"
+for (i, η) in enumerate((0.0, 1.5, 3.0, 5.0,))
     η > 0 && network != "torus" && continue
     funky == true && network ∉ ("torus", "sphere") && continue
     cover_manifold != "default" && network ∉ ("mobius", ) && continue
 
-    # network ∈ ("plane", ) && continue
+    network ∉ ("torus", ) && continue
 
     # --------------------------------- get data --------------------------------- #
     println(hLine("$(network) - η=$(η)"; style="bold blue"))
@@ -125,7 +127,7 @@ for (i, network) in enumerate(networks)
 
         push!(xticksmarks, 5i + δ)
         # push!(xticks, distance_thresholds[network][k])
-        push!(xticks, network)
+        push!(xticks, network * " η = $(η)")
 
         boxplot!(
             X,

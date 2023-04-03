@@ -142,6 +142,7 @@ function load_and_concat_activations(; expected_n=nothing, filters...)
     end
     
     # stack activations over time
+    data = filter(d -> "S" in keys(d), data)
     X = hcat(
         map(
             d -> d["S"][:, 1, end-5:end], data
@@ -201,28 +202,23 @@ function do_tda(
     tresh = 20
     )
 
-    th = if network == "sphere"
-        15
-    elseif network == "torus"
-        if η == 0.0
-            14
-        else
-            18
-        end
-    else
-        12
-    end
+    
 
     tda_params = AnalysisParameters(
         tda_threshold = tresh,       # threshold to reduce TDA computation 
-        tda_downsample_factor = 5,        # temporal downsampling of data for TDA
+        tda_downsample_factor = 8,        # temporal downsampling of data for TDA
         tda_dim_max = max_d,        # max feature dimension, starting at 0
     )
     
     # load data
     _, M = ProjectSupervisor.fetch(supervisor; data_filters...) 
-    @assert length(M) == 1 "Loaded too much data with filters $(length(M)) $data_filters"
-    M = M[1]
+
+    
+    @assert length(M) >= 1 "Loaded too much data ($(length(M)) entries) with filters $data_filters"
+    @assert length(M) > 0 "Loaded no data with filters $data_filters"
+    M = M[1] isa Matrix ? M[1] : M[2]
+    @assert M isa Matrix "Expected a matrix of data, got $(typeof(M))."
+
     # @assert size(M, 1) == 10 size(M)
 
     # run TDA
