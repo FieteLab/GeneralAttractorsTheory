@@ -8,7 +8,7 @@ Including with noise.
 include("settings.jl")
 
 
-move_to_datadir(supervisor, "mfld_top2")
+move_to_datadir(supervisor, "mfld_top3")
 
 
 
@@ -28,7 +28,7 @@ still = 15
 tag = "manifold_topology_data"
 
 # noise
-η = 5.0
+η = 0.0
 
 
 
@@ -38,7 +38,9 @@ tag = "manifold_topology_data"
 for network in networks    
     GENERATE_DATA || break    
 
-    (η > 0 && network ∉ ("torus",)) && continue
+    # (η > 0 && network ∉ ("torus",)) && continue
+    # network ∉ ("torus",) && continue
+
     print(hLine(network; style="red"))
 
     # can 
@@ -83,7 +85,7 @@ end
 GENERATE_EMBEDDINGS && @info "Dimensionality reduction embeddings"
 for network in networks
     (η > 0 && network ∉ ("ring", "torus", "sphere")) && continue
-    network != "torus" && continue
+    # network != "torus" && continue
 
 
     GENERATE_EMBEDDINGS || break
@@ -99,6 +101,7 @@ for network in networks
 
     # embed in 3 and 10 dimensions
     for (dim, params) in zip(("d3_", "d10_", "d50_"), (dimred_3d_params, dimred_10d_params, dimred_50d_params))
+        println("   doing $(dim)embeddings")
         meta = Dict(
             :can => network,
             :dim => parse(Int, dim[2:end-1]),
@@ -111,23 +114,26 @@ for network in networks
         name = "$(network)_$(dim)_noise_$(_η)"
 
         fld = "embeddings_noise_$(_η)"
+        try
+            generate_or_load(
+                supervisor, 
+                fld;
+                name = name,
+                fmt = "npz",
+                metadata = meta,
+                load_existing=false
+            ) do
+                pca, X̄ = pca_dimensionality_reduction(X, params)
+                iso, X̄ = isomap_dimensionality_reduction(X̄, params)
 
-        generate_or_load(
-            supervisor, 
-            fld;
-            name = name,
-            fmt = "npz",
-            metadata = meta,
-            load_existing=false
-        ) do
-            pca, X̄ = pca_dimensionality_reduction(X, params)
-            iso, X̄ = isomap_dimensionality_reduction(X̄, params)
-
-            # save embeddings in a separate file
-            emb_name = "$(network)_$(dim)embedding_noise_$(_η)"
-            store_data(supervisor, 
-                    "embeddings"; name = emb_name, fmt="bson", data=Dict(:iso=>iso, :pca=>pca), metadata = meta)
-            X̄  # save transformed data
+                # save embeddings in a separate file
+                emb_name = "$(network)_$(dim)embedding_noise_$(_η)"
+                store_data(supervisor, 
+                        "embeddings"; name = emb_name, fmt="bson", data=Dict(:iso=>iso, :pca=>pca), metadata = meta)
+                X̄  # save transformed data
+            end
+        catch err
+            @error "Error in $(network) $(dim)embeddings"
         end
     end
     print(hLine(; style="dim"))

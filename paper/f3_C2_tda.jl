@@ -23,8 +23,8 @@ for η in (0.0, 1.5, 3.0, 5.0)
     )
     
     max_d = network ∈ ("ring", "line") ? 1 : 2
-    do_tda(network, η, supervisor, filters, "f3_C_TDA_$(network)"; 
-            max_d=2, tresh = 20,
+    do_tda(network, η, supervisor, filters, "f3_C_TDA_$(network)_η_$η"; 
+            max_d=2, tresh = 15,
     )
 
 end

@@ -206,7 +206,7 @@ function do_tda(
 
     tda_params = AnalysisParameters(
         tda_threshold = tresh,       # threshold to reduce TDA computation 
-        tda_downsample_factor = 8,        # temporal downsampling of data for TDA
+        tda_downsample_factor = 10,        # temporal downsampling of data for TDA
         tda_dim_max = max_d,        # max feature dimension, starting at 0
     )
     

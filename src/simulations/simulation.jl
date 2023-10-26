@@ -68,7 +68,7 @@ end
 White noise with variance proportional to the square root of the activity of each neuron.
 """
 function noise(S::AbstractVector, η::Number)::Vector
-    return rand(Float64, length(S)) .* (η .* sqrt.(S) )
+    return (rand(Float64, length(S)) .- 0.5) .* (η .* sqrt.(S) )
 end
 
 """

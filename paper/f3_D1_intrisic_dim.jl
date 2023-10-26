@@ -26,11 +26,11 @@ Run analysis on (10d embedded) data for each network.
 
 import GeneralAttractors.Analysis.ManifoldAnalysis: 
         fraction_variance_explained, find_fraction_variance_explained_elbow, pca_dimensionality_reduction
-move_to_datadir(supervisor, "mfld_top")
+move_to_datadir(supervisor, "mfld_top3")
 
-PLOT_EXTRINSIC_DIMENSIONALITY = true
+PLOT_EXTRINSIC_DIMENSIONALITY = false
 ESTIMATE_LOCAL_PCA_PARAMS_SENSITIVITY = false
-ESTIMATE_INTRINSIC_DIMENSIONALITY = false
+ESTIMATE_INTRINSIC_DIMENSIONALITY = true
 
 
 
@@ -174,12 +174,17 @@ end
 
 if ESTIMATE_INTRINSIC_DIMENSIONALITY
     for network in networks
+        network == "line" && continue
         filters = Dict{Symbol, Any}(
             :tag => "d10_embeddings",
             :can => network,
             :η => 0.0,
+            :extension => "npz",
         )
-        _, M = ProjectSupervisor.fetch(supervisor; filters...) 
+
+
+        df, M = ProjectSupervisor.fetch(supervisor; filters...) 
+        println(first(df, 5))
         @assert length(M) == 1 length(M)
         M = M[1]
         @assert size(M, 1) == 10 size(M)

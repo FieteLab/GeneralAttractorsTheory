@@ -6,7 +6,7 @@ include("settings.jl")
 move_to_datadir(supervisor, "mfld_top2")
 # pyplot()
 
-# η = 1.5
+η = 0.0
 _η = replace(string(η), "." => "_")
 Δ = 1  # donwsampling
 
@@ -62,7 +62,7 @@ for η in (0.0, 1.5, 3.0, 5.0)
     end
 
     fig = plot(plots..., layout = (2, 1), size = (800, 800))
-    save_plot(supervisor, fig, "f3_mfld_top_$(network)_noise_$(_η)")
+    save_plot(supervisor, fig, "f3_mfld_top_$(network)_noise_$(η)")
     display(fig)
     # break
 end

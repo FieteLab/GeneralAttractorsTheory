@@ -23,10 +23,10 @@ using GeneralAttractors.ManifoldUtils
 import GeneralAttractors.Simulations: remove_jumps_from_trajectory
 import GeneralAttractors.Simulations: plot_trajectory_and_decoded
 
-datadir = "/Users/federicoclaudi/Desktop/GeneralAttractors/data"
+datadir = "F:\\PostDoc\\GeneralAttractors\\data"
 
 supervisor = Supervisor("GeneralAttractorsTheory"; 
-            plotsdir="/Users/federicoclaudi/Dropbox (Personal)/Postdoc/Writings/GeneralAttractors/plots")
+            plotsdir="F:\\Dropbox (Personal)\\Postdoc\\Writings\\GeneralAttractors\\plots")
 set_datadir(supervisor, datadir)
 
 # ---------------------------------- general --------------------------------- #
