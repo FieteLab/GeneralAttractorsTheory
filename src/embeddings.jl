@@ -49,6 +49,36 @@ mobius_embedding(x::Matrix) = hcat(map(mobius_embedding, eachcol(x))...)
 
 
 # ---------------------------------------------------------------------------- #
+#                                 KLEIN BOTTLE                                 #
+# ---------------------------------------------------------------------------- #
+
+function klein_embedding end
+
+function klein_embedding(u, v)
+    R, r = 0.8, 0.4
+    u = u * 2π  # Scale u to [0, 2π]
+    v = v * 2π  # Scale v to [0, 2π]
+    
+    if u < π
+        x = (R + r * cos(v)) * cos(u)
+        y = (R + r * cos(v)) * sin(u)
+        z = r * sin(v)
+    else
+        x = (R + r * cos(v)) * cos(u)
+        y = (R + r * cos(v)) * sin(u)
+        z = r * sin(v + π)
+    end
+    
+    return [x, y, z]
+end
+klein_embedding(p) = klein_embedding(p...)
+
+klein_embedding(x::Matrix) = hcat(map(klein_embedding, eachcol(x))...)
+
+
+
+
+# ---------------------------------------------------------------------------- #
 #                                     TORUS                                    #
 # ---------------------------------------------------------------------------- #
 

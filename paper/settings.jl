@@ -16,9 +16,24 @@ install_term_stacktrace(; hide_frames=false)
 using GeneralAttractors.Simulations
 using GeneralAttractors.Analysis
 using GeneralAttractors.Kernels
-import GeneralAttractors: torus_maker, sphere_maker, mobius_maker, cylinder_maker, plane_maker, ring_maker, line_maker
-import GeneralAttractors: torus_embedding, identity_embedding, mobius_embedding, cylinder_embedding, plane_embedding, sphere_embedding, ring_embedding, line_embedding
-import GeneralAttractors: by_column, MobiusEuclidean, SphericalDistance, moving_average
+import GeneralAttractors: torus_maker, 
+    sphere_maker,
+    mobius_maker,
+    cylinder_maker,
+    plane_maker,
+    ring_maker,
+    line_maker,
+    klein_maker,
+    Line,
+    Ring,
+    Manifoldℝ²,
+    Cylinder,
+    Torus,
+    Sphere,
+    Mobius,
+    KleinBottle
+import GeneralAttractors: torus_embedding, identity_embedding, mobius_embedding, cylinder_embedding, plane_embedding, sphere_embedding, ring_embedding, line_embedding, klein_embedding
+import GeneralAttractors: by_column, MobiusEuclidean, SphericalDistance, moving_average, KleinBottleEuclidean
 using GeneralAttractors.ManifoldUtils
 import GeneralAttractors.Simulations: remove_jumps_from_trajectory
 import GeneralAttractors.Simulations: plot_trajectory_and_decoded
@@ -41,7 +56,8 @@ networks = (
     "sphere", 
     "mobius", 
     "cylinder",
-    "plane"
+    "plane",
+    "klein",
 )
 
 
@@ -54,6 +70,7 @@ network_makers = Dict(
     "mobius" => mobius_maker,
     "cylinder" => cylinder_maker,
     "plane" => plane_maker,
+    "klein" => klein_maker,
 )
 
 embeddings = Dict(
@@ -64,6 +81,7 @@ embeddings = Dict(
     "mobius" => mobius_embedding,
     "cylinder" => cylinder_embedding,
     "plane" => plane_embedding,
+    "klein" => klein_embedding,
 )
 
 metrics = Dict(
@@ -74,6 +92,7 @@ metrics = Dict(
     Torus => PeriodicEuclidean([2π, 2π]),
     Sphere => SphericalDistance(),
     Mobius => MobiusEuclidean(),
+    KleinBottle => KleinBottleEuclidean(),
 )
 
 
@@ -85,6 +104,7 @@ max_path_int_vel = Dict(
     "torus" => 0.04,
     "sphere" => 0.004,
     "mobius" => 0.02,
+    "klein" => 0.02,
 )
 
 # ------------------------------ PLOTTING params ----------------------------- #
@@ -137,8 +157,6 @@ dimred_50d_params = AnalysisParameters(
     isomap_k = 10,
     isomap_downsample = 10,  
 )
-
-
 
 
 intrinsic_dimensionality_prms = AnalysisParameters(

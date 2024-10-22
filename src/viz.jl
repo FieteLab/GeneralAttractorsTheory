@@ -155,6 +155,25 @@ function plot_distance_function(d::MobiusEuclidean; kwargs...)
 end
 
 """
+plot_distance_function(d::KleinBottleEuclidean; kwargs...)
+
+Plot distance for metric of type KleinBottleEuclidean
+"""
+function plot_distance_function(d::KleinBottleEuclidean; kwargs...)
+    x = 0:0.075:2π |> collect
+    y = 0:0.075:2π |> collect
+    X = (x × y) |> collect
+    X = [[x...] for x in vec(X)]
+
+    return plot_distance_2d(
+        d,
+        x,
+        y;
+        points = [[2, 0.1], [2, 2], [2π - 0.1, 2], [2π - 0.1, 4]],
+        kwargs...,
+    )
+end
+"""
 plot_distance_function(d::SphericalAngle; kwargs...)
 
 Plot distance for metric of type SphericalAngle

@@ -40,7 +40,8 @@ include("networks/line.jl")
 include("networks/sphere.jl")
 include("networks/cylinder.jl")
 include("networks/plane.jl")
+include("networks/klein.jl")
 
-export torus_maker, sphere_maker, ring_maker, mobius_maker, cylinder_maker, plane_maker, line_maker
+export torus_maker, sphere_maker, ring_maker, mobius_maker, cylinder_maker, plane_maker, line_maker, klein_maker
 
 end

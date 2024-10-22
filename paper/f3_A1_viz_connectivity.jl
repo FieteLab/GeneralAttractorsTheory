@@ -17,7 +17,7 @@ import GeneralAttractors: plot_distance_function, SphericalDistance, MobiusEucli
 #     can = make_single_can(network; cy_extent = 1)
 
 #     fig = if can.d == 2
-#         W = reshape(can.W[1,:], can.n)' |> Matrix
+#         W = reshape(can.W[1,:], can.n)' |> MatrixPkg.inst
 #         w_x = range(can.X[1,1], can.X[1,end]; length=can.n[1])
 #         w_y = range(can.X[2,1], can.X[2,end]; length=can.n[2])
     
@@ -98,6 +98,16 @@ p = plot_distance_function(
     colorbar = nothing,
 )
 save_plot(supervisor, p, "f3_A__distance_mobius")
+
+
+d = KleinBottleEuclidean()
+p = plot_distance_function(
+    d,
+    plot_title = "Klein Bottle distance",
+    layout = (2, 2),
+    colorbar = nothing,
+)
+save_plot(supervisor, p, "f3_A__distance_klein")
 
 d = SphericalDistance()
 plot_distance_function(

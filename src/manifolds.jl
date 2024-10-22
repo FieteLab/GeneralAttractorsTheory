@@ -5,12 +5,12 @@ module ManifoldUtils
 using Distances
 import Term.Repr: @with_repr, termshow
 
-import ..GeneralAttractors: SphericalDistance, MobiusEuclidean, lerp
-import ..GeneralAttractors: sphere_embedding, mobius_embedding
+import ..GeneralAttractors: SphericalDistance, MobiusEuclidean, lerp, KleinBottleEuclidean
+import ..GeneralAttractors: sphere_embedding, mobius_embedding, klein_embedding
 
 export AbstractManifold, CoverSpace
 export ℝ², T, S²
-export Ring, Mobius, Sphere, Torus, Manifoldℝ², Cylinder, Line
+export Ring, Mobius, Sphere, Torus, Manifoldℝ², Cylinder, Line, KleinBottle
 
 include("_manifolds.jl")
 
@@ -358,6 +358,69 @@ function Base.rand(m::Mobius; δ=0.25)
     x
 end
 
+
+# ---------------------------------------------------------------------------- #
+#                                 Klein Botttle                                #
+# ---------------------------------------------------------------------------- #
+
+
+@with_repr struct KleinBottle <: AbstractManifold
+    name::String
+    xmin::Vector
+    xmax::Vector
+    ψs::Vector{AbstractVectorField}
+    metric::Metric
+    d::Int  # dimensionality
+    periodic_dimensions::Vector # label for which dimensions are periodic
+end
+
+KleinBottle() = KleinBottle(
+    "Klein Bottle",
+    [0, 0],
+    [2π, 2π],
+    [VectorField(MB_ψ1), VectorField(MB_ψ2)],
+    KleinBottleEuclidean(),
+    2, [1, 1]
+)
+
+
+""" 
+Correct the position vector x to ensure
+that it's on the Klein Bottle. If it's too much to the side
+
+"""
+function apply_boundary_conditions!(x::Vector, m::KleinBottle)
+    vel_correction_factors = [1, 1]
+    # non periodic dimension
+    # δ = 0.5  # padding around boundary to account for bump size
+    # if x[1] <= m.xmin[1] + δ
+    #     x[1] = m.xmin[1] + δ
+    #     vel_correction_factors[1] = 0
+    # elseif x[1] >= m.xmax[1] - δ
+    #     x[1] = m.xmax[1] - δ
+    #     vel_correction_factors[1] = 0
+    # end
+
+    # periodic dimension
+    if x[2] >= 2π
+        x[2] = x[2] - 2π
+        x[1] = -x[1]
+    elseif x[2] <= 0
+        x[2] = 2π + x[2]
+        x[1] = -x[1]
+    end
+    return x, [1, 1] 
+end
+
+function Base.rand(m::KleinBottle)
+    # generate a random point on the unit sphere
+    d = length(m.xmin)
+    x = zeros(d)
+    for i = 1:d
+        x[i] = rand(m.xmin[i]:0.001:m.xmax[i])  # padding because of boundary effect on neural activity
+    end
+    x
+end
 
 # ---------------------------------------------------------------------------- #
 #                                 COVER SPACES                                 #

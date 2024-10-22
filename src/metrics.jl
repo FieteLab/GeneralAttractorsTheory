@@ -77,3 +77,39 @@ end
 
 # # Distances.result_type(::MobiusEuclidean, ::Float64, ::Float64) = Float64
 Distances.eval_op(::MobiusEuclidean, ::Float64, ::Float64) = 1.0
+
+
+
+# ---------------------------------------------------------------------------- #
+#                                 klein bottle                                 #
+# ---------------------------------------------------------------------------- #
+
+struct KleinBottleEuclidean <: UnionMetric
+    th::Float64  # threshold distance for points "on the same side"
+    periodic::PeriodicEuclidean
+end
+
+KleinBottleEuclidean() = KleinBottleEuclidean(π, PeriodicEuclidean([2π, 2π]))
+
+function (dist::KleinBottleEuclidean)(q, p)
+    @inbounds begin
+        Δx = abs(q[1] - p[1])
+        Δy = abs(q[2] - p[2])
+        
+        # Handle x-direction (torus-like behavior)
+        x̂ = Δx > π ? (q[1] > p[1] ? q[1] - 2π : q[1] + 2π) : q[1]
+        
+        # Handle y-direction (Möbius strip-like behavior)
+        if Δy > dist.th
+            ŷ = q[2] > p[2] ? q[2] - 2π : q[2] + 2π
+            x̂ = 2π - x̂  # Flip x-coordinate when crossing y-boundary
+        else
+            ŷ = q[2]
+        end
+        
+        q̂ = [x̂, ŷ]
+        return dist.periodic(q̂, p)
+    end
+end
+
+Distances.eval_op(::KleinBottleEuclidean, ::Float64, ::Float64) = 1.0

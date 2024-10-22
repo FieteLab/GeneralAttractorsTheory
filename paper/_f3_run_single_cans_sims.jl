@@ -13,9 +13,9 @@ move_to_datadir(supervisor, "mfld_top3")
 
 
 
-GENERATE_DATA = false
+GENERATE_DATA = true
 GENERATE_EMBEDDINGS = true
-GENERATE_DEUBUG_PLOTS = false
+GENERATE_DEUBUG_PLOTS = true
 
 # number of sims
 n_sims_per_network = 2500
