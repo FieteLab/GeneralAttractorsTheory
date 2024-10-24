@@ -169,7 +169,7 @@ function plot_distance_function(d::KleinBottleEuclidean; kwargs...)
         d,
         x,
         y;
-        points = [[2, 0.1], [2, 2], [2π - 0.1, 2], [2π - 0.1, 4]],
+        points = [[0.1, 0.1], [2, 2], [2π - 0.1, 2], [2, 0.1]],
         kwargs...,
     )
 end

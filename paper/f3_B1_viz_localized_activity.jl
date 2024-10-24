@@ -9,11 +9,12 @@ include("settings.jl")
 
 duration = 500
 still = 15
-network = "torus"
+do_network = "klein"
 
 for network in networks
-    network == "sphere" && continue
-    network != "plane" && continue
+    # network == "sphere" && continue
+    # network != "plane" && continue
+    network != do_network && continue
     print(hLine("Doing $network"; style ="bold blue"))
 
     φ = embeddings[network]
@@ -23,6 +24,8 @@ for network in networks
         [1, 0, 0]
     elseif network == "cylinder"
         [3, 0] 
+    elseif network == "klein"
+        [π, π]
     elseif network ∉ ("line", "ring")
         [-9.9, -9.9]
     elseif network == "ring"
@@ -32,7 +35,7 @@ for network in networks
     end
 
     # plots params
-    can = make_single_can(network; k = LocalGlobalKernel(α = 1.5, σ = 250.0))
+    can = make_single_can(network; k = LocalGlobalKernel(α = 1.5, σ = 5.0))
 
     # run simulation
     h, _ = simulate_constant_traj_random_init(can, duration, dt, still, τ, b₀; x₀=x₀)

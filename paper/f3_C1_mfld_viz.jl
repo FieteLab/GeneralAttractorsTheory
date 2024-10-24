@@ -3,7 +3,7 @@ Isomap embedding visualization of activity manifold
 """
 
 include("settings.jl")
-move_to_datadir(supervisor, "mfld_top2")
+move_to_datadir(supervisor, "mfld_top4")
 # pyplot()
 
 η = 0.0
@@ -14,10 +14,10 @@ camera_angles = (100, 10),  (150, 70)
 
 # for (network, color) in zip(networks, networks_colors)
 
-network = "torus"
+network = "klein"
 color = "black"
 
-for η in (0.0, 1.5, 3.0, 5.0)
+for η in (0.0,) #  1.5, 3.0, 5.0)
     (η > 0 && network ∉ ("torus", )) && continue
 
     # load data
@@ -30,10 +30,13 @@ for η in (0.0, 1.5, 3.0, 5.0)
     )
 
     M = ProjectSupervisor.fetch(supervisor; filters...)[2][1]
+    println(size(M))
 
     zlims = if network == "plane" 
         [-20, 20]
     elseif network == "mobius"
+        [-10, 10]
+    elseif network == "klein"
         [-10, 10]
     else
         [-20, 20]

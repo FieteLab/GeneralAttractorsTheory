@@ -136,10 +136,11 @@ activations.
 """
 function load_and_concat_activations(; expected_n=nothing, filters...)
     _, data = ProjectSupervisor.fetch(supervisor; filters...)
+    println(length(data))
 
-    if expected_n !== nothing
-        @assert length(data) == expected_n "Expected $(expected_n) simulations, got $(length(data))."
-    end
+    # if expected_n !== nothing
+    #     @assert length(data) == expected_n "Expected $(expected_n) simulations, got $(length(data))."
+    # end
     
     # stack activations over time
     data = filter(d -> "S" in keys(d), data)

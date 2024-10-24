@@ -70,15 +70,15 @@ function History(
     
     @debug "Done" size(S) 
     metadata = Dict{Symbol,Any}(
-        :can => simulation.can.name,
-        :cover => simulation.can.C,
-        :n => simulation.can.n,
-        :kernel => (string ∘ typeof)(simulation.can.kernel),
-        :σ => simulation.can.σ,
-        :b₀ => simulation.b₀,
-        :η => simulation.η,
-        :dt => simulation.dt,
-        :τ => simulation.τ,
+        # :can => simulation.can.name,
+        # :cover => simulation.can.C,
+        # :n => simulation.can.n,
+        # :kernel => (string ∘ typeof)(simulation.can.kernel),
+        # :σ => simulation.can.σ,
+        # :b₀ => simulation.b₀,
+        # :η => simulation.η,
+        # :dt => simulation.dt,
+        # :τ => simulation.τ,
         :average_over_ms => average_over_ms,
     )
 

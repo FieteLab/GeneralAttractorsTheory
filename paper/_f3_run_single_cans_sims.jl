@@ -8,28 +8,31 @@ Including with noise.
 include("settings.jl")
 
 
-move_to_datadir(supervisor, "mfld_top3")
+move_to_datadir(supervisor, "mfld_top4")
 
+supervisor.metadata
 
 
 
 GENERATE_DATA = true
 GENERATE_EMBEDDINGS = true
-GENERATE_DEUBUG_PLOTS = true
+GENERATE_DEUBUG_PLOTS = false
 
-# number of sims
-n_sims_per_network = 2500
-N_sims = n_sims_per_network * length(networks)
-GENERATE_DATA && @info "Running $N_sims simulations in total."
 
 # sim params
 duration = 25
 still = 15
 tag = "manifold_topology_data"
+do_networks = ("klein",)
+
+# number of sims
+n_sims_per_network = 2500  # was 2500
+N_sims = n_sims_per_network * length(do_networks)
+GENERATE_DATA && @info "Running $N_sims simulations in total."
+
 
 # noise
 η = 0.0
-
 
 
 
@@ -37,6 +40,7 @@ tag = "manifold_topology_data"
 
 for network in networks    
     GENERATE_DATA || break    
+    network in do_networks || continue
 
     # (η > 0 && network ∉ ("torus",)) && continue
     # network ∉ ("torus",) && continue
@@ -45,10 +49,11 @@ for network in networks
 
     # can 
     can = make_single_can(network)
+    println(can)
     
     # run simulations
     for i in 1:n_sims_per_network
-        i % 100 == 0 && tprintln("   doing $i/$n_sims_per_network - `$(network)`")
+        i % 100 == 0 && tprintln("   doing $i-$(i+99) of $n_sims_per_network - `$(network)`")
 
         save_name = "$(can.name)_noise_$(η)"
         save_name = replace(save_name, "." => "_")
@@ -84,11 +89,12 @@ end
 
 GENERATE_EMBEDDINGS && @info "Dimensionality reduction embeddings"
 for network in networks
+    network in do_networks || continue
     (η > 0 && network ∉ ("ring", "torus", "sphere")) && continue
     # network != "torus" && continue
-
-
     GENERATE_EMBEDDINGS || break
+
+
     print(hLine(network * " η:($η)"; style="red"))
     filters = Dict{Symbol, Any}(
         :tag => tag,
@@ -98,6 +104,7 @@ for network in networks
 
 
     X = load_and_concat_activations(; expected_n=n_sims_per_network, filters...) 
+    println(size(X))
 
     # embed in 3 and 10 dimensions
     for (dim, params) in zip(("d3_", "d10_", "d50_"), (dimred_3d_params, dimred_10d_params, dimred_50d_params))
@@ -150,6 +157,8 @@ GENERATE_DEUBUG_PLOTS && begin
     @info "Plotting decoded locations"
 
     for network in networks
+        network in do_networks || continue
+        
         # plot rand init conditions
         can = network_makers[network](:single)
         x₀ = hcat(map(i -> rand(can.C.N), 1:n_sims_per_network)...)

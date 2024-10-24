@@ -295,7 +295,8 @@ function SingleCAN(
 
     # get connectivity
     # get pairwise offset connectivity
-    D::Matrix = pairwise(metric, X, X)
+    println("computing distance matrix")
+    D::Matrix = pairwise(metric, X,)
 
     # get connectivity matrix with kernel
     W = kernel.k.(D)
