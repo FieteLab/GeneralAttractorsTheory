@@ -21,17 +21,18 @@ function klein_maker(
     if cover_manifold == :default
         cover = CoverSpace(mfld)
     else
-        # create a cover space from the cylinder to the mobius strip
-        ρ(x, y) = [y, x]
-        ρ(v) = ρ(v...)
+        # # create a cover space from the cylinder to the mobius strip
+        # ρ(x, y) = [y, x]
+        # ρ(v) = ρ(v...)
 
-        ρⁱ(x, y) = [y, x]
-        ρⁱ(v) = ρⁱ(v...)
+        # ρⁱ(x, y) = [y, x]
+        # ρⁱ(v) = ρⁱ(v...)
 
 
-        cover = CoverSpace(
-            Cylinder(y_extent/2), mfld, ρ, ρⁱ;
-        )
+        # cover = CoverSpace(
+        #     Cylinder(y_extent/2), mfld, ρ, ρⁱ;
+        # )
+        error("No cover space for klein bottle")
     end
 
     # coordinates function (from neurons index to lattice coordintes)
@@ -46,18 +47,18 @@ function klein_maker(
 
     # define offset vector fields
     offsets = [
-        p -> MB_ψ1(p),
-        p -> -MB_ψ1(p),
-        p -> MB_ψ2(p),
-        p -> -MB_ψ2(p),
+        p -> torus_ψ1(p),
+        p -> -torus_ψ1(p),
+        p -> torus_ψ2(p),
+        p -> -torus_ψ2(p),
     ]
 
     # define one forms
     Ω = [
-        OneForm(1, (p) -> offset_size * MB_ψ1(p)),
-        OneForm(1, (p) -> -offset_size * MB_ψ1(p)),
-        OneForm(2, (p) -> offset_size * MB_ψ2(p)),
-        OneForm(2, (p) -> -offset_size * MB_ψ2(p)),
+        OneForm(1, (p) -> offset_size * torus_ψ1(p)),
+        OneForm(1, (p) -> -offset_size * torus_ψ1(p)),
+        OneForm(2, (p) -> offset_size * torus_ψ2(p)),
+        OneForm(2, (p) -> -offset_size * torus_ψ2(p)),
     ]
 
     # construct network

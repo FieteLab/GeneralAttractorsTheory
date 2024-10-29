@@ -76,31 +76,36 @@ import GeneralAttractors: plot_distance_function, SphericalDistance, MobiusEucli
 
 # ------------------------------- plot distance ------------------------------ #
 
-# d = PeriodicEuclidean([2π])
-# p = plot_distance_function(d, plot_title = "Ring distance")
-# save_plot(supervisor, p, "f3_A__distance_ring")
 
-# d = PeriodicEuclidean([2π, 2π])  # distance function over a torus manifold
-# p = plot_distance_function(d, plot_title = "Torus distance"; points = [[1, 1]])
-# save_plot(supervisor, p, "f3_A__distance_torus")
+d = Euclidean()
+p = plot_distance_function(d, plot_title = "Euclidean distance")
+save_plot(supervisor, p, "f3_A__distance_line")
+
+d = PeriodicEuclidean([2π])
+p = plot_distance_function(d, plot_title = "Ring distance")
+save_plot(supervisor, p, "f3_A__distance_ring")
+
+d = PeriodicEuclidean([2π, 2π])  # distance function over a torus manifold
+p = plot_distance_function(d, plot_title = "Torus distance"; points = [[1, 1]])
+save_plot(supervisor, p, "f3_A__distance_torus")
 
 
-# d = PeriodicEuclidean([Inf, Inf])  
-# p = plot_distance_function(d, plot_title = "Plane distance"; points = [[.2, .2]])
-# save_plot(supervisor, p, "f3_A__distance_plane")
+d = PeriodicEuclidean([Inf, Inf])  
+p = plot_distance_function(d, plot_title = "Plane distance"; points = [[.2, .2]])
+save_plot(supervisor, p, "f3_A__distance_plane")
 
-# d = PeriodicEuclidean([2π, Inf])
-# p = plot_distance_function(d, plot_title = "Cylinder distance", layout = (4, 1))
-# save_plot(supervisor, p, "f3_A__distance_cylinder")
+d = PeriodicEuclidean([2π, Inf])
+p = plot_distance_function(d, plot_title = "Cylinder distance", layout = (4, 1))
+save_plot(supervisor, p, "f3_A__distance_cylinder")
 
-# d = MobiusEuclidean()
-# p = plot_distance_function(
-#     d,
-#     plot_title = "Mobius distance",
-#     layout = (1, 4),
-#     colorbar = nothing,
-# )
-# save_plot(supervisor, p, "f3_A__distance_mobius")
+d = MobiusEuclidean()
+p = plot_distance_function(
+    d,
+    plot_title = "Mobius distance",
+    layout = (1, 4),
+    colorbar = nothing,
+)
+save_plot(supervisor, p, "f3_A__distance_mobius")
 
 
 d = KleinBottleEuclidean()
@@ -112,10 +117,11 @@ p = plot_distance_function(
 )
 save_plot(supervisor, p, "f3_A__distance_klein")
 
-# d = SphericalDistance()
-# plot_distance_function(
-#     d,
-#     plot_title = "Spherical (angle) distance",
-#     layout = (2, 2),
-#     size = (800, 600),
-# )
+d = SphericalDistance()
+p = plot_distance_function(
+    d,
+    plot_title = "Spherical (angle) distance",
+    layout = (2, 2),
+    size = (800, 600),
+)
+save_plot(supervisor, p, "f3_A__distance_spherical")

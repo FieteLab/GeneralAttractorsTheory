@@ -26,11 +26,11 @@ Run analysis on (10d embedded) data for each network.
 
 import GeneralAttractors.Analysis.ManifoldAnalysis: 
         fraction_variance_explained, find_fraction_variance_explained_elbow, pca_dimensionality_reduction
-move_to_datadir(supervisor, "mfld_top3")
+move_to_datadir(supervisor, "mfld_top4")
 
-PLOT_EXTRINSIC_DIMENSIONALITY = false
+PLOT_EXTRINSIC_DIMENSIONALITY = true
 ESTIMATE_LOCAL_PCA_PARAMS_SENSITIVITY = false
-ESTIMATE_INTRINSIC_DIMENSIONALITY = true
+ESTIMATE_INTRINSIC_DIMENSIONALITY = false
 
 
 
@@ -85,6 +85,7 @@ if PLOT_EXTRINSIC_DIMENSIONALITY
         # )
 
         above = findfirst(σ .> 80)
+        println(above, network)
 
         scatter!(
             [above], [σ[above]],

@@ -1,4 +1,5 @@
 import MyterialColors: red, green, black, white
+import Distances: Euclidean, PeriodicEuclidean
 
 # ---------------------------------- kernel ---------------------------------- #
 function Plots.plot(K::AbstractKernel; σ = 4, kwargs...)
@@ -36,8 +37,23 @@ end
 
 
 # ---------------------------- distance functions ---------------------------- #
+
+function plot_distance_1d(d::Euclidean; kwargs...)
+    x = 0:0.01:1 |> collect
+
+    p = plot(; xlabel = "x", ylabel = "distance", kwargs...)
+    colors = [:black, :red, :green, :blue]
+    for (i, point) in enumerate(rand(x, 4))
+        y = [evaluate(d, point, xx) for xx in x]
+        plot!(x, y, lw = 3, color = colors[i], label = nothing)
+        vline!([point], color = colors[i], label = nothing)
+    end
+    display(p)
+    return p
+end
+
 function plot_distance_1d(d::PeriodicEuclidean; kwargs...)
-    x = 0:0.1:d.periods[1] |> collect
+    x = 0:0.01:d.periods[1] |> collect
 
     p = plot(; xlabel = "x", ylabel = "distance", kwargs...)
     colors = [:black, :red, :green, :blue]
@@ -133,6 +149,10 @@ function plot_distance_function(d::PeriodicEuclidean; kwargs...)
     end
 end
 
+function plot_distance_function(d::Euclidean; kwargs...)
+    plot_distance_1d(d; kwargs...)
+end
+
 
 """
 plot_distance_function(d::MobiusEuclidean; kwargs...)
@@ -181,37 +201,93 @@ https://github.com/JuliaStats/Distances.jl/blob/master/src/haversine.jl
 
 For an embedding of the sphere see: https://stackoverflow.com/questions/10473852/convert-latitude-and-longitude-to-point-in-3d-space
 """
+# function plot_distance_function(d::Union{SphericalDistance,SphericalAngle}; kwargs...)
+#     function fibonacci_sphere(n = 1000)
+#         points = zeros(3, n)
+#         ϕ = π * (3 - √5)  # golden angle in radians
+
+#         for i = 1:n
+#             y = 1 - (i / float(n - 1)) * 2  # y goes from 1 to -1
+#             radius = √(Complex(1 - y * y)) |> real  # radius at y
+
+#             θ = ϕ * i  # golden angle increment
+
+#             x = cos(θ) * radius
+#             z = sin(θ) * radius
+
+#             points[:, i] = [x, y, z]
+#         end
+#         return points
+#     end
+
+#     vips = ([1, 0, 0], [0, 0, 1], [0, 1, 0])
+#     X = fibonacci_sphere(400)
+
+#     plts = []
+#     for p in vips
+#         Δx = [evaluate(d, p, x) for x in eachcol(X)]
+#         plt = scatter3d(eachrow(X)..., marker_z = Δx, color=:Greens)
+#         scatter3d!(plt, [p[1]], [p[2]], [p[3]], ms = 10, color = :green)
+#         push!(plts, plt)
+#     end
+
+#     plot(plts...)
+# end
+
 function plot_distance_function(d::Union{SphericalDistance,SphericalAngle}; kwargs...)
-    function fibonacci_sphere(n = 1000)
-        points = zeros(3, n)
-        ϕ = π * (3 - √5)  # golden angle in radians
+    # Create latitude/longitude grid (in radians)
+    lat = range(-π/2, π/2, length=500)
+    lon = range(-π, π, length=500)
 
-        for i = 1:n
-            y = 1 - (i / float(n - 1)) * 2  # y goes from 1 to -1
-            radius = √(Complex(1 - y * y)) |> real  # radius at y
-
-            θ = ϕ * i  # golden angle increment
-
-            x = cos(θ) * radius
-            z = sin(θ) * radius
-
-            points[:, i] = [x, y, z]
-        end
-        return points
+    # Function to convert lat/lon to 3D coordinates on unit sphere
+    function latlon_to_xyz(lat, lon)
+        [cos(lat)*cos(lon), cos(lat)*sin(lon), sin(lat)]
     end
 
-    vips = ([1, 0, 0], [0, 0, 1], [0, 1, 0])
-    X = fibonacci_sphere(400)
-
-    plts = []
-    for p in vips
-        Δx = [evaluate(d, p, x) for x in eachcol(X)]
-        plt = scatter3d(eachrow(X)..., marker_z = Δx)
-        scatter3d!(plt, [p[1]], [p[2]], [p[3]], ms = 10, color = :red)
-        push!(plts, plt)
+    # Create plots for a few reference points
+    points = [
+        [0.0, 0.0],      # equator at prime meridian
+        [π/4, π/4],      # mid northern hemisphere
+        [-π/4, -π/4],    # mid southern hemisphere
+        [π/2, 0.0],      # north pole
+    ]
+    
+    pts = []
+    for p in points
+        ref_point = latlon_to_xyz(p[1], p[2])
+        
+        # Calculate distances from reference point to all grid points
+        distances = [
+            evaluate(d, ref_point, latlon_to_xyz(lat_i, lon_j))
+            for lat_i in lat, lon_j in lon
+        ]
+        
+        # Create contour plot
+        _plot = contourf(
+            rad2deg.(lon),  # convert to degrees for better readability
+            rad2deg.(lat),
+            distances',
+            aspect_ratio = :equal,
+            xlabel = "Longitude (degrees)",
+            ylabel = "Latitude (degrees)",
+            linewidth = 0.25,
+            grid = false,
+            color = :Greens
+        )
+        
+        # Mark reference point
+        scatter!([rad2deg(p[2])], [rad2deg(p[1])], 
+            color = :green, 
+            label = nothing, 
+            ms = 10, 
+            alpha = 1
+        )
+        push!(pts, _plot)
     end
 
-    plot(plts...)
+    plt = plot(pts..., size = (800, 800); kwargs...)
+    display(plt)
+    return plt
 end
 
 # ------------------------------- connectivity ------------------------------- #

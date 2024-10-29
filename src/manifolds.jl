@@ -378,9 +378,10 @@ KleinBottle() = KleinBottle(
     "Klein Bottle",
     [0, 0],
     [2π, 2π],
-    [VectorField(MB_ψ1), VectorField(MB_ψ2)],
+    [ConstantVectorField(2, 1), ConstantVectorField(2, 2)],
     KleinBottleEuclidean(),
-    2, [1, 1]
+    2, 
+    [1, 1]
 )
 
 
@@ -412,14 +413,8 @@ function apply_boundary_conditions!(x::Vector, m::KleinBottle)
     return x, [1, 1] 
 end
 
-function Base.rand(m::KleinBottle)
-    # generate a random point on the unit sphere
-    d = length(m.xmin)
-    x = zeros(d)
-    for i = 1:d
-        x[i] = rand(m.xmin[i]:0.001:m.xmax[i])  # padding because of boundary effect on neural activity
-    end
-    x
+function Base.rand(m::KleinBottle; δ=0)
+    rand(0:0.001:2π, 2)
 end
 
 # ---------------------------------------------------------------------------- #

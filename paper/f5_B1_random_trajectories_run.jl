@@ -79,6 +79,13 @@ function PI_trajectory_maker(can, x₀_traj)
             δ = 10,
             kwargs...
         )
+    elseif M == KleinBottle && N == KleinBottle
+        Trajectory(
+            can;
+            σv = [.75, .2],
+            δ = 10,
+            kwargs...
+        )
     else
         error("No trajectory maker for $M and $N")
     end
@@ -155,7 +162,7 @@ for network in networks
     η > 0 && network != "torus" && continue
     funky == true && network ∉ ("torus", "sphere") && continue
 
-    network ∉ ("torus", ) && continue
+    network ∉ ("klein", ) && continue
     
     run_sims_and_save(network, funky, N_sims, η, still; cover_manifold=cover_manifold)
 end

@@ -23,7 +23,7 @@ GENERATE_DEUBUG_PLOTS = false
 duration = 25
 still = 15
 tag = "manifold_topology_data"
-do_networks = ("klein",)
+do_networks = ("plane", "cylinder" )
 
 # number of sims
 n_sims_per_network = 2500  # was 2500

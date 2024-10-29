@@ -56,6 +56,10 @@ function make_path_int_can(network; funky=false, random_x0=false, kwargs...)
         can = sphere_maker(:default; n=48, α=235, use_offset_fields=funky, kwargs...) # 225
         x₀_traj = random_x0 ? nothing : ([0, 1, 0] ./ norm([0, 1, 0]))
         can, x₀_traj, sphere_embedding
+    elseif network == "klein"
+        can = klein_maker(:default; n=48, α=235, use_offset_fields=funky, kwargs...) # 225
+        x₀_traj = random_x0 ? nothing : [0.5, 0.5]
+        can, x₀_traj, klein_embedding
     end
 end
 
