@@ -1,4 +1,3 @@
-
 """
 Analysis of manifold topology and dimensionality
 from point cloud data (e.g. neural activity recordings)
@@ -194,7 +193,7 @@ function estimate_intrinsic_dimensionality(
     params::AnalysisParameters = AnalysisParameters();
     nntree = nothing,
     Us = nothing,  # precomputed neighborhoods
-)::Vector{Int}
+)::Tuple{Vector{Int}, Vector{Vector{Float64}}}  # Modified return type
     # @info "Estimating intrinsic dimensionality" size(M) params.intrinsic_d_nseeds params.intrinsic_d_neighborhood_size params.intrinsic_d_pratio
 
     # build nearest neighbor tree
@@ -214,6 +213,8 @@ function estimate_intrinsic_dimensionality(
 
     # for each neighborhood fit PCA and get the number of PCs
     D = []  # store "dimensionality" of each tangent vector space
+    all_variances = Vector{Float64}[]  # store variances for each neighborhood
+
     for (i, U) in enumerate(Us)
         @assert length(U) == k
         pca_model = fit(PCA, M[:, U]; 
@@ -223,8 +224,11 @@ function estimate_intrinsic_dimensionality(
         # d = find_fraction_variance_explained_elbow(principalvars(pca_model))
         d = length(principalvars(pca_model))
         push!(D, d)
+        
+        # Get fraction of variance explained for this neighborhood
+        push!(all_variances, fraction_variance_explained(pca_model))
     end
-    return D
+    return D, all_variances
 end
 
 

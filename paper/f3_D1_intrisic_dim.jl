@@ -28,9 +28,9 @@ import GeneralAttractors.Analysis.ManifoldAnalysis:
         fraction_variance_explained, find_fraction_variance_explained_elbow, pca_dimensionality_reduction
 move_to_datadir(supervisor, "mfld_top4")
 
-PLOT_EXTRINSIC_DIMENSIONALITY = true
+PLOT_EXTRINSIC_DIMENSIONALITY = false
 ESTIMATE_LOCAL_PCA_PARAMS_SENSITIVITY = false
-ESTIMATE_INTRINSIC_DIMENSIONALITY = false
+ESTIMATE_INTRINSIC_DIMENSIONALITY = true
 
 
 
@@ -174,7 +174,19 @@ end
 
 
 if ESTIMATE_INTRINSIC_DIMENSIONALITY
-    for network in networks
+    # Create a figure with subplots for each network
+    n_networks = length(networks) - 1  # excluding line
+    n_cols = 2
+    n_rows = ceil(Int, n_networks/n_cols)
+    plt = plot(
+        layout=(n_rows, n_cols),
+        size=(1000, 250*n_rows),
+        grid=false;
+        plot_font_size_kwargs...
+    )
+
+    plot_idx = 1
+    for (network, color) in zip(networks, networks_colors)
         network == "line" && continue
         filters = Dict{Symbol, Any}(
             :tag => "d10_embeddings",
@@ -183,15 +195,44 @@ if ESTIMATE_INTRINSIC_DIMENSIONALITY
             :extension => "npz",
         )
 
-
         df, M = ProjectSupervisor.fetch(supervisor; filters...) 
-        println(first(df, 5))
         @assert length(M) == 1 length(M)
         M = M[1]
         @assert size(M, 1) == 10 size(M)
 
-
-        d = estimate_intrinsic_dimensionality(M, intrinsic_dimensionality_prms)
+        # Get dimensionality and variances
+        d, all_variances = estimate_intrinsic_dimensionality(M, intrinsic_dimensionality_prms)
         @info "Estimated intrinsic dimensionality of $network: $(d |> mean) ± $(d |> std)"
+
+        # Calculate mean and std of variance explained for each PC
+        max_pcs = maximum(length.(all_variances))
+        var_means = zeros(max_pcs)
+        var_stds = zeros(max_pcs)
+        
+        for pc in 1:max_pcs
+            pc_vars = [v[pc] for v in all_variances if length(v) >= pc]
+            var_means[pc] = mean(pc_vars)
+            var_stds[pc] = std(pc_vars)
+        end
+
+        # Create subplot
+        plot!(
+            plt[plot_idx],
+            1:max_pcs,
+            var_means,
+            yerror=var_stds,
+            color=color,
+            label=nothing,
+            title=network,
+            xlabel="PC",
+            ylabel="Variance explained (%)",
+            seriestype=:bar,
+            alpha=0.6
+        )
+
+        plot_idx += 1
     end
+
+    save_plot(supervisor, plt, "f3_D_intrisic_dim_local_pca")
+    display(plt)
 end
