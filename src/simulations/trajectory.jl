@@ -291,13 +291,9 @@ function Trajectory(
         x̂, v_correction = apply_boundary_conditions!(x̂, can.C.M)
 
         # scale velocity inputs
-        # if x̂ isa Matrix
         J = jacobian(can.C.ρ, x̂)
         v = J * (v .* v_correction)
-        # else
-        #     J = gradient(can.C.ρ, x̂)
-        #     v = J .* (v .* v_correction)
-        # end
+
 
         # store
         X[t, :] = x̂

@@ -340,11 +340,15 @@ function apply_boundary_conditions!(x::Vector, m::Mobius)
     if x[2] >= 2π
         x[2] = x[2] - 2π
         x[1] = -x[1]
+        vel_correction_factors = [-1, 0]
     elseif x[2] <= 0
         x[2] = 2π + x[2]
         x[1] = -x[1]
+        vel_correction_factors = [-1, 0]
+    else
+        vel_correction_factors = [1, 1] 
     end
-    return x, [1, 1] # vel_correction_factors
+    return x, vel_correction_factors
 end
 
 function Base.rand(m::Mobius; δ=0.25)

@@ -8,9 +8,9 @@ Including with noise.
 include("settings.jl")
 
 
-move_to_datadir(supervisor, "mfld_top4")
+# move_to_datadir(supervisor, "mfld_top4")
 
-supervisor.metadata
+# supervisor.metadata
 
 
 
@@ -23,7 +23,7 @@ GENERATE_DEUBUG_PLOTS = false
 duration = 25
 still = 15
 tag = "manifold_topology_data"
-do_networks = ("plane", "cylinder" )
+do_networks = ("plane", "cylinder", "ring", "torus", "sphere", "line", "mobius", "klein")
 
 # number of sims
 n_sims_per_network = 2500  # was 2500
@@ -40,7 +40,7 @@ GENERATE_DATA && @info "Running $N_sims simulations in total."
 
 for network in networks    
     GENERATE_DATA || break    
-    network in do_networks || continue
+    # network in do_networks || continue
 
     # (η > 0 && network ∉ ("torus",)) && continue
     # network ∉ ("torus",) && continue
@@ -89,7 +89,7 @@ end
 
 GENERATE_EMBEDDINGS && @info "Dimensionality reduction embeddings"
 for network in networks
-    network in do_networks || continue
+    # network in do_networks || continue
     (η > 0 && network ∉ ("ring", "torus", "sphere")) && continue
     # network != "torus" && continue
     GENERATE_EMBEDDINGS || break

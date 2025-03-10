@@ -1,8 +1,6 @@
 include("settings.jl")
 
 
-
-
 import MyterialColors: blue_grey_dark, salmon
 using NearestNeighbors
 
@@ -26,9 +24,9 @@ Run analysis on (10d embedded) data for each network.
 
 import GeneralAttractors.Analysis.ManifoldAnalysis: 
         fraction_variance_explained, find_fraction_variance_explained_elbow, pca_dimensionality_reduction
-move_to_datadir(supervisor, "mfld_top4")
+# move_to_datadir(supervisor, "mfld_top4")
 
-PLOT_EXTRINSIC_DIMENSIONALITY = false
+PLOT_EXTRINSIC_DIMENSIONALITY = true
 ESTIMATE_LOCAL_PCA_PARAMS_SENSITIVITY = false
 ESTIMATE_INTRINSIC_DIMENSIONALITY = true
 
@@ -36,20 +34,12 @@ ESTIMATE_INTRINSIC_DIMENSIONALITY = true
 
 if PLOT_EXTRINSIC_DIMENSIONALITY
     dim_est_params = AnalysisParameters(
-        max_nPC = 150,  # max num of PCs
-        pca_pratio = 0.999999,       # fraction of variance explained
+        max_nPC = nothing,  # Use all PCs
+        pca_pratio = 1.0,  # Use all components
     )
 
-
-    plt = plot(
-        xlabel = "PC", ylabel = "Fraction of variance explained",
-        grid = false,
-        size = (1000, 600);
-        plot_font_size_kwargs...
-    )
-
+    # Create individual plots for each network
     for (network, color) in zip(networks, networks_colors)
-        # network != "cylinder" && continue
         print(hLine(network; style="red"))
         filters = Dict{Symbol, Any}(
             :tag => "manifold_topology_data",
@@ -65,50 +55,36 @@ if PLOT_EXTRINSIC_DIMENSIONALITY
             continue
         end
         pca = pca_dimensionality_reduction(X, dim_est_params)[1]
-        # get fraction of variance explained and dimensionality
-        fvariance_explained = fraction_variance_explained(pca) 
-        # plot
-        σ = cumsum(fvariance_explained)
+        
+        # get fraction of variance explained for first 100 PCs
+        fvariance_explained = fraction_variance_explained(pca)[1:25]
 
+        plt = plot(
+            xlabel = "PC", 
+            ylabel = "Variance explained (%)",
+            grid = false,
+            size = (800, 500),
+            title = network,
+            ylims = (0, 100);
+            xlims = (0, 25),
+            plot_font_size_kwargs...
+        )
+
+        # Plot as bar plot
         plot!(
-            1:length(σ), σ,
-            lw = 1.5,
+            plt,
+            1:length(fvariance_explained),
+            fvariance_explained,
+            seriestype=:bar,
+            lw = 0,
             label = nothing,
             color = color,
+            alpha = 0.6
         )
-        # scatter!(
-        #     1:length(σ), σ,
-        #     markersize = 3.0,
-        #     label = network,
-        #     color = color,
-        #     msa=0, msw=0,
-        # )
 
-        above = findfirst(σ .> 80)
-        println(above, network)
-
-        scatter!(
-            [above], [σ[above]],
-            markersize = 5.0,
-            label = nothing,
-            color = color,
-            msa=0, msw=0,
-        )
-        plot!(
-            [above, above], [0, σ[above]],
-            lw = 1.5,
-            label = nothing,
-            color = color,
-            ls = :dash,
-        )
-        annotate!((above, 0, network))
-
-
-        print(hLine(; style="dim"))
+        display(plt)
+        save_plot(supervisor, plt, "f3_D_extrinsic_dimensionality_$(network)")
     end
-
-    display(plt)
-    save_plot(supervisor, plt, "f3_D_extrinsic_dimensionality")
 end
 
 
@@ -174,20 +150,9 @@ end
 
 
 if ESTIMATE_INTRINSIC_DIMENSIONALITY
-    # Create a figure with subplots for each network
-    n_networks = length(networks) - 1  # excluding line
-    n_cols = 2
-    n_rows = ceil(Int, n_networks/n_cols)
-    plt = plot(
-        layout=(n_rows, n_cols),
-        size=(1000, 250*n_rows),
-        grid=false;
-        plot_font_size_kwargs...
-    )
-
-    plot_idx = 1
+    # Create individual plots for each network
     for (network, color) in zip(networks, networks_colors)
-        network == "line" && continue
+        println("Plotting $network")
         filters = Dict{Symbol, Any}(
             :tag => "d10_embeddings",
             :can => network,
@@ -204,35 +169,41 @@ if ESTIMATE_INTRINSIC_DIMENSIONALITY
         d, all_variances = estimate_intrinsic_dimensionality(M, intrinsic_dimensionality_prms)
         @info "Estimated intrinsic dimensionality of $network: $(d |> mean) ± $(d |> std)"
 
-        # Calculate mean and std of variance explained for each PC
-        max_pcs = maximum(length.(all_variances))
-        var_means = zeros(max_pcs)
-        var_stds = zeros(max_pcs)
+        # Calculate mean and std of variance explained for all PCs
+        n_dims = size(M, 1)  # Use full dimensionality
+        var_means = zeros(n_dims)
+        var_stds = zeros(n_dims)
         
-        for pc in 1:max_pcs
+        for pc in 1:n_dims
             pc_vars = [v[pc] for v in all_variances if length(v) >= pc]
             var_means[pc] = mean(pc_vars)
             var_stds[pc] = std(pc_vars)
         end
 
-        # Create subplot
+        # Create individual plot
+        plt = plot(
+            xlabel = "PC",
+            ylabel = "Variance explained (%)",
+            grid = false,
+            size = (800, 500),
+            title = network,
+            ylims = (0, 100),
+            xlims = (0, 25),
+        )
+
+        # Plot all PCs
         plot!(
-            plt[plot_idx],
-            1:max_pcs,
+            plt,
+            1:n_dims,
             var_means,
             yerror=var_stds,
             color=color,
             label=nothing,
-            title=network,
-            xlabel="PC",
-            ylabel="Variance explained (%)",
             seriestype=:bar,
             alpha=0.6
         )
 
-        plot_idx += 1
+        display(plt)
+        save_plot(supervisor, plt, "f3_D_intrisic_dim_local_pca_$(network)")
     end
-
-    save_plot(supervisor, plt, "f3_D_intrisic_dim_local_pca")
-    display(plt)
 end

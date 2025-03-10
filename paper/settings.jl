@@ -38,7 +38,7 @@ using GeneralAttractors.ManifoldUtils
 import GeneralAttractors.Simulations: remove_jumps_from_trajectory
 import GeneralAttractors.Simulations: plot_trajectory_and_decoded
 
-datadir = "F:\\PostDoc\\GeneralAttractors\\data"
+datadir = "E:\\PostDoc\\GeneralAttractors\\data\\mfld_top4"
 
 supervisor = Supervisor("GeneralAttractorsTheory"; 
             plotsdir="F:\\Dropbox (Personal)\\Postdoc\\Writings\\GeneralAttractors\\plots")

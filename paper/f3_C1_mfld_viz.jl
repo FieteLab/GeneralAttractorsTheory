@@ -3,7 +3,7 @@ Isomap embedding visualization of activity manifold
 """
 
 include("settings.jl")
-move_to_datadir(supervisor, "mfld_top4")
+# move_to_datadir(supervisor, "mfld_top4")
 # pyplot()
 
 η = 0.0

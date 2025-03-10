@@ -26,7 +26,19 @@ export pca_dimensionality_reduction,
 
 # ----------------------------------- utils ---------------------------------- #
 """ compute fraction of variance explained by each PC """
-fraction_variance_explained(M::PCA) = principalvars(M) ./ tvar(M) * 100
+function fraction_variance_explained(M::PCA)
+    # Get all principal variances and total variance
+    all_vars = principalvars(M)
+    total_var = tvar(M)
+    
+    # Pad with zeros if needed to get all dimensions
+    n_dims = size(M.proj, 1)
+    if length(all_vars) < n_dims
+        all_vars = vcat(all_vars, zeros(n_dims - length(all_vars)))
+    end
+    
+    return all_vars ./ total_var * 100
+end
 
 """
     find_fraction_variance_explained_elbow(σ::Vector{Float64})::Int
@@ -218,14 +230,13 @@ function estimate_intrinsic_dimensionality(
     for (i, U) in enumerate(Us)
         @assert length(U) == k
         pca_model = fit(PCA, M[:, U]; 
-                    pratio = params.intrinsic_d_pratio, 
-                    maxoutdim = size(M, 2)
+                    pratio = 1.0,  # Use all components
+                    maxoutdim = size(M, 1)  # Use full dimensionality
         )
-        # d = find_fraction_variance_explained_elbow(principalvars(pca_model))
         d = length(principalvars(pca_model))
         push!(D, d)
         
-        # Get fraction of variance explained for this neighborhood
+        # Get fraction of variance explained for all PCs
         push!(all_variances, fraction_variance_explained(pca_model))
     end
     return D, all_variances
