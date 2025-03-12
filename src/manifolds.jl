@@ -97,6 +97,16 @@ function Base.rand(m::Line; δ=0.25)
     [x,]
 end
 
+function make_space_filling_trajectory(M::Line, n_pts::Int, n_steps::Int)
+    δ = 0.5
+    X = zeros(n_steps, 1)
+    X[:, 1] = range(M.xmin[1]+δ, M.xmax[1]-δ, length=n_steps)
+    V = zeros(n_steps, 1)
+    V[1:end-1, 1] = (X[2:end, 1] - X[1:end-1, 1])/0.5
+    V[end, 1] = 0
+    return X, V
+end
+
 
 # ---------------------------------------------------------------------------- #
 #                                     RING                                     #
@@ -120,6 +130,15 @@ Ring() = Ring(
 )
 
 apply_boundary_conditions!(x, ::Ring) = mod.(x, 2π), 1
+
+function make_space_filling_trajectory(M::Ring, n_pts::Int, n_steps::Int)
+    X = zeros(n_steps, 1)
+    X[:, 1] = range(0, 2π, length=n_steps)
+    V = zeros(n_steps, 1)
+    V[1:end-1, 1] = (X[2:end, 1] - X[1:end-1, 1])/0.5
+    V[end, 1] = 0
+    return X, V
+end
 
 
 # ---------------------------------------------------------------------------- #

@@ -339,7 +339,7 @@ function make_sp_trajectory(
     _X, Vs = make_space_filling_trajectory(M, n_pts, n_steps)
     println("Vs: ", size(Vs))
     plt = plot(Vs[:, 1], label="v1")
-    plot!(plt, Vs[:, 2], label="v2")
+    # plot!(plt, Vs[:, 2], label="v2")
     display(plt)
     size(Vs, 1) != n_steps && error("Vs has wrong number of rows: $(size(Vs, 1)) != $n_steps")
 
@@ -374,7 +374,9 @@ function make_sp_trajectory(
         V[t-1, :] = v
     end
     println("After creating trajectory: ", size(X), " ", size(V))
-    plt = scatter(X[:, 1], X[:, 2], marker_z=V[:, 2], cmap=:bwr)
+    # plt = scatter(X[:, 1], X[:, 2], marker_z=V[:, 2], cmap=:bwr)
+    plt = scatter(X[:, 1], range(1, n_steps, length=n_steps), cmap=:bwr)
+
     display(plt)
 
 

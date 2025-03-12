@@ -1,7 +1,7 @@
-include("settings.jl")
-move_to_datadir(supervisor, "TuningCurves")
+# include("settings.jl")
+# move_to_datadir(supervisor, "TuningCurves")
 
-duration = 12_000 
+duration = 1000
 funky = false
 η=0
 nframes = (Int ∘ round)(duration / dt)
@@ -23,6 +23,15 @@ function PI_trajectory_maker(can, x₀_traj)
             can.C.M, 
             can.C.N;
             n_pts = sampling_n_pts,  
+            n_steps = nframes,
+            dt = dt,
+            vmax = max_path_int_vel[can.name]
+        )
+    elseif N == Line || N == Ring
+        return make_sp_trajectory(
+            can, 
+            can.C.M, 
+            can.C.N;
             n_steps = nframes,
             dt = dt,
             vmax = max_path_int_vel[can.name]
@@ -64,8 +73,8 @@ function run_sims_and_save(network, funky, η; cover_manifold=:default)
         trajectory = PI_trajectory_maker(can, x₀_traj)
 
         # create trajectory plot
-        trajplot = plot(trajectory.X[:, 1], trajectory.X[:, 2])
-        display(trajplot)
+        # trajplot = plot(trajectory.X[:, 1], trajectory.X[:, 2])
+        # display(trajplot
         
         # get simulation
         simulation = Simulation(can, trajectory; η = η, b₀ = 1.0);
@@ -76,7 +85,7 @@ function run_sims_and_save(network, funky, η; cover_manifold=:default)
             simulation;
             average_over_ms = 0,
             s₀ = 1.0 .* activate,
-            discard_first_ms=100,
+            discard_first_ms=0,
         )
 
         # plot decoded
@@ -98,7 +107,7 @@ for network in networks
     η > 0 && network != "torus" && continue
     funky == true && network ∉ ("torus", "sphere") && continue
 
-    network ∉ ("torus", "cylinder", "plane") && continue
+    network ∉ ("ring",) && continue
     
     run_sims_and_save(network, funky, η)
 end
