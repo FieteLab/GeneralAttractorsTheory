@@ -46,7 +46,7 @@ function torus_maker(cantype;
     ρⁱ(w::Vector; n = 6) = ρⁱ(w...; n = n)
     
     cover = if cover_manifold == :default
-        CoverSpace(Manifoldℝ²(25), Torus(), ρ, ρⁱ)
+        CoverSpace(Manifoldℝ²(10), Torus(), ρ, ρⁱ)  #  was 25
     elseif cover_manifold == :cylinder
         CoverSpace(Cylinder(20), Torus(), ρ, ρⁱ)
     end

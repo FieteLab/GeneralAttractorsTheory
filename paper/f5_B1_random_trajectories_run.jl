@@ -7,7 +7,7 @@ include("settings.jl")
 move_to_datadir(supervisor, "PI2")
 
 
-N_sims = 50
+N_sims = 25
 still = 150
 duration = 1000 + still
 funky = false
@@ -36,59 +36,47 @@ function PI_trajectory_maker(can, x₀_traj)
         :scale=>0.5,
     )
 
-    trajectory = if M == N == Line
-        Trajectory(
-            can;
-            σv = [.5,],  # mobius values
-            δ = .25,
-            kwargs...
+    traj_params = if M == N == Line
+        Dict(
+            :σv => [.5,], 
+            :δ => .25,
         )
     elseif M == N == Ring
-        Trajectory(
-            can;
-            σv = [.5,],  # mobius values
-            δ = 0,
-            kwargs...
+        Dict(
+            :σv => [.5,], 
+            :δ =>0,
         )
     elseif M ∈ (Manifoldℝ², Cylinder) && N ∈ (Manifoldℝ², Cylinder, Torus)
-        Trajectory(
-            can;
-            σv = [1.0, 1.0],  # mobius values
-            δ = .5,
-            x₀ = x₀_traj,
-            kwargs...
+        Dict(
+            :σv => [1.0, 1.0], 
+            :δ =>.5,
         )
     elseif M == N == Mobius
-        Trajectory(
-            can;
-            σv = [.75, .2],  # mobius values
-            δ = 10,
-            kwargs...
+        Dict(
+            :σv => [.75, .2], 
+            :δ =>10,
         )
     elseif M == N == Sphere
-        Trajectory(
-            can;
-            σv = [.1, .1, .1],  # mobius values
-            δ = 0,
-            kwargs...
+        Dict(
+            :σv => [.1, .1, .1], 
+            :δ =>0,
         )
     elseif M == Cylinder && N == Mobius
-        Trajectory(
-            can;
-            σv = [.75, .2],  # mobius values
-            δ = 10,
-            kwargs...
+        Dict(
+            :σv => [.75, .2], 
+            :δ =>10,
         )
     elseif M == KleinBottle && N == KleinBottle
-        Trajectory(
-            can;
-            σv = [.75, .2],
-            δ = 10,
-            kwargs...
-        )
+
     else
         error("No trajectory maker for $M and $N")
     end
+
+    trajectory = Trajectory(
+        can;
+        traj_params...,
+        kwargs...
+    )
 
     return trajectory
 end
@@ -137,7 +125,6 @@ function run_sims_and_save(network, funky, N_sims, η, still; cover_manifold=:de
 
             # save plots of the trajectory and the decoded trajectory
             trajplot = plot(trajectory; Δ=75)
-
             
             # run 
             h, X̄ = @time run_simulation(
@@ -156,13 +143,13 @@ function run_sims_and_save(network, funky, N_sims, η, still; cover_manifold=:de
         end
     end
 end
-
+ 
 
 for network in networks
     η > 0 && network != "torus" && continue
     funky == true && network ∉ ("torus", "sphere") && continue
 
-    network ∉ ("klein", ) && continue
+    network ∉ ("torus", ) && continue
     
     run_sims_and_save(network, funky, N_sims, η, still; cover_manifold=cover_manifold)
 end

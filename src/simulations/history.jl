@@ -15,11 +15,11 @@ mutable struct History
     v::Union{Nothing, Array}                        # input vector at each timestep
     v̂::Union{Nothing, Array}                        # for averaging
     x_M::Array                       # on mfld position at each timestep
-    x̂_M::Array                       # for averagin
+    x̂_M::Array                       # for averaging
     x_M_decoded::Array                       # on mfld position at each timestep
-    x̂_M_decoded::Array                       # for averagin
+    x̂_M_decoded::Array                       # for averaging
     x_N::Array                       # on mfld position at each timestep
-    x̂_N::Array                       # for averagin
+    x̂_N::Array                       # for averaging
     average_over::Int               # average every N frames
     discard::Int                    # discard first N frames
     metadata::Dict                  # can info, sim params, timestamp...

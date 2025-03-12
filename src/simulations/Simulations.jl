@@ -11,7 +11,7 @@ import GeneralAttractors:
     moving_average,
     by_column,
     plot_can_vector_fields!
-import GeneralAttractors: show_oneforms, show_oneforms!
+import GeneralAttractors: show_oneforms, show_oneforms!, make_space_filling_trajectory
 import ..Can: AbstractCAN, offset_for_visual, OneForm, AbstractWeightOffset, SingleCAN
 import ..ManifoldUtils:
     AbstractManifold,
@@ -28,6 +28,7 @@ import ..ManifoldUtils:
 export Simulation, run_simulation
 export Trajectory, ConstantTrajectory
 export generate_groundtruth_data
+export make_sp_trajectory
 
 include("trajectory.jl")
 include("decoding.jl")

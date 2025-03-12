@@ -32,7 +32,7 @@ Holds information necessary for running a simulation.
     b₀::Float64 = 1.0       # baseline input activity
     η::Float64 = 0.1       # noise scale
     dt::Float64 = 0.5       # simulation step - milliseconds
-    τ::Float64 = 5.0      # activity time constant - milliseconds
+    τ::Float64 = 5      # activity time constant - milliseconds
 end
 
 Base.string(sim::Simulation) = "Simulation of $(sim.can)"
@@ -107,11 +107,11 @@ function step!(
     # update activity
     simulation.S += (can.σ.(Ṡ) - S) / (simulation.τ)
 
-    # remove bad entries
-    # droptol!(simulation.S, 0.01)
-    # droptol!(simulation.Ṡ, 0.01)
-    # simulation.S = sparse(simulation.S)
-    # simulation.Ṡ = sparse(simulation.Ṡ)
+    # remove small entries
+    droptol!(simulation.S, 0.01)
+    droptol!(simulation.Ṡ, 0.01)
+    simulation.S = sparse(simulation.S)
+    simulation.Ṡ = sparse(simulation.Ṡ)
 
     return ∑ⱼ(simulation.S)  # return the sum of all activations
 end

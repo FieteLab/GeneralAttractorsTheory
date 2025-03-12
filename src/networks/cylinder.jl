@@ -5,7 +5,7 @@ function cylinder_maker(
     offset_size::Number = 0.2,
     α = 3.2,
     σ = :softrelu, 
-    r2_extent = 25,
+    r2_extent = 10,  # was 25
     cy_extent = 5,
     kwargs...
 )

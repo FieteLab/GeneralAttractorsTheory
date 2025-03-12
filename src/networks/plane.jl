@@ -10,7 +10,8 @@ function plane_maker(
     # number of neurons
     n = (n, n) # number of neurons per dimension
 
-    m_extent, n_extent = 25, 10 # size of the two manifolds
+    # m_extent, n_extent = 25, 10 # size of the two manifolds
+    m_extent, n_extent = 10, 10 # size of the two manifolds
     ratio = m_extent / n_extent
 
     m_to_n(x) = x ./ ratio

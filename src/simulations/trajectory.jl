@@ -1,6 +1,7 @@
 import Term.Repr: @with_repr, termshow
 using Statistics
 import ForwardDiff: jacobian, gradient
+using Interpolations
 
 # ----------------------------------- utils ---------------------------------- #
 """
@@ -294,7 +295,6 @@ function Trajectory(
         J = jacobian(can.C.ρ, x̂)
         v = J * (v .* v_correction)
 
-
         # store
         X[t, :] = x̂
         V[t-1, :] = v 
@@ -314,3 +314,87 @@ function Trajectory(
     end
     return Trajectory(M, N, X, X̄, V, still)
 end
+
+"""
+Create a trajectory that systematically covers the entire manifold space.
+Currently implemented for Torus manifold.
+"""
+function make_sp_trajectory(
+        can::AbstractCAN,
+        M::AbstractManifold,
+        N::AbstractManifold;
+        n_pts::Int = 10,
+        n_steps::Int = 100,
+        dt::Float64 = 0.5,
+        still::Int = 100,
+        vmax::Number = 0.075,
+    )
+
+    d = length(M.xmin)
+    T = n_steps
+    ψs::Vector = can.C.M.ψs # get manifold vector fields
+    n_vfields = length(ψs)
+
+    # Generate space-filling trajectory
+    _X, Vs = make_space_filling_trajectory(M, n_pts, n_steps)
+    println("Vs: ", size(Vs))
+    plt = plot(Vs[:, 1], label="v1")
+    plot!(plt, Vs[:, 2], label="v2")
+    display(plt)
+    size(Vs, 1) != n_steps && error("Vs has wrong number of rows: $(size(Vs, 1)) != $n_steps")
+
+    function ∑ψ(p, t)
+        map(i -> Vs[:, i][t] * ψs[i](p), 1:n_vfields) |> sum
+    end
+
+    # first, generate a trajectory on the M mfld
+    X, V = Matrix(reshape(zeros(T, d), T, d)), Matrix(reshape(zeros(T, d), T, d))
+    X[1, :] = _X[1, :]
+    v_correction = ones(d)
+    for t = 2:T
+        x = X[t-1, :]
+
+        # get a velocity vector
+        v = ∑ψ(x, t) 
+
+        # make sure vmax magnitude is in range
+        # v = enforce_vmax(v, vmax)
+        # v = enforce_vmin(v, 0.0)
+
+        # update on mfld position
+        x̂ = x + (v * dt)
+        x̂, v_correction = apply_boundary_conditions!(x̂, can.C.M)
+
+        # scale velocity inputs
+        J = jacobian(can.C.ρ, x̂)
+        v = J * (v .* v_correction)
+
+        # store
+        X[t, :] = x̂
+        V[t-1, :] = v
+    end
+    println("After creating trajectory: ", size(X), " ", size(V))
+    plt = scatter(X[:, 1], X[:, 2], marker_z=V[:, 2], cmap=:bwr)
+    display(plt)
+
+
+    # if the M and N manifolds are the same, we're done
+    if can.C.M == can.C.N
+        X̄ = X
+    else
+        # reconstruct the N mfld trajectory using the cover map ρ
+        X̄ = by_column(can.C.ρ, Matrix(X'))' |> Matrix
+    end
+    # Add still phase if requested
+    if still > 0
+        x₀ = X[1,:]
+        X, V = add_initial_still_phase(X, X̄, V, still, x₀)
+    end
+    
+    return Trajectory(M, N, X, X̄, V, still)
+end
+
+
+
+
+

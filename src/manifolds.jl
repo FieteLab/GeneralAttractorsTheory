@@ -4,7 +4,7 @@ Collection of code useful to visualize manifolds
 module ManifoldUtils
 using Distances
 import Term.Repr: @with_repr, termshow
-
+using Interpolations
 import ..GeneralAttractors: SphericalDistance, MobiusEuclidean, lerp, KleinBottleEuclidean
 import ..GeneralAttractors: sphere_embedding, mobius_embedding, klein_embedding
 
@@ -18,6 +18,7 @@ export MB_ψ1, MB_ψ2, MB_ψ3
 export ring_ψ
 export torus_ψ1, torus_ψ2
 export sphere_ψx, sphere_ψy, sphere_ψz, fibonacci_sphere
+export make_space_filling_trajectory
 
 # ---------------------------------------------------------------------------- #
 #                                 VECTOR FIELDS                                #
@@ -148,7 +149,7 @@ function apply_boundary_conditions!(x::Vector, m::Manifoldℝ²)
     vel_correction_factors = [1, 1]
 
     # non periodic dimension
-    δ = 0.5  # padding around boundary to account for bump size
+    δ = 0.25  # padding around boundary to account for bump size
     if x[1] <= m.xmin[1] + δ
         x[1] = m.xmin[1] + δ
         vel_correction_factors[1] = 0
@@ -178,6 +179,59 @@ function Base.rand(m::Manifoldℝ²; δ=0.25)
     end
     x
 end
+
+
+
+function upsample(x, n_steps)
+    t = 1:length(x)
+    itp = LinearInterpolation(t, x)
+    new_t = range(1, length(x), length=n_steps)
+    return itp.(new_t)
+end
+
+
+
+function make_space_filling_trajectory(M::Manifoldℝ², n_pts::Int, n_steps::Int)
+    # sample a grid of points on the torus
+    δ = 1
+    x_min, x_max = M.xmin[1] + δ, M.xmax[1] - δ
+    y_min, y_max = M.xmin[2] + δ, M.xmax[2] - δ
+    x = range(x_min, x_max, length=n_pts)
+    y = range(y_min, y_max, length=n_pts)
+
+    # Create grid of coordinates
+    points = Vector{Vector{Float64}}()
+    
+    # Create a snake-like pattern to ensure continuity
+    for (i, xi) in enumerate(x)
+        ys = i % 2 == 1 ? y : reverse(y)
+        for yi in ys
+            push!(points, [xi, yi])
+        end
+    end
+
+    # Convert to matrix format (T×d)
+    X = reduce(hcat, points)' |> Matrix
+    println("X before upsampling: ", size(X))
+
+    # Convert to matrix format (T×d)
+    X = reduce(hcat, points)' |> Matrix
+    X_up = zeros(n_steps, 2)
+    X_up[:, 1] = upsample(X[:, 1], n_steps)
+    X_up[:, 2] = upsample(X[:, 2], n_steps)
+    println("X after upsampling: ", size(X_up), " with n_steps: ", n_steps)
+    
+
+    # Compute velocities between consecutive points
+    V = similar(X_up)
+    for i in 1:size(X_up,1)-1
+        V[i,:] = (X_up[i+1,:] - X_up[i,:])/0.5
+    end
+    V[end,:] .= 0  # No velocity for last point
+    
+    return X_up, V
+end
+
 
 # ---------------------------------------------------------------------------- #
 #                                   CYLINDER                                   #
@@ -245,6 +299,7 @@ end
     d::Int  # dimensionality
     periodic_dimensions::Vector # label for which dimensions are periodic
 end
+
 Torus() = Torus(
     "Torus",
     [0, 0],
