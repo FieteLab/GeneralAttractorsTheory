@@ -7,6 +7,7 @@ import Term.Repr: @with_repr, termshow
 using Interpolations
 import ..GeneralAttractors: SphericalDistance, MobiusEuclidean, lerp, KleinBottleEuclidean
 import ..GeneralAttractors: sphere_embedding, mobius_embedding, klein_embedding
+using LinearAlgebra
 
 export AbstractManifold, CoverSpace
 export ℝ², T, S²
@@ -368,6 +369,24 @@ function Base.rand(::Sphere; δ=0)
     return x ./ norm(x)
 end
 
+function make_space_filling_trajectory(M::Sphere, n_pts::Int, n_steps::Int)
+    # Define the starting and ending latitudes in radians
+    start_lat = π / 8  # +45 degrees
+    end_lat = -π / 8   # -45 degrees
+
+    X = zeros(1, 3)
+    X[1, 1] =  cos(start_lat) * cos(end_lat)
+    X[1, 2] =  cos(start_lat) * sin(end_lat)
+    X[1, 3] =  sin(start_lat)
+
+    V = zeros(n_steps, 3)
+    V[:, 1] .= 0.2
+    V[:, 2] .= 0.05
+    V[:, 3] .= 0.0
+
+    return X, V
+end
+
 
 # ---------------------------------------------------------------------------- #
 #                                    MOBIUS                                    #
@@ -437,6 +456,20 @@ function Base.rand(m::Mobius; δ=0.25)
 end
 
 
+
+function make_space_filling_trajectory(M::Mobius, n_pts::Int, n_steps::Int)
+    X = zeros(1, 2)
+    X[1, 1] =  .5
+    X[1, 2] =  .5
+
+    V = zeros(n_steps, 2)
+    V[:, 1] .= cos.(range(0, 2π, length=n_steps)) .* 0.33
+    V[:, 2] .= sin.(range(0, 8π, length=n_steps)) .* 0.2
+
+    return X, V
+end
+
+
 # ---------------------------------------------------------------------------- #
 #                                 Klein Botttle                                #
 # ---------------------------------------------------------------------------- #
@@ -456,7 +489,7 @@ KleinBottle() = KleinBottle(
     "Klein Bottle",
     [0, 0],
     [2π, 2π],
-    [ConstantVectorField(2, 1), ConstantVectorField(2, 2)],
+    [ConstantField(2, 1), ConstantField(2, 2)],
     KleinBottleEuclidean(),
     2, 
     [1, 1]

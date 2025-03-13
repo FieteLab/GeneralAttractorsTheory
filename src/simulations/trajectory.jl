@@ -2,6 +2,8 @@ import Term.Repr: @with_repr, termshow
 using Statistics
 import ForwardDiff: jacobian, gradient
 using Interpolations
+import LinearAlgebra: dot
+
 
 # ----------------------------------- utils ---------------------------------- #
 """
@@ -316,8 +318,12 @@ function Trajectory(
 end
 
 """
-Create a trajectory that systematically covers the entire manifold space.
-Currently implemented for Torus manifold.
+Create a trajectory that systematically covers the entire external manifold space.
+
+This is a special case of the normal trajectory construction. 
+We ignore things like ρ and boundary constraints. 
+Only to be used when we know exactly what we're doing and how the input 
+space filling trajectory is defined (and correct).
 """
 function make_sp_trajectory(
         can::AbstractCAN,
@@ -337,15 +343,18 @@ function make_sp_trajectory(
 
     # Generate space-filling trajectory
     _X, Vs = make_space_filling_trajectory(M, n_pts, n_steps)
-    println("Vs: ", size(Vs))
-    plt = plot(Vs[:, 1], label="v1")
-    # plot!(plt, Vs[:, 2], label="v2")
-    display(plt)
     size(Vs, 1) != n_steps && error("Vs has wrong number of rows: $(size(Vs, 1)) != $n_steps")
 
-    function ∑ψ(p, t)
-        map(i -> Vs[:, i][t] * ψs[i](p), 1:n_vfields) |> sum
-    end
+    # for each vector field, project the velocity vector onto the vector field
+    # X = _X
+    # V = zeros(n_steps, n_vfields)
+    # for i in 1:n_vfields
+    #     V[:, i] = -map(t -> dot(Vs[t, :], ψs[i](X[t, :])), 1:n_steps)
+    #     # V[:, i] = -map(t -> sum(Vs[t, :] .* ψs[i](X[t, :])), 1:n_steps)
+    # end
+
+    ∑ψ(p, t) = map(i -> Vs[t, i] * ψs[i](p), 1:n_vfields) |> sum
+
 
     # first, generate a trajectory on the M mfld
     X, V = Matrix(reshape(zeros(T, d), T, d)), Matrix(reshape(zeros(T, d), T, d))
@@ -358,8 +367,8 @@ function make_sp_trajectory(
         v = ∑ψ(x, t) 
 
         # make sure vmax magnitude is in range
-        # v = enforce_vmax(v, vmax)
-        # v = enforce_vmin(v, 0.0)
+        v = enforce_vmax(v, vmax)
+        v = enforce_vmin(v, 0.0)
 
         # update on mfld position
         x̂ = x + (v * dt)
@@ -371,14 +380,21 @@ function make_sp_trajectory(
 
         # store
         X[t, :] = x̂
-        V[t-1, :] = v
+        V[t-1, :] = v 
     end
+
+
     println("After creating trajectory: ", size(X), " ", size(V))
-    # plt = scatter(X[:, 1], X[:, 2], marker_z=V[:, 2], cmap=:bwr)
-    plt = scatter(X[:, 1], range(1, n_steps, length=n_steps), cmap=:bwr)
-
+    if d == 3
+        plt = scatter3d(X[:, 1], X[:, 2], X[:, 3], marker_z=V[:, 2], cmap=:bwr)
+        # plt = plot(X[:, 1], X[:, 2], X[:, 3])
+    elseif d == 2
+        plt = scatter(X[1:5:end, 1], X[1:5:end, 2], marker_z=V[1:5:end, 1], cmap=:bwr)
+    else
+        plt = scatter(X[:, 1], range(1, n_steps), marker_z=V[:,1], cmap=:bwr)
+    end
     display(plt)
-
+    # throw("cacca")
 
     # if the M and N manifolds are the same, we're done
     if can.C.M == can.C.N

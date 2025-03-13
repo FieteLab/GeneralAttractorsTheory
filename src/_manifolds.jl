@@ -138,3 +138,4 @@ function area_deformation(φ::Function, p::AbstractVector)::Float64
     λ₁, λ₂ = metric_deformation(φ, p)
     λ₁ * λ₂
 end
+

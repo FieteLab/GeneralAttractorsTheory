@@ -1,7 +1,7 @@
 # include("settings.jl")
 # move_to_datadir(supervisor, "TuningCurves")
 
-duration = 1000
+duration = 7000
 funky = false
 η=0
 nframes = (Int ∘ round)(duration / dt)
@@ -36,10 +36,36 @@ function PI_trajectory_maker(can, x₀_traj)
             dt = dt,
             vmax = max_path_int_vel[can.name]
         )
+    elseif N == Sphere
+        return make_sp_trajectory(
+            can, 
+            can.C.M, 
+            can.C.N;
+            n_pts = nframes,
+            n_steps = nframes,
+            dt = dt,
+        )
+        # return Trajectory(
+        #     can, 
+        #     can.C.M,
+        #     can.C.N;
+        #     T = nframes,
+        #     still=100,
+        #     scale=0.5,
+        #     vmax = max_path_int_vel[can.name],
+        #     σv = [0.1, 0.1, 0.1],
+        #     δ = 0,
+        # )
+    elseif N == Mobius
+        return make_sp_trajectory(
+            can, 
+            can.C.M, 
+            can.C.N;
+            n_steps = nframes,
+        )
     else
         throw(ArgumentError("make_sp_trajectory is not implemented for $M and $N"))
     end
-
 end
 
 """
@@ -107,7 +133,7 @@ for network in networks
     η > 0 && network != "torus" && continue
     funky == true && network ∉ ("torus", "sphere") && continue
 
-    network ∉ ("ring",) && continue
+    network ∉ ("mobius",) && continue
     
     run_sims_and_save(network, funky, η)
 end
